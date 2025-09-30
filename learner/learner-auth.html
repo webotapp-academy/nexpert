@@ -41,16 +41,25 @@
                     <h2 class="text-3xl font-bold text-gray-900">Welcome Back</h2>
                     <p class="mt-2 text-gray-600">Sign in to your learner account</p>
                 </div>
+                
+                <!-- Demo Credentials -->  
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div class="text-sm text-blue-800">
+                        <strong>Demo Credentials:</strong><br>
+                        Email: learner@demo.com<br>
+                        Password: demo123
+                    </div>
+                </div>
 
-                <form class="space-y-6">
+                <form id="learnerLoginForm" class="space-y-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                        <input type="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter your email">
+                        <input id="learnerEmail" type="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter your email" value="learner@demo.com">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                        <input type="password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter your password">
+                        <input id="learnerPassword" type="password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="Enter your password" value="demo123">
                     </div>
 
                     <div class="flex items-center justify-between">
@@ -128,5 +137,25 @@
             </div>
         </div>
     </div>
+
+    <script>
+    document.getElementById('learnerLoginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('learnerEmail').value;
+        const password = document.getElementById('learnerPassword').value;
+        
+        // Demo credentials check
+        if (email === 'learner@demo.com' && password === 'demo123') {
+            // Show success message
+            alert('Login successful! Redirecting to dashboard...');
+            // Redirect to learner dashboard
+            window.location.href = '?panel=learner&page=dashboard';
+        } else {
+            // Show error message
+            alert('Invalid credentials. Please use:\nEmail: learner@demo.com\nPassword: demo123');
+        }
+    });
+    </script>
 </body>
 </html>

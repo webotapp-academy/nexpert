@@ -71,6 +71,15 @@
                     <h2 class="text-3xl font-bold text-gray-900">Expert Portal</h2>
                     <p class="mt-2 text-gray-600">Access your expert dashboard</p>
                 </div>
+                
+                <!-- Demo Credentials -->  
+                <div class="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div class="text-sm text-amber-800">
+                        <strong>Demo Credentials:</strong><br>
+                        Email: expert@demo.com<br>
+                        Password: demo123
+                    </div>
+                </div>
 
                 <!-- KYC Status Banner -->
                 <div class="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
@@ -82,15 +91,15 @@
                     </div>
                 </div>
 
-                <form class="space-y-6">
+                <form id="expertLoginForm" class="space-y-6">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-                        <input type="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent" placeholder="Enter your email">
+                        <input id="expertEmail" type="email" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent" placeholder="Enter your email" value="expert@demo.com">
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                        <input type="password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent" placeholder="Enter your password">
+                        <input id="expertPassword" type="password" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent" placeholder="Enter your password" value="demo123">
                     </div>
 
                     <div class="flex items-center justify-between">
@@ -138,5 +147,25 @@
             </div>
         </div>
     </div>
+
+    <script>
+    document.getElementById('expertLoginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const email = document.getElementById('expertEmail').value;
+        const password = document.getElementById('expertPassword').value;
+        
+        // Demo credentials check
+        if (email === 'expert@demo.com' && password === 'demo123') {
+            // Show success message
+            alert('Login successful! Redirecting to expert profile setup...');
+            // Redirect to expert profile setup
+            window.location.href = '?panel=expert&page=profile-setup';
+        } else {
+            // Show error message
+            alert('Invalid credentials. Please use:\nEmail: expert@demo.com\nPassword: demo123');
+        }
+    });
+    </script>
 </body>
 </html>

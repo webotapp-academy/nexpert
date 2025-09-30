@@ -28,7 +28,7 @@
                 <div class="flex items-center space-x-6">
                     <a href="?panel=learner&page=dashboard" class="text-gray-600 hover:text-primary">Dashboard</a>
                     <a href="?panel=learner&page=browse-experts" class="text-gray-600 hover:text-primary">Browse Experts</a>
-                    <img src="https://via.placeholder.com/32x32" alt="Profile" class="w-8 h-8 rounded-full">
+                    <img src="attached_assets/stock_images/professional_busines_a5bb892c.jpg" alt="Profile" class="w-8 h-8 rounded-full object-cover">
                 </div>
             </div>
         </div>
@@ -36,29 +36,52 @@
 
     <div class="max-w-6xl mx-auto px-4 py-8">
         <!-- Expert Header -->
-        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-                <img src="https://via.placeholder.com/150x150" alt="Sarah Chen" class="w-32 h-32 rounded-full">
+        <div class="bg-gradient-to-r from-blue-600 to-purple-700 rounded-lg shadow-xl p-8 mb-8 text-white relative overflow-hidden">
+            <div class="absolute inset-0 bg-black opacity-20"></div>
+            <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+                <div class="relative">
+                    <img src="attached_assets/stock_images/professional_busines_5844ea0b.jpg" alt="Sarah Chen" class="w-40 h-40 rounded-full object-cover border-4 border-white shadow-lg">
+                    <div class="absolute -bottom-2 -right-2 bg-green-500 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center">
+                        <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                </div>
                 <div class="flex-1 text-center md:text-left">
-                    <h1 class="text-3xl font-bold text-gray-900">Sarah Chen</h1>
-                    <p class="text-xl text-gray-600 mb-2">Senior UX Designer</p>
-                    <div class="flex items-center justify-center md:justify-start mb-4">
-                        <div class="flex text-yellow-400 text-lg">
+                    <div class="mb-4">
+                        <h1 class="text-4xl font-bold mb-2">Sarah Chen</h1>
+                        <p class="text-xl text-blue-100 mb-2">Senior UX Designer • Google</p>
+                        <p class="text-blue-200 text-sm">🌍 Available worldwide • 🕒 Typically responds in 2 hours</p>
+                    </div>
+                    <div class="flex items-center justify-center md:justify-start mb-6">
+                        <div class="flex text-yellow-400 text-xl mr-3">
                             ★★★★★
                         </div>
-                        <span class="text-gray-600 ml-2">(4.9) • 127 reviews</span>
+                        <span class="text-white font-semibold mr-4">(4.9)</span>
+                        <span class="text-blue-200">127 reviews</span>
+                        <span class="ml-4 px-3 py-1 bg-green-500 text-white text-sm rounded-full font-medium">Top Rated</span>
                     </div>
                     <div class="flex flex-wrap gap-2 justify-center md:justify-start mb-6">
-                        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">UX Design</span>
-                        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">Figma</span>
-                        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">User Research</span>
-                        <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">Product Strategy</span>
+                        <span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full border border-white/30">UX Design</span>
+                        <span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full border border-white/30">Figma</span>
+                        <span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full border border-white/30">User Research</span>
+                        <span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full border border-white/30">Product Strategy</span>
+                        <span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full border border-white/30">Design Systems</span>
                     </div>
-                    <div class="flex flex-col sm:flex-row items-center space-y-3 sm:space-y-0 sm:space-x-4">
-                        <span class="text-2xl font-bold text-primary">$75/hour</span>
-                        <a href="?panel=learner&page=booking" class="bg-primary text-white px-8 py-3 rounded-lg hover:bg-secondary transition text-lg font-semibold">
-                            Book Now
-                        </a>
+                    <div class="flex flex-col lg:flex-row items-center space-y-4 lg:space-y-0 lg:space-x-6">
+                        <div class="text-center lg:text-left">
+                            <span class="text-3xl font-bold">$75</span>
+                            <span class="text-blue-200">/hour</span>
+                            <p class="text-blue-200 text-sm">Starting price</p>
+                        </div>
+                        <div class="flex space-x-3">
+                            <a href="?panel=learner&page=booking" class="bg-white text-blue-600 px-8 py-3 rounded-lg hover:bg-gray-100 transition text-lg font-semibold shadow-lg">
+                                Book Session
+                            </a>
+                            <button class="border-2 border-white text-white px-6 py-3 rounded-lg hover:bg-white hover:text-blue-600 transition text-lg font-semibold">
+                                Message
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
