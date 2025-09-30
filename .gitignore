@@ -1,0 +1,66 @@
+# macOS system files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# XAMPP and local development files
+xampp/
+*.log
+error_log
+error.log
+
+# Dependency directories
+vendor/
+node_modules/
+
+# Composer
+composer.phar
+composer.lock
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+.tmp/
+.temp/
+
+# Security and sensitive files
+*.key
+*.pem
+*.crt
+*.csr
+
+# Uploaded files and user-generated content (optional, depends on your preference)
+# attached_assets/
+
+# Backup files
+*.bak
+*.gho
+*.ori
+*.orig
+*.tmp
+
+# Compiled source 
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# Logs and databases
+*.sqlite
+*.sqlite3

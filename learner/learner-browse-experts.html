@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browse Experts - Nexpert.ai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#1E40AF',
+                        accent: '#F59E0B'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <a href="/" class="text-2xl font-bold text-primary">Nexpert.ai</a>
+                <div class="flex items-center space-x-6">
+                    <a href="?panel=learner&page=dashboard" class="text-gray-600 hover:text-primary">Dashboard</a>
+                    <a href="?panel=learner&page=profile" class="text-gray-600 hover:text-primary">Profile</a>
+                    <div class="relative">
+                        <button class="text-gray-600 hover:text-primary">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5v-3a1 1 0 011-1h3a1 1 0 011 1v3z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <img src="https://via.placeholder.com/32x32" alt="Profile" class="w-8 h-8 rounded-full">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Browse Experts</h1>
+            <p class="text-gray-600">Find the perfect expert to accelerate your learning journey</p>
+        </div>
+
+        <div class="flex gap-8">
+            <!-- Filters Sidebar -->
+            <div class="w-80 bg-white rounded-lg shadow-lg p-6 h-fit">
+                <h2 class="text-xl font-semibold mb-4">Filters</h2>
+                
+                <!-- Search -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                    <input type="text" placeholder="Search experts..." class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+
+                <!-- Category -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                    <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <option>All Categories</option>
+                        <option>Coaches</option>
+                        <option>Mentors</option>
+                        <option>Consultants</option>
+                        <option>Trainers</option>
+                        <option>Freelancers</option>
+                    </select>
+                </div>
+
+                <!-- Price Range -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Price Range (per hour)</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="price" class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                            <span class="ml-2 text-sm text-gray-600">Under ₹500</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="price" class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                            <span class="ml-2 text-sm text-gray-600">₹500 - ₹1,000</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="price" class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                            <span class="ml-2 text-sm text-gray-600">₹1,000 - ₹2,000</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="price" class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                            <span class="ml-2 text-sm text-gray-600">₹2,000+</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Availability -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Availability</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                            <span class="ml-2 text-sm text-gray-600">Available Today</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                            <span class="ml-2 text-sm text-gray-600">Weekend Sessions</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+                            <span class="ml-2 text-sm text-gray-600">Evening Sessions</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Rating -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Minimum Rating</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="rating" class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                            <span class="ml-2 text-sm text-gray-600">4+ Stars</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="rating" class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                            <span class="ml-2 text-sm text-gray-600">4.5+ Stars</span>
+                        </label>
+                    </div>
+                </div>
+
+                <button class="w-full bg-primary text-white py-2 px-4 rounded-lg hover:bg-secondary transition duration-200">
+                    Apply Filters
+                </button>
+            </div>
+
+            <!-- Experts Grid -->
+            <div class="flex-1">
+                <div class="flex justify-between items-center mb-6">
+                    <span class="text-gray-600">Showing 24 experts</span>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm text-gray-600">Sort by:</span>
+                        <select class="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm">
+                            <option>Relevance</option>
+                            <option>Price: Low to High</option>
+                            <option>Price: High to Low</option>
+                            <option>Rating</option>
+                            <option>Newest</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Expert Cards Grid -->
+                <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Expert Card 1 -->
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition duration-300">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <img src="https://via.placeholder.com/60x60" alt="Expert" class="w-15 h-15 rounded-full mr-4">
+                                <div>
+                                    <h3 class="font-semibold text-lg">Priya Sharma</h3>
+                                    <p class="text-gray-600 text-sm">UX Design Coach</p>
+                                    <div class="flex items-center mt-1">
+                                        <div class="flex text-yellow-400">
+                                            ★★★★★
+                                        </div>
+                                        <span class="text-gray-600 text-sm ml-1">(4.9) • 127 reviews</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-700 text-sm mb-4">Former Design Lead at Flipkart with 8+ years experience. Helped 200+ designers transition into tech careers.</p>
+                            <div class="flex flex-wrap gap-1 mb-4">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">UX Design</span>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Figma</span>
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Research</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-semibold text-primary">₹1,500/hour</span>
+                                <a href="?panel=learner&page=expert-profile" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition duration-200 text-sm">
+                                    View Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expert Card 2 -->
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition duration-300">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <img src="https://via.placeholder.com/60x60" alt="Expert" class="w-15 h-15 rounded-full mr-4">
+                                <div>
+                                    <h3 class="font-semibold text-lg">Rajesh Kumar</h3>
+                                    <p class="text-gray-600 text-sm">Business Consultant</p>
+                                    <div class="flex items-center mt-1">
+                                        <div class="flex text-yellow-400">
+                                            ★★★★★
+                                        </div>
+                                        <span class="text-gray-600 text-sm ml-1">(4.8) • 89 reviews</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-700 text-sm mb-4">Ex-McKinsey consultant and startup founder. Specializes in business strategy and scaling startups in India.</p>
+                            <div class="flex flex-wrap gap-1 mb-4">
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Strategy</span>
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Startups</span>
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Business</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-semibold text-primary">₹2,000/hour</span>
+                                <a href="?panel=learner&page=expert-profile" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition duration-200 text-sm">
+                                    View Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Expert Card 3 -->
+                    <div class="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition duration-300">
+                        <div class="p-6">
+                            <div class="flex items-center mb-4">
+                                <img src="https://via.placeholder.com/60x60" alt="Expert" class="w-15 h-15 rounded-full mr-4">
+                                <div>
+                                    <h3 class="font-semibold text-lg">Anita Patel</h3>
+                                    <p class="text-gray-600 text-sm">Digital Marketing Trainer</p>
+                                    <div class="flex items-center mt-1">
+                                        <div class="flex text-yellow-400">
+                                            ★★★★★
+                                        </div>
+                                        <span class="text-gray-600 text-sm ml-1">(4.9) • 156 reviews</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="text-gray-700 text-sm mb-4">Growth marketing specialist with proven track record of scaling startups. Expert in SEO, PPC, and content strategy.</p>
+                            <div class="flex flex-wrap gap-1 mb-4">
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">SEO</span>
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Google Ads</span>
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Analytics</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-semibold text-primary">$65/hour</span>
+                                <a href="?panel=learner&page=expert-profile" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition duration-200 text-sm">
+                                    View Profile
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pagination -->
+                <div class="flex justify-center mt-8">
+                    <nav class="flex space-x-2">
+                        <button class="px-3 py-2 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Previous</button>
+                        <button class="px-3 py-2 text-white bg-primary border border-primary rounded-lg">1</button>
+                        <button class="px-3 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">2</button>
+                        <button class="px-3 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">3</button>
+                        <button class="px-3 py-2 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">Next</button>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

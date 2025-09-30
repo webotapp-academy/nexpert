@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Nexpert.ai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#1E40AF',
+                        accent: '#F59E0B'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex justify-between items-center py-4">
+                <a href="/" class="text-2xl font-bold text-primary">Nexpert.ai</a>
+                <div class="flex items-center space-x-6">
+                    <a href="?panel=learner&page=browse-experts" class="text-gray-600 hover:text-primary">Browse Experts</a>
+                    <a href="?panel=learner&page=profile" class="text-gray-600 hover:text-primary">Profile</a>
+                    <div class="relative">
+                        <button class="text-gray-600 hover:text-primary relative">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5-5-5h5v-3a1 1 0 011-1h3a1 1 0 011 1v3z"></path>
+                            </svg>
+                            <span class="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                        </button>
+                    </div>
+                    <img src="https://via.placeholder.com/32x32" alt="Profile" class="w-8 h-8 rounded-full">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome back, John!</h1>
+            <p class="text-gray-600">Here's what's happening with your learning journey</p>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="grid md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-primary rounded-full">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-2xl font-semibold text-gray-900">8</p>
+                        <p class="text-gray-600 text-sm">Total Sessions</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-green-500 rounded-full">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-2xl font-semibold text-gray-900">5</p>
+                        <p class="text-gray-600 text-sm">Completed</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-accent rounded-full">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-2xl font-semibold text-gray-900">78%</p>
+                        <p class="text-gray-600 text-sm">Progress</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center">
+                    <div class="p-3 bg-purple-500 rounded-full">
+                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-2xl font-semibold text-gray-900">3</p>
+                        <p class="text-gray-600 text-sm">Active Experts</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Upcoming Sessions -->
+            <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-semibold">Upcoming Sessions</h2>
+                    <a href="?panel=learner&page=booking" class="text-primary hover:text-secondary text-sm">View All</a>
+                </div>
+                <div class="space-y-4">
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                        <div class="flex justify-between items-start">
+                            <div class="flex">
+                                <img src="https://via.placeholder.com/48x48" alt="Expert" class="w-12 h-12 rounded-full mr-4">
+                                <div>
+                                    <h3 class="font-semibold">Sarah Chen</h3>
+                                    <p class="text-gray-600 text-sm">UX Design Consultation</p>
+                                    <div class="flex items-center mt-2 text-sm text-gray-500">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        Tomorrow, 2:00 PM
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="bg-primary text-white px-3 py-1 rounded text-sm hover:bg-secondary transition">Join</button>
+                                <button class="text-gray-600 hover:text-gray-800">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                        <div class="flex justify-between items-start">
+                            <div class="flex">
+                                <img src="https://via.placeholder.com/48x48" alt="Expert" class="w-12 h-12 rounded-full mr-4">
+                                <div>
+                                    <h3 class="font-semibold">Marcus Johnson</h3>
+                                    <p class="text-gray-600 text-sm">React Development Workshop</p>
+                                    <div class="flex items-center mt-2 text-sm text-gray-500">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        Friday, 10:00 AM
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button class="bg-gray-200 text-gray-700 px-3 py-1 rounded text-sm">Starts in 2 days</button>
+                                <button class="text-gray-600 hover:text-gray-800">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions & Progress -->
+            <div class="space-y-6">
+                <!-- Quick Actions -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
+                    <div class="space-y-3">
+                        <a href="?panel=learner&page=browse-experts" class="block w-full bg-primary text-white py-3 px-4 rounded-lg text-center hover:bg-secondary transition">
+                            Find New Expert
+                        </a>
+                        <a href="?panel=learner&page=booking" class="block w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg text-center hover:bg-gray-50 transition">
+                            Schedule Session
+                        </a>
+                        <a href="?panel=learner&page=profile" class="block w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg text-center hover:bg-gray-50 transition">
+                            Update Profile
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h2 class="text-xl font-semibold mb-4">Recent Activity</h2>
+                    <div class="space-y-3">
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
+                            <div class="text-sm">
+                                <p class="text-gray-900">Completed session with Elena Rodriguez</p>
+                                <p class="text-gray-500">2 hours ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
+                            <div class="text-sm">
+                                <p class="text-gray-900">New assignment uploaded</p>
+                                <p class="text-gray-500">1 day ago</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center">
+                            <div class="w-2 h-2 bg-yellow-500 rounded-full mr-3"></div>
+                            <div class="text-sm">
+                                <p class="text-gray-900">Booked session with Sarah Chen</p>
+                                <p class="text-gray-500">2 days ago</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Sessions -->
+        <div class="mt-8 bg-white rounded-lg shadow-lg p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-semibold">Recent Sessions</h2>
+                <a href="#" class="text-primary hover:text-secondary text-sm">View All</a>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Expert</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Topic</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Date</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Duration</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Status</th>
+                            <th class="text-left py-3 px-4 font-medium text-gray-700">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-gray-100">
+                            <td class="py-3 px-4">
+                                <div class="flex items-center">
+                                    <img src="https://via.placeholder.com/32x32" alt="Expert" class="w-8 h-8 rounded-full mr-3">
+                                    <span>Elena Rodriguez</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">Digital Marketing Strategy</td>
+                            <td class="py-3 px-4">Sep 23, 2025</td>
+                            <td class="py-3 px-4">60 min</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full">Completed</span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <button class="text-primary hover:text-secondary text-sm">View Recording</button>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-gray-100">
+                            <td class="py-3 px-4">
+                                <div class="flex items-center">
+                                    <img src="https://via.placeholder.com/32x32" alt="Expert" class="w-8 h-8 rounded-full mr-3">
+                                    <span>Marcus Johnson</span>
+                                </div>
+                            </td>
+                            <td class="py-3 px-4">React Fundamentals</td>
+                            <td class="py-3 px-4">Sep 20, 2025</td>
+                            <td class="py-3 px-4">90 min</td>
+                            <td class="py-3 px-4">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full">Completed</span>
+                            </td>
+                            <td class="py-3 px-4">
+                                <button class="text-primary hover:text-secondary text-sm">View Recording</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
