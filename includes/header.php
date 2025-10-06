@@ -10,6 +10,9 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+        const BASE_URL = '<?php echo BASE_URL; ?>';
+        const BASE_PATH = '<?php echo BASE_PATH; ?>';
+        
         tailwind.config = {
             theme: {
                 extend: {
@@ -25,11 +28,11 @@
         }
     </script>
     <!-- Expert Panel JavaScript -->
-    <script src="/admin-panel/js/expert-panel.js"></script>
+    <script src="<?php echo BASE_PATH; ?>/admin-panel/js/expert-panel.js"></script>
     <?php if (isset($panel_type) && $panel_type === 'admin'): ?>
     <!-- Admin API JavaScript -->
-    <script src="/admin-panel/js/admin-api.js"></script>
-    <script src="/admin-panel/js/admin-logout.js"></script>
+    <script src="<?php echo BASE_PATH; ?>/admin-panel/js/admin-api.js"></script>
+    <script src="<?php echo BASE_PATH; ?>/admin-panel/js/admin-logout.js"></script>
     <?php endif; ?>
 </head>
 <body class="bg-gray-50 min-h-screen">

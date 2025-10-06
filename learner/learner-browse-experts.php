@@ -267,7 +267,7 @@ require_once 'includes/navigation.php';
     </div>
 </div>
 
-<script src="/admin-panel/js/learner-browse-experts.js"></script>
+<script src="<?php echo BASE_PATH; ?>/admin-panel/js/learner-browse-experts.js"></script>
 <script>
 // Mobile Filter and Sort Modal Handlers
 document.addEventListener('DOMContentLoaded', function() {

@@ -206,5 +206,5 @@ require_once 'includes/navigation.php';
     </div>
 </div>
 
-<script src="/admin-panel/js/learner-expert-profile.js"></script>
+<script src="<?php echo BASE_PATH; ?>/admin-panel/js/learner-expert-profile.js"></script>
 <?php require_once 'includes/footer.php'; ?>

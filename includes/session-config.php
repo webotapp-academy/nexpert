@@ -2,6 +2,9 @@
 // Centralized session configuration for the entire application
 // Include this at the top of every PHP file that needs sessions
 
+// Include path configuration (must be first)
+require_once __DIR__ . '/config.php';
+
 // Set default timezone to IST (India Standard Time)
 date_default_timezone_set('Asia/Kolkata');
 

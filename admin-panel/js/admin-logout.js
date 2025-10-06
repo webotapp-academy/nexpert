@@ -4,7 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async function() {
             try {
-                const response = await fetch('/admin-panel/apis/admin/auth.php', {
+                const basePath = typeof BASE_PATH !== 'undefined' ? BASE_PATH : '';
+                const response = await fetch(basePath + '/admin-panel/apis/admin/auth.php', {
                     method: 'DELETE'
                 });
                 const data = await response.json();

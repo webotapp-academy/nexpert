@@ -199,7 +199,7 @@ const learnerLogoutBtnMobile = document.getElementById('learner-logout-btn-mobil
 const handleLearnerLogout = async function() {
     if (confirm('Are you sure you want to logout?')) {
         try {
-            const response = await fetch('/admin-panel/apis/learner/auth.php', {
+            const response = await fetch(BASE_PATH + '/admin-panel/apis/learner/auth.php', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -209,7 +209,7 @@ const handleLearnerLogout = async function() {
             const result = await response.json();
             
             if (result.success) {
-                window.location.href = '/';
+                window.location.href = BASE_PATH + '/';
             } else {
                 alert('Logout failed. Please try again.');
             }
@@ -228,7 +228,7 @@ const expertLogoutBtnMobile = document.getElementById('expert-logout-btn-mobile'
 const handleExpertLogout = async function() {
     if (confirm('Are you sure you want to logout?')) {
         try {
-            const response = await fetch('/admin-panel/apis/expert/auth.php', {
+            const response = await fetch(BASE_PATH + '/admin-panel/apis/expert/auth.php', {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -238,7 +238,7 @@ const handleExpertLogout = async function() {
             const result = await response.json();
             
             if (result.success) {
-                window.location.href = '/';
+                window.location.href = BASE_PATH + '/';
             } else {
                 alert('Logout failed. Please try again.');
             }
@@ -254,7 +254,7 @@ if (expertLogoutBtnMobile) expertLogoutBtnMobile.addEventListener('click', handl
 // Load expert profile photo in navigation
 const expertNavPhoto = document.getElementById('expert-nav-photo');
 if (expertNavPhoto) {
-    fetch('/admin-panel/apis/expert/profile.php?user_id=<?php echo $_SESSION["user_id"] ?? ""; ?>')
+    fetch(BASE_PATH + '/admin-panel/apis/expert/profile.php?user_id=<?php echo $_SESSION["user_id"] ?? ""; ?>')
         .then(response => response.json())
         .then(result => {
             if (result.success && result.data.profile_photo) {

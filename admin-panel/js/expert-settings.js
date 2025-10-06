@@ -38,7 +38,8 @@
             formData.append('photo', file);
 
             try {
-                const response = await fetch('/admin-panel/apis/expert/upload-photo.php', {
+                const basePath = typeof BASE_PATH !== 'undefined' ? BASE_PATH : '';
+                const response = await fetch(basePath + '/admin-panel/apis/expert/upload-photo.php', {
                     method: 'POST',
                     body: formData
                 });

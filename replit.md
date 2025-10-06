@@ -4,6 +4,7 @@
 Nexpert.ai is a global expert learning platform connecting learners with subject matter experts. It features distinct learner and expert panels, facilitating live sessions, structured learning, payment processing, and comprehensive management tools. The platform aims to provide a worldwide reach for knowledge exchange.
 
 ## Recent Changes (October 2025)
+- **Global Path Configuration (Oct 6)**: Implemented automatic base path detection that works across all environments (Replit, XAMPP, shared hosting). The `includes/config.php` file automatically detects the application root and sets `BASE_PATH` and `BASE_URL` constants. All absolute paths in PHP, HTML, and JavaScript files updated to use these variables, ensuring the project works when exported to XAMPP subdirectories without manual path adjustments. JavaScript files use `BASE_PATH` for all API calls and redirects.
 - **My Programs Feature**: Fully functional program management system for experts with database integration. Experts can create structured learning programs with milestones, assignments, and resources. Uses workflows, workflow_steps, and assignments tables. API endpoint at `/admin-panel/apis/expert/programs.php` handles GET/POST/DELETE operations. Real-time stats display total programs, active learners, assignments, and completion rates.
 - **Homepage Dynamic Experts**: "Meet Our Top Experts" section now displays real experts from database using AJAX, showing latest 6 experts with profile photos, ratings, skills, and hourly rates
 - **Homepage Animations**: Added animated gradient orbs and floating icons to hero section and footer for modern, engaging UI
@@ -25,6 +26,8 @@ The frontend uses pure HTML/CSS with Tailwind CSS for styling and vanilla JavaSc
 
 ### Backend Architecture
 The backend is powered by PHP 8.2.23 and connects to a remote Hostinger MySQL database via a secure PDO connection. Database credentials are managed through Replit environment variables. The API structure is organized within the `admin-panel/apis/` directory, featuring distinct endpoints for admin, expert, and learner functionalities.
+
+**Path Configuration**: The project uses an automatic path detection system (`includes/config.php`) that works universally across different hosting environments. It traverses up from the executing script to find the application root (identified by `index.php` and `includes/config.php`), then calculates `BASE_PATH` and `BASE_URL` relative to the document root. This ensures all asset paths, API calls, and redirects work correctly whether the project is in the root directory (Replit) or a subdirectory (XAMPP/htdocs/myproject).
 
 ### Authentication & User Management
 The platform supports multi-modal authentication including email/password, Google OAuth, and OTP-based login. It implements role-based access with distinct flows for learners and experts, comprehensive expert profile setup with KYC verification, and browser-based session management with CSRF protection and secure cookie configuration.

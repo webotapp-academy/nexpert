@@ -1,10 +1,10 @@
 <?php
-require_once 'includes/session-config.php';
+require_once "<?php echo BASE_PATH; ?>/includes/session-config.php";
 
 $page_title = "Learner Auth - Nexpert.ai";
 $panel_type = "learner";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
+require_once "<?php echo BASE_PATH; ?>/includes/header.php";
+require_once "<?php echo BASE_PATH; ?>/includes/navigation.php";
 ?>
 
     <div class="min-h-screen flex">

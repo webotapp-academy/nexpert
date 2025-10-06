@@ -33,7 +33,8 @@
         }
 
         try {
-            const response = await fetch('/admin-panel/apis/learner/browse-experts.php?' + params.toString());
+            const basePath = typeof BASE_PATH !== 'undefined' ? BASE_PATH : '';
+            const response = await fetch(basePath + '/admin-panel/apis/learner/browse-experts.php?' + params.toString());
             const result = await response.json();
 
             if (result.success) {

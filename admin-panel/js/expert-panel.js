@@ -1,7 +1,7 @@
 // Expert Panel JavaScript - Database Integration
 // For demo purposes, using user_id = 1 (will be replaced with session management later)
 
-const API_BASE = '/admin-panel/apis/expert';
+const API_BASE = (typeof BASE_PATH !== 'undefined' ? BASE_PATH : '') + '/admin-panel/apis/expert';
 const DEMO_USER_ID = 1;  // Demo expert user ID
 
 // Utility function for API calls

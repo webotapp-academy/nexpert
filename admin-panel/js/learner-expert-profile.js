@@ -2,13 +2,15 @@ document.addEventListener('DOMContentLoaded', async function() {
     const urlParams = new URLSearchParams(window.location.search);
     const expertId = urlParams.get('expert_id');
 
+    const basePath = typeof BASE_PATH !== 'undefined' ? BASE_PATH : '';
+
     if (!expertId) {
-        window.location.href = '/index.php?panel=learner&page=browse-experts';
+        window.location.href = basePath + '/index.php?panel=learner&page=browse-experts';
         return;
     }
 
     try {
-        const response = await fetch(`/admin-panel/apis/learner/expert-profile.php?expert_id=${expertId}`);
+        const response = await fetch(basePath + `/admin-panel/apis/learner/expert-profile.php?expert_id=${expertId}`);
         
         console.log('Response status:', response.status);
         
@@ -26,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 text: data.message || 'The expert profile could not be found.',
                 confirmButtonColor: '#3B82F6'
             }).then(() => {
-                window.location.href = '/index.php?panel=learner&page=browse-experts';
+                window.location.href = basePath + '/index.php?panel=learner&page=browse-experts';
             });
             return;
         }
@@ -41,7 +43,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             text: 'Failed to load expert profile. Please try again.',
             confirmButtonColor: '#3B82F6'
         }).then(() => {
-            window.location.href = '/index.php?panel=learner&page=browse-experts';
+            window.location.href = basePath + '/index.php?panel=learner&page=browse-experts';
         });
     }
 });

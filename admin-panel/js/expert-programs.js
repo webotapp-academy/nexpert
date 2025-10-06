@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', async function() {
 // Load programs and stats
 async function loadProgramsAndStats() {
     try {
-        const response = await fetch('/admin-panel/apis/expert/programs.php');
+        const basePath = typeof BASE_PATH !== 'undefined' ? BASE_PATH : '';
+        const response = await fetch(basePath + '/admin-panel/apis/expert/programs.php');
         const result = await response.json();
         
         if (result.success) {
