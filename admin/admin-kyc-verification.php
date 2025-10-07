@@ -1,10 +1,14 @@
 <?php
-require_once 'includes/admin-auth-check.php';
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/admin-auth-check.php';
 
 $page_title = "KYC Verification - Admin Panel - Nexpert.ai";
 $panel_type = "admin";
-require_once 'includes/header.php';
-require_once 'includes/admin-sidebar.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/admin-sidebar.php';
 ?>
 
 <div class="flex-1 p-8">
@@ -81,8 +85,12 @@ require_once 'includes/admin-sidebar.php';
     </div>
 </div>
 
-<script src="/admin-panel/js/admin-api.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="<?php echo $BASE_PATH; ?>/admin-panel/js/admin-api.js"></script>
 <script>
+// Set BASE_PATH globally
+window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+
 let currentKYCId = null;
 let currentFilter = 'all';
 
@@ -96,7 +104,7 @@ function escapeHtml(text) {
 async function loadKYC(filter = 'all') {
     const tbody = document.getElementById('kycTableBody');
     try {
-        const url = '/admin-panel/apis/admin/kyc.php' + (filter !== 'all' ? `?status=${filter}` : '');
+        const url = `${window.BASE_PATH}/admin-panel/apis/admin/kyc.php` + (filter !== 'all' ? `?status=${filter}` : '');
         const response = await window.AdminAPI.fetch(url);
         const text = await response.text();
         console.log('API Response Text:', text);
@@ -168,7 +176,7 @@ async function viewKYC(expertId) {
     currentKYCId = expertId;
     
     try {
-        const response = await window.AdminAPI.fetch(`/admin-panel/apis/admin/kyc.php?expert_id=${expertId}`);
+        const response = await window.AdminAPI.fetch(`${window.BASE_PATH}/admin-panel/apis/admin/kyc.php?expert_id=${expertId}`);
         const data = await response.json();
         
         if (data.success && data.data) {
@@ -328,7 +336,7 @@ async function approveKYC() {
     const notes = prompt('Add review notes (optional):');
     
     try {
-        const response = await window.AdminAPI.fetch('/admin-panel/apis/admin/kyc.php', {
+        const response = await window.AdminAPI.fetch(`${window.BASE_PATH}/admin-panel/apis/admin/kyc.php`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -364,7 +372,7 @@ async function rejectKYC() {
     }
     
     try {
-        const response = await window.AdminAPI.fetch('/admin-panel/apis/admin/kyc.php', {
+        const response = await window.AdminAPI.fetch(`${window.BASE_PATH}/admin-panel/apis/admin/kyc.php`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -414,4 +422,4 @@ function filterKYC(status) {
 loadKYC();
 </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>

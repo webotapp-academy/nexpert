@@ -1,18 +1,22 @@
 <?php
-require_once 'includes/session-config.php';
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
 
 // Check if user is logged in as learner
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
     // Save the current URL to redirect back after login
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header('Location: ?panel=learner&page=auth');
+    header('Location: ' . $BASE_PATH . '/index.php?panel=learner&page=auth');
     exit;
 }
 
 $page_title = "Payment - Nexpert.ai";
 $panel_type = "learner";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 ?>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <!-- Progress Steps -->
@@ -180,132 +184,152 @@ require_once 'includes/navigation.php';
     </div>
 
 <script>
-(function() {
-    'use strict';
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
 
-    // Get URL parameters
-    const urlParams = new URLSearchParams(window.location.search);
-    const expertId = urlParams.get('expert_id');
-    const sessionDatetime = urlParams.get('datetime');
-    const amount = urlParams.get('amount');
+    (function() {
+        'use strict';
 
-    if (!expertId || !sessionDatetime || !amount) {
-        Swal.fire({
-            icon: 'warning',
-            title: 'Missing Information',
-            text: 'Payment details are incomplete. Redirecting to browse experts...',
-            confirmButtonColor: '#3B82F6',
-            timer: 2000,
-            showConfirmButton: false
-        }).then(() => {
-            window.location.href = '/?panel=learner&page=browse-experts';
-        });
-        return;
-    }
+        // Get URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const expertId = urlParams.get('expert_id');
+        const sessionDatetime = urlParams.get('datetime');
+        const amount = urlParams.get('amount');
 
-    // Load expert data and populate summary
-    async function loadExpertData() {
-        try {
-            const response = await fetch(`/admin-panel/apis/learner/booking.php?expert_id=${expertId}`);
-            const result = await response.json();
-
-            if (result.success) {
-                const expert = result.data;
-                document.getElementById('summary-expert-name').textContent = expert.name || 'Expert';
-                document.getElementById('summary-expert-title').textContent = expert.professional_title || 'Professional';
-                
-                if (expert.profile_photo) {
-                    const photoContainer = document.getElementById('summary-expert-photo');
-                    photoContainer.innerHTML = `<img src="${expert.profile_photo}" alt="${expert.name}" class="w-full h-full object-cover">`;
-                }
-            }
-        } catch (error) {
-            console.error('Error loading expert data:', error);
-        }
-    }
-
-    // Populate session details
-    const datetime = new Date(sessionDatetime);
-    const formattedDate = datetime.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-    const formattedTime = datetime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-    
-    document.getElementById('summary-date').textContent = formattedDate;
-    document.getElementById('summary-time').textContent = formattedTime;
-    document.getElementById('summary-amount').textContent = `₹${amount}`;
-    document.getElementById('summary-total').textContent = `₹${amount}`;
-
-    // Handle form submission
-    document.getElementById('payment-form').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
-        const submitBtn = document.getElementById('submit-payment-btn');
-        
-        submitBtn.disabled = true;
-        submitBtn.textContent = 'Processing...';
-
-        try {
-            const response = await fetch('/admin-panel/apis/learner/payment.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    expert_id: expertId,
-                    session_datetime: sessionDatetime,
-                    amount: amount,
-                    duration: 60,
-                    payment_method: paymentMethod
-                })
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Payment Successful!',
-                    text: 'Your session has been booked.',
-                    confirmButtonColor: '#3B82F6',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-                window.location.href = '/?panel=learner&page=dashboard';
-            } else {
-                if (response.status === 401) {
-                    await Swal.fire({
-                        icon: 'warning',
-                        title: 'Login Required',
-                        text: 'Please login to complete payment',
-                        confirmButtonColor: '#3B82F6'
-                    });
-                    window.location.href = '/?panel=learner&page=auth';
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Payment Failed',
-                        text: result.message || 'Payment could not be processed',
-                        confirmButtonColor: '#3B82F6'
-                    });
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Complete Payment';
-                }
-            }
-        } catch (error) {
-            console.error('Error:', error);
+        if (!expertId || !sessionDatetime || !amount) {
             Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Payment processing failed. Please try again.',
-                confirmButtonColor: '#3B82F6'
+                icon: 'warning',
+                title: 'Missing Information',
+                text: 'Payment details are incomplete. Redirecting to browse experts...',
+                confirmButtonColor: '#3B82F6',
+                timer: 2000,
+                showConfirmButton: false
+            }).then(() => {
+                window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=browse-experts`;
             });
-            submitBtn.disabled = false;
-            submitBtn.textContent = 'Complete Payment';
+            return;
         }
-    });
 
-    // Initialize
-    loadExpertData();
-})();
+        // Utility function to resolve image paths
+        function resolveImagePath(imagePath) {
+            // If it's a full URL or a data URI, return as-is
+            if (/^(https?:\/\/|data:)/.test(imagePath)) {
+                return imagePath;
+            }
+            
+            // If no image path, use a default
+            if (!imagePath) {
+                return `${window.BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+            }
+            
+            // Remove leading slashes
+            const normalizedPath = imagePath.replace(/^\/+/, '');
+            
+            // Construct full path
+            return `${window.BASE_PATH}/${normalizedPath}`;
+        }
+
+        // Load expert data and populate summary
+        async function loadExpertData() {
+            try {
+                const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/booking.php?expert_id=${expertId}`);
+                const result = await response.json();
+
+                if (result.success) {
+                    const expert = result.data;
+                    document.getElementById('summary-expert-name').textContent = expert.name || 'Expert';
+                    document.getElementById('summary-expert-title').textContent = expert.professional_title || 'Professional';
+                    
+                    const photoContainer = document.getElementById('summary-expert-photo');
+                    photoContainer.innerHTML = `<img src="${resolveImagePath(expert.profile_photo)}" alt="${expert.name}" class="w-full h-full object-cover">`;
+                }
+            } catch (error) {
+                console.error('Error loading expert data:', error);
+            }
+        }
+
+        // Populate session details
+        const datetime = new Date(sessionDatetime);
+        const formattedDate = datetime.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+        const formattedTime = datetime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        
+        document.getElementById('summary-date').textContent = formattedDate;
+        document.getElementById('summary-time').textContent = formattedTime;
+        document.getElementById('summary-amount').textContent = `₹${amount}`;
+        document.getElementById('summary-total').textContent = `₹${amount}`;
+
+        // Handle form submission
+        document.getElementById('payment-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+            const submitBtn = document.getElementById('submit-payment-btn');
+            
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+
+            try {
+                const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/payment.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        expert_id: expertId,
+                        session_datetime: sessionDatetime,
+                        amount: amount,
+                        duration: 60,
+                        payment_method: paymentMethod
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    await Swal.fire({
+                        icon: 'success',
+                        title: 'Payment Successful!',
+                        text: 'Your session has been booked.',
+                        confirmButtonColor: '#3B82F6',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                    window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=dashboard`;
+                } else {
+                    if (response.status === 401) {
+                        await Swal.fire({
+                            icon: 'warning',
+                            title: 'Login Required',
+                            text: 'Please login to complete payment',
+                            confirmButtonColor: '#3B82F6'
+                        });
+                        window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=auth`;
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Payment Failed',
+                            text: result.message || 'Payment could not be processed',
+                            confirmButtonColor: '#3B82F6'
+                        });
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Complete Payment';
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Payment processing failed. Please try again.',
+                    confirmButtonColor: '#3B82F6'
+                });
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Complete Payment';
+            }
+        });
+
+        // Initialize
+        loadExpertData();
+    })();
 </script>
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>

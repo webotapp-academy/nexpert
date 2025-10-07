@@ -1,18 +1,22 @@
 <?php
-require_once 'includes/session-config.php';
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
 
 // Check if user is logged in as learner
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
     // Save the current URL to redirect back after login
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header('Location: ?panel=learner&page=auth');
+    header('Location: ' . $BASE_PATH . '/index.php?panel=learner&page=auth');
     exit;
 }
 
 $page_title = "Profile - Nexpert.ai";
 $panel_type = "learner";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 ?>
     <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Header -->
@@ -26,7 +30,7 @@ require_once 'includes/navigation.php';
             <form id="profile-form">
                 <!-- Profile Photo -->
                 <div class="flex items-center mb-8">
-                    <img id="profile-photo" src="attached_assets/stock_images/professional_busines_a5bb892c.jpg" alt="Profile" class="w-20 h-20 rounded-full object-cover mr-6">
+                    <img id="profile-photo" src="<?php echo $BASE_PATH; ?>/attached_assets/stock_images/professional_busines_a5bb892c.jpg" alt="Profile" class="w-20 h-20 rounded-full object-cover mr-6">
                     <div>
                         <input type="file" id="photo-upload" accept="image/jpeg,image/png,image/jpg" class="hidden">
                         <button type="button" id="change-photo-btn" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition">
@@ -84,102 +88,124 @@ require_once 'includes/navigation.php';
     </div>
 
 <script>
-let profileData = {};
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
 
-// Load profile data
-async function loadProfile() {
-    try {
-        const response = await fetch('/admin-panel/apis/learner/profile.php');
-        const result = await response.json();
+    let profileData = {};
+
+    // Utility function to resolve image paths
+    function resolveImagePath(imagePath) {
+        // If it's a full URL or a data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            return imagePath;
+        }
         
-        if (result.success) {
-            profileData = result.profile;
+        // If no image path, use a default
+        if (!imagePath) {
+            return `${window.BASE_PATH}/attached_assets/stock_images/professional_busines_a5bb892c.jpg`;
+        }
+        
+        // Remove leading slashes
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct full path
+        return `${window.BASE_PATH}/${normalizedPath}`;
+    }
+
+    // Load profile data
+    async function loadProfile() {
+        try {
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/profile.php`);
+            const result = await response.json();
             
-            // Populate form
-            document.getElementById('full_name').value = profileData.full_name || '';
-            document.getElementById('email').value = profileData.email || '';
-            document.getElementById('phone').value = profileData.phone || '';
-            document.getElementById('timezone').value = profileData.timezone || 'Asia/Kolkata';
-            document.getElementById('learning_goals').value = profileData.learning_goals || '';
-            
-            // Update profile photo
-            if (profileData.profile_photo) {
-                document.getElementById('profile-photo').src = profileData.profile_photo;
+            if (result.success) {
+                profileData = result.profile;
+                
+                // Populate form
+                document.getElementById('full_name').value = profileData.full_name || '';
+                document.getElementById('email').value = profileData.email || '';
+                document.getElementById('phone').value = profileData.phone || '';
+                document.getElementById('timezone').value = profileData.timezone || 'Asia/Kolkata';
+                document.getElementById('learning_goals').value = profileData.learning_goals || '';
+                
+                // Update profile photo
+                if (profileData.profile_photo) {
+                    document.getElementById('profile-photo').src = resolveImagePath(profileData.profile_photo);
+                }
             }
+        } catch (error) {
+            console.error('Error loading profile:', error);
         }
-    } catch (error) {
-        console.error('Error loading profile:', error);
     }
-}
 
-// Handle profile photo change
-document.getElementById('change-photo-btn').addEventListener('click', function() {
-    document.getElementById('photo-upload').click();
-});
+    // Handle profile photo change
+    document.getElementById('change-photo-btn').addEventListener('click', function() {
+        document.getElementById('photo-upload').click();
+    });
 
-document.getElementById('photo-upload').addEventListener('change', async function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const formData = new FormData();
-    formData.append('profile_photo', file);
-    
-    try {
-        const response = await fetch('/admin-panel/apis/learner/profile.php', {
-            method: 'POST',
-            body: formData
-        });
+    document.getElementById('photo-upload').addEventListener('change', async function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
         
-        const result = await response.json();
+        const formData = new FormData();
+        formData.append('profile_photo', file);
         
-        if (result.success) {
-            document.getElementById('profile-photo').src = result.photo_url;
-            alert('Profile photo updated successfully!');
-        } else {
-            alert(result.message || 'Failed to upload photo');
+        try {
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/profile.php`, {
+                method: 'POST',
+                body: formData
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                document.getElementById('profile-photo').src = resolveImagePath(result.photo_url);
+                alert('Profile photo updated successfully!');
+            } else {
+                alert(result.message || 'Failed to upload photo');
+            }
+        } catch (error) {
+            console.error('Error uploading photo:', error);
+            alert('Failed to upload photo');
         }
-    } catch (error) {
-        console.error('Error uploading photo:', error);
-        alert('Failed to upload photo');
-    }
-});
+    });
 
-// Handle form submission
-document.getElementById('profile-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const formData = {
-        full_name: document.getElementById('full_name').value,
-        phone: document.getElementById('phone').value,
-        timezone: document.getElementById('timezone').value,
-        learning_goals: document.getElementById('learning_goals').value
-    };
-    
-    try {
-        const response = await fetch('/admin-panel/apis/learner/profile.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(formData)
-        });
+    // Handle form submission
+    document.getElementById('profile-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
         
-        const result = await response.json();
+        const formData = {
+            full_name: document.getElementById('full_name').value,
+            phone: document.getElementById('phone').value,
+            timezone: document.getElementById('timezone').value,
+            learning_goals: document.getElementById('learning_goals').value
+        };
         
-        if (result.success) {
-            alert('Profile updated successfully!');
-            loadProfile(); // Reload data
-        } else {
-            alert(result.message || 'Failed to update profile');
+        try {
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/profile.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('Profile updated successfully!');
+                loadProfile(); // Reload data
+            } else {
+                alert(result.message || 'Failed to update profile');
+            }
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            alert('Failed to update profile');
         }
-    } catch (error) {
-        console.error('Error updating profile:', error);
-        alert('Failed to update profile');
-    }
-});
+    });
 
-// Load profile on page load
-loadProfile();
+    // Load profile on page load
+    loadProfile();
 </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>

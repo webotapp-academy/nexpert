@@ -1,9 +1,55 @@
 <?php
-$page_title = "Expert Auth - Nexpert.ai";
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
+
+// Check if user is logged in as expert
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
+    // Prevent redirect loop by checking current page
+    $currentPage = $_SERVER['REQUEST_URI'];
+    $authPage = $BASE_PATH . '/index.php?panel=expert&page=auth';
+    
+    if ($currentPage !== $authPage) {
+        // Save the current URL to redirect back after login
+        $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+        header('Location: ' . $authPage);
+        exit;
+    }
+}
+
+$page_title = "Expert Authentication - Nexpert.ai";
 $panel_type = "expert";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 ?>
+
+<script>
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+
+    // Utility function to resolve image paths
+    function resolveImagePath(imagePath) {
+        // If it's a full URL or a data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            return imagePath;
+        }
+        
+        // If no image path, use a default
+        if (!imagePath) {
+            return `${window.BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+        }
+        
+        // Remove leading slashes
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct full path
+        return `${window.BASE_PATH}/${normalizedPath}`;
+    }
+
+    // Add any authentication-specific JavaScript here
+</script>
 
     <div class="min-h-screen flex">
         <!-- Left Side - Image/Branding -->
@@ -218,7 +264,7 @@ require_once 'includes/navigation.php';
         }
         
         try {
-            const response = await fetch('/admin-panel/apis/expert/auth.php', {
+            const response = await fetch(window.BASE_PATH + '/admin-panel/apis/expert/auth.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -244,9 +290,9 @@ require_once 'includes/navigation.php';
                 
                 // Check if expert needs to complete KYC
                 if (result.user.verification_status === 'pending' || !result.user.verification_status) {
-                    window.location.href = '?panel=expert&page=kyc';
+                    window.location.href = window.BASE_PATH + '?panel=expert&page=kyc';
                 } else {
-                    window.location.href = '?panel=expert&page=dashboard';
+                    window.location.href = window.BASE_PATH + '?panel=expert&page=dashboard';
                 }
             } else {
                 Swal.fire({
@@ -320,7 +366,7 @@ require_once 'includes/navigation.php';
         spinner.classList.remove('hidden');
         
         try {
-            const response = await fetch('/admin-panel/apis/expert/register.php', {
+            const response = await fetch(window.BASE_PATH + '/admin-panel/apis/expert/register.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -343,7 +389,7 @@ require_once 'includes/navigation.php';
                     confirmButtonColor: '#F59E0B',
                     timer: 2000
                 });
-                window.location.href = '?panel=expert&page=settings#profile';
+                window.location.href = window.BASE_PATH + '?panel=expert&page=settings#profile';
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -448,4 +494,4 @@ require_once 'includes/navigation.php';
     }
     </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>

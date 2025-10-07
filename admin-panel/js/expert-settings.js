@@ -2,339 +2,647 @@
 (function() {
     'use strict';
 
-    // Toast notification function
+    // Ensure BASE_PATH is defined
+    const BASE_PATH = window.BASE_PATH || '';
+    console.log('Expert Settings JS: BASE_PATH =', BASE_PATH);
+
+    // Default profile photo
+    const DEFAULT_PROFILE_PHOTO = `${BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+
+    // Utility function to show toast notifications
     function showToast(message, type = 'success') {
-        const toast = document.createElement('div');
-        toast.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg text-white transform transition-all duration-300 ${
-            type === 'success' ? 'bg-green-500' : 'bg-red-500'
-        }`;
-        toast.textContent = message;
-        document.body.appendChild(toast);
-
-        setTimeout(() => {
-            toast.style.opacity = '0';
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
-    }
-
-    // Settings are already loaded from PHP on page load, no need for additional AJAX loading
-
-    // Helper function to set toggle state
-    function setToggleState(id, isChecked) {
-        const toggle = document.getElementById(id);
-        if (toggle) {
-            toggle.checked = isChecked;
+        try {
+            console.log(`Toast (${type}):`, message);
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                icon: type,
+                title: message,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                }
+            });
+        } catch (error) {
+            console.error('Toast notification error:', error);
+            alert(message);
         }
     }
 
-    // Profile photo upload
-    const profilePhotoInput = document.getElementById('profilePhoto');
-    if (profilePhotoInput) {
-        profilePhotoInput.addEventListener('change', async function(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+    // Enhanced image loading function
+    function loadImage(src, altSrc = DEFAULT_PROFILE_PHOTO) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            
+            // Track image loading states
+            img.addEventListener('load', () => {
+                console.log('Image loaded successfully:', src);
+                resolve(img.src);
+            });
+            
+            img.addEventListener('error', () => {
+                console.error('Failed to load image:', src);
+                
+                // Try alternative source if provided
+                if (altSrc && altSrc !== src) {
+                    console.log('Attempting to load alternative image:', altSrc);
+                    img.src = altSrc;
+                } else {
+                    console.error('All image loading attempts failed');
+                    reject(new Error('Image loading failed'));
+                }
+            });
+            
+            // Start loading the image
+            img.src = src;
+        });
+    }
 
-            const formData = new FormData();
-            formData.append('photo', file);
+    // Utility function to resolve image path
+    function resolveImagePath(imagePath) {
+        console.log('Resolving image path:', imagePath);
+        
+        // If it's a full URL or data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            console.log('Full URL or data URI detected');
+            return imagePath;
+        }
+        
+        // If no image path, use default
+        if (!imagePath) {
+            console.log('No image path, using default');
+            return DEFAULT_PROFILE_PHOTO;
+        }
+        
+        // If path starts with /nexpert, it's already an absolute path
+        if (imagePath.startsWith('/nexpert')) {
+            console.log('Absolute path detected:', imagePath);
+            return imagePath;
+        }
+        
+        // If path starts with /uploads, prepend /nexpert
+        if (imagePath.startsWith('/uploads')) {
+            console.log('Uploads path detected:', imagePath);
+            return `/nexpert${imagePath}`;
+        }
+        
+        // Remove leading slashes
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct full path
+        const fullPath = `${BASE_PATH}/${normalizedPath}`;
+        console.log('Constructed full path:', fullPath);
+        return fullPath;
+    }
+
+    // Load profile data on page load
+    async function loadProfileData() {
+        try {
+            console.log('Starting loadProfileData function');
+            const profilePhotoPreview = document.getElementById('profilePhotoPreview');
+            const profilePhotoImg = profilePhotoPreview ? profilePhotoPreview.querySelector('img') : null;
+
+            console.log('Fetching profile data...');
+            const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/profile-data.php`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            console.log('Response status:', response.status);
+            console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            console.log('Profile data response:', result);
+            
+            if (!result.success) {
+                throw new Error(result.message || 'Error loading profile data');
+            }
+
+            const profileData = result.data || {};
+            console.log('Profile data:', profileData);
+
+            // Detailed logging for profile photo
+            console.log('Profile photo before resolution:', profileData.profile_photo);
+            const photoSrc = resolveImagePath(profileData.profile_photo);
+            console.log('Resolved photo src:', photoSrc);
+
+            // Update profile photo with enhanced loading
+            if (profilePhotoImg) {
+                try {
+                    const loadedSrc = await loadImage(photoSrc);
+                    console.log('Setting photo src on img element:', loadedSrc);
+                    profilePhotoImg.src = loadedSrc;
+                } catch (error) {
+                    console.error('Failed to load profile photo:', error);
+                    profilePhotoImg.src = DEFAULT_PROFILE_PHOTO;
+                }
+            } else {
+                console.error('Profile photo img element not found');
+            }
+
+            // Populate other form fields
+            const fullNameInput = document.querySelector('input[name="full_name"]');
+            if (fullNameInput) {
+                fullNameInput.value = profileData.full_name || '';
+                console.log('Full name set:', fullNameInput.value);
+            }
+
+            const taglineInput = document.querySelector('input[name="tagline"]');
+            if (taglineInput) {
+                taglineInput.value = profileData.tagline || '';
+                console.log('Tagline set:', taglineInput.value);
+            }
+
+            const bioFullTextarea = document.querySelector('textarea[name="bio_full"]');
+            if (bioFullTextarea) {
+                bioFullTextarea.value = profileData.bio_full || '';
+                console.log('Bio set:', bioFullTextarea.value);
+            }
+
+            const timezoneInput = document.querySelector('input[name="timezone"]');
+            if (timezoneInput) {
+                timezoneInput.value = profileData.timezone || 'UTC';
+                console.log('Timezone set:', timezoneInput.value);
+            }
+            
+            const experienceYearsSelect = document.querySelector('select[name="experience_years"]');
+            if (experienceYearsSelect) {
+                const options = experienceYearsSelect.options;
+                const experienceYears = profileData.experience_years;
+                console.log('Experience years:', experienceYears);
+                
+                for (let i = 0; i < options.length; i++) {
+                    if (options[i].value === experienceYears) {
+                        options[i].selected = true;
+                        console.log('Selected experience years option:', options[i].value);
+                        break;
+                    }
+                }
+            }
+
+        } catch (error) {
+            console.error('Error loading profile data:', error);
+            showToast('Failed to load profile data', 'error');
+
+            // Set default profile photo
+            const profilePhotoPreview = document.getElementById('profilePhotoPreview');
+            const profilePhotoImg = profilePhotoPreview ? profilePhotoPreview.querySelector('img') : null;
+            
+            if (profilePhotoImg) {
+                profilePhotoImg.src = DEFAULT_PROFILE_PHOTO;
+            }
+        }
+    }
+
+    // Upload profile photo to server
+    function uploadProfilePhoto(file) {
+        const formData = new FormData();
+        formData.append('profile_photo', file);
+
+        fetch(`${BASE_PATH}/admin-panel/apis/expert/upload-photo.php`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            console.log('Upload response status:', response.status);
+            return response.json();
+        })
+        .then(async (result) => {
+            console.log('Upload result:', result);
+            
+            if (result.success) {
+                showToast('Profile photo updated successfully');
+                
+                // Update the preview image in the profile tab
+                const previewImg = document.querySelector('#content-profile img');
+                if (previewImg) {
+                    const photoSrc = resolveImagePath(result.photo_url);
+                    console.log('Setting uploaded photo src:', photoSrc);
+                    
+                    try {
+                        const loadedSrc = await loadImage(photoSrc);
+                        previewImg.src = loadedSrc;
+                    } catch (error) {
+                        console.error('Failed to load uploaded photo:', error);
+                        previewImg.src = DEFAULT_PROFILE_PHOTO;
+                    }
+                }
+
+                // Reload profile data to ensure consistency
+                loadProfileData();
+            } else {
+                showToast(result.message || 'Failed to upload photo', 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Photo upload error:', error);
+            showToast('Error uploading photo', 'error');
+        });
+    }
+
+    // Profile photo preview function
+    function previewProfilePhoto(event) {
+        try {
+            const file = event.target.files[0];
+            const preview = document.getElementById('profilePhotoPreview');
+            const img = preview.querySelector('img') || document.createElement('img');
+
+            // Validate file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+                showToast('File size exceeds 5MB limit', 'error');
+                event.target.value = ''; // Clear the file input
+                return;
+            }
+
+            // Validate file type
+            const validTypes = ['image/jpeg', 'image/png'];
+            if (!validTypes.includes(file.type)) {
+                showToast('Only JPG and PNG files are allowed', 'error');
+                event.target.value = ''; // Clear the file input
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                img.src = e.target.result;
+                img.classList.add('w-full', 'h-full', 'object-cover');
+                preview.innerHTML = '';
+                preview.appendChild(img);
+
+                // Upload photo to server
+                uploadProfilePhoto(file);
+            };
+            reader.readAsDataURL(file);
+        } catch (error) {
+            console.error('Profile photo preview error:', error);
+            showToast('Error processing photo', 'error');
+        }
+    }
+
+    // Attach preview function to file input
+    function attachPhotoHandler() {
+        const profilePhotoInput = document.getElementById('profilePhoto');
+        if (profilePhotoInput) {
+            profilePhotoInput.addEventListener('change', previewProfilePhoto);
+            console.log('Photo handler attached');
+        } else {
+            console.error('Profile photo input not found');
+        }
+    }
+
+    // Call attachPhotoHandler and loadProfileData when the page loads
+    document.addEventListener('DOMContentLoaded', () => {
+        attachPhotoHandler();
+        loadProfileData();
+    });
+
+    // Profile form submission
+    const profileForm = document.getElementById('profileForm');
+    if (profileForm) {
+        profileForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                section: 'profile',
+                full_name: this.querySelector('input[name="full_name"]')?.value || '',
+                tagline: this.querySelector('input[name="tagline"]')?.value || '',
+                bio_full: this.querySelector('textarea[name="bio_full"]')?.value || '',
+                timezone: this.querySelector('input[name="timezone"]')?.value || 'UTC',
+                experience_years: this.querySelector('select[name="experience_years"]')?.value || null
+            };
+
+            console.log('Profile Form Submission Data:', formData);
 
             try {
-                const basePath = typeof BASE_PATH !== 'undefined' ? BASE_PATH : '';
-                const response = await fetch(basePath + '/admin-panel/apis/expert/upload-photo.php', {
+                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/settings.php`, {
+                    method: 'PUT',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                console.log('Response status:', response.status);
+                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+                const result = await response.json();
+                console.log('Response result:', result);
+                
+                if (result.success) {
+                    showToast(result.message);
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (error) {
+                console.error('Profile update error:', error);
+                showToast('Failed to update profile', 'error');
+            }
+        });
+    }
+
+    // Bank Form Submission
+    const bankForm = document.getElementById('bankForm');
+    if (bankForm) {
+        bankForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            try {
+                const formData = new FormData(this);
+                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/update-bank.php`, {
                     method: 'POST',
                     body: formData
                 });
 
                 const result = await response.json();
-                
                 if (result.success) {
-                    showToast('Profile photo updated successfully', 'success');
-                    // Update the preview image
-                    const previewImg = document.querySelector('#content-profile img');
-                    if (previewImg) {
-                        previewImg.src = result.photo_url;
-                    }
+                    showToast('Bank details updated successfully');
                 } else {
-                    showToast(result.message, 'error');
+                    showToast(result.message || 'Bank details update failed', 'error');
                 }
             } catch (error) {
-                showToast('Failed to upload photo', 'error');
+                console.error('Bank details update error:', error);
+                showToast('Error updating bank details', 'error');
             }
         });
     }
 
-    // Profile form submission
-    document.getElementById('profileForm')?.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = {
-            section: 'profile',
-            full_name: this.querySelector('input[name="full_name"]')?.value || '',
-            tagline: this.querySelector('input[name="tagline"]')?.value || '',
-            bio_short: this.querySelector('textarea[name="bio_short"]')?.value || '',
-            bio_full: this.querySelector('textarea[name="bio_full"]')?.value || '',
-            expertise_verticals: this.querySelector('input[name="expertise_verticals"]')?.value || '',
-            credentials: this.querySelector('textarea[name="credentials"]')?.value || '',
-            experience_years: this.querySelector('select[name="experience_years"]')?.value || '',
-            timezone: this.querySelector('input[name="timezone"]')?.value || 'UTC'
-        };
-
-        try {
-            const response = await fetch('/admin-panel/apis/expert/settings.php', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            const result = await response.json();
-            showToast(result.message, result.success ? 'success' : 'error');
+    // Availability Form Submission
+    const availabilityForm = document.getElementById('availabilityForm');
+    if (availabilityForm) {
+        availabilityForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            if (result.success) {
-                setTimeout(() => window.location.reload(), 1500);
+            // Disable submit button and show loading state
+            const submitButton = this.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.classList.add('opacity-50', 'cursor-not-allowed');
+                
+                // Optional: Add a loading spinner or text
+                const originalText = submitButton.textContent;
+                submitButton.innerHTML = `
+                    <span class="flex items-center justify-center">
+                        <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Adding Time Slot...
+                    </span>
+                `;
             }
-        } catch (error) {
-            showToast('Failed to update profile', 'error');
-        }
-    });
-
-    // Bank form submission
-    document.getElementById('bankForm')?.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const accountNum = this.querySelector('input[name="account_number"]')?.value || '';
-        const confirmAccountNum = this.querySelector('input[name="account_number_confirm"]')?.value || '';
-
-        // Check if account number is masked (starts with ****)
-        if (accountNum.startsWith('****')) {
-            showToast('Please enter your full account number to update', 'error');
-            return;
-        }
-
-        if (confirmAccountNum && accountNum !== confirmAccountNum) {
-            showToast('Account numbers do not match', 'error');
-            return;
-        }
-
-        const formData = {
-            section: 'bank',
-            account_holder_name: this.querySelector('input[name="account_holder_name"]')?.value || '',
-            bank_name: this.querySelector('input[name="bank_name"]')?.value || '',
-            branch_name: this.querySelector('input[name="branch_name"]')?.value || '',
-            account_number: accountNum,
-            ifsc_code: this.querySelector('input[name="ifsc_code"]')?.value || '',
-            account_type: this.querySelector('select[name="account_type"]')?.value || ''
-        };
-
-        try {
-            const response = await fetch('/admin-panel/apis/expert/settings.php', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            const result = await response.json();
-            showToast(result.message, result.success ? 'success' : 'error');
-            
-            if (result.success) {
-                setTimeout(() => window.location.reload(), 1500);
-            }
-        } catch (error) {
-            showToast('Failed to update bank details', 'error');
-        }
-    });
-
-    // Password form submission
-    document.getElementById('passwordForm')?.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const currentPassword = this.querySelectorAll('input[type="password"]')[0].value;
-        const newPassword = this.querySelectorAll('input[type="password"]')[1].value;
-        const confirmPassword = this.querySelectorAll('input[type="password"]')[2].value;
-
-        if (newPassword !== confirmPassword) {
-            showToast('New passwords do not match', 'error');
-            return;
-        }
-
-        if (newPassword.length < 6) {
-            showToast('Password must be at least 6 characters', 'error');
-            return;
-        }
-
-        const formData = {
-            section: 'password',
-            current_password: currentPassword,
-            new_password: newPassword
-        };
-
-        try {
-            const response = await fetch('/admin-panel/apis/expert/settings.php', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            const result = await response.json();
-            showToast(result.message, result.success ? 'success' : 'error');
-            
-            if (result.success) {
-                this.reset();
-            }
-        } catch (error) {
-            showToast('Failed to update password', 'error');
-        }
-    });
-
-    // Toggle change handler for privacy settings
-    async function handleToggleChange(section, setting, value) {
-        const data = { section };
-        data[setting] = value;
-
-        try {
-            const response = await fetch('/admin-panel/apis/expert/settings.php', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            const result = await response.json();
-            if (result.success) {
-                showToast('Setting updated', 'success');
-            } else {
-                showToast(result.message, 'error');
-            }
-        } catch (error) {
-            showToast('Failed to update setting', 'error');
-        }
-    }
-
-    // Privacy toggles
-    const privacyToggles = [
-        { id: 'privacy-show-search', setting: 'show_in_search' },
-        { id: 'privacy-show-email', setting: 'show_email' },
-        { id: 'privacy-accept-bookings', setting: 'accept_bookings' }
-    ];
-
-    privacyToggles.forEach(({ id, setting }) => {
-        const toggle = document.getElementById(id);
-        if (toggle) {
-            toggle.addEventListener('change', function() {
-                handleToggleChange('privacy', setting, this.checked);
-            });
-        }
-    });
-
-    // Two-factor authentication toggle
-    const twoFactorToggle = document.getElementById('two-factor');
-    if (twoFactorToggle) {
-        twoFactorToggle.addEventListener('change', async function() {
-            const data = {
-                section: 'two_factor',
-                enabled: this.checked
-            };
 
             try {
-                const response = await fetch('/admin-panel/apis/expert/settings.php', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                // Gather form data with detailed logging
+                const formData = new FormData(this);
+                
+                console.group('Availability Form Submission');
+                console.log('Form Data:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`${key}: ${value}`);
+                }
+                
+                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/update-availability.php`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                console.log('Response Status:', response.status);
+                
+                const result = await response.json();
+                console.log('Response Result:', result);
+                
+                // Restore button state
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    submitButton.textContent = originalText;
+                }
+
+                if (result.success) {
+                    showToast('Availability updated successfully');
+                    this.reset(); // Clear form
+                    
+                    // Optional: Reload availability data or update UI
+                    try {
+                        const availabilityResponse = await fetch(`${BASE_PATH}/admin-panel/apis/expert/get-availability.php`);
+                        const availabilityData = await availabilityResponse.json();
+                        
+                        if (availabilityData.success) {
+                            updateAvailabilityDisplay(availabilityData.data);
+                        }
+                    } catch (reloadError) {
+                        console.error('Error reloading availability:', reloadError);
+                    }
+                } else {
+                    showToast(result.message || 'Availability update failed', 'error');
+                }
+                
+                console.groupEnd();
+            } catch (error) {
+                console.error('Availability update error:', error);
+                
+                // Restore button state
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.classList.remove('opacity-50', 'cursor-not-allowed');
+                    submitButton.textContent = originalText;
+                }
+                
+                showToast('Error updating availability', 'error');
+                console.groupEnd();
+            }
+        });
+    }
+
+    // Function to update availability display
+    function updateAvailabilityDisplay(availabilitySlots) {
+        const availabilityContainer = document.querySelector('#current-availability-container');
+        if (!availabilityContainer) return;
+
+        // Clear existing slots
+        availabilityContainer.innerHTML = '';
+
+        // Days of the week
+        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+        // Group slots by day
+        const groupedSlots = {};
+        availabilitySlots.forEach(slot => {
+            if (!groupedSlots[slot.day_of_week]) {
+                groupedSlots[slot.day_of_week] = [];
+            }
+            groupedSlots[slot.day_of_week].push(slot);
+        });
+
+        // Create display for each day
+        days.forEach((day, index) => {
+            const daySlots = groupedSlots[index] || [];
+            
+            if (daySlots.length > 0) {
+                const dayElement = document.createElement('div');
+                dayElement.classList.add('flex', 'items-center', 'justify-between', 'p-4', 'bg-gray-50', 'rounded-lg', 'mb-2');
+                
+                dayElement.innerHTML = `
+                    <div class="flex-1">
+                        <p class="font-semibold text-gray-900">${day}</p>
+                        <div class="flex flex-wrap gap-2 mt-2">
+                            ${daySlots.map(slot => `
+                                <span class="px-3 py-1 bg-accent text-white rounded-full text-sm">
+                                    ${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}
+                                </span>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <button onclick="editDayAvailability('${day}')" class="ml-4 text-accent hover:text-yellow-600">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                        </svg>
+                    </button>
+                `;
+                
+                availabilityContainer.appendChild(dayElement);
+            }
+        });
+    }
+
+    // Utility function to format time
+    function formatTime(timeString) {
+        const [hours, minutes] = timeString.split(':');
+        const date = new Date();
+        date.setHours(parseInt(hours), parseInt(minutes));
+        return date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    }
+
+    // Notification Preferences
+    const notificationPrefsButton = document.querySelector('#content-notifications button');
+    if (notificationPrefsButton) {
+        notificationPrefsButton.addEventListener('click', async function() {
+            try {
+                const formData = new FormData();
+                const checkboxes = document.querySelectorAll('#content-notifications input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    formData.append(checkbox.id, checkbox.checked ? '1' : '0');
+                });
+
+                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/update-notifications.php`, {
+                    method: 'POST',
+                    body: formData
                 });
 
                 const result = await response.json();
-                showToast(result.message, result.success ? 'success' : 'error');
+                if (result.success) {
+                    showToast('Notification preferences updated');
+                } else {
+                    showToast(result.message || 'Failed to update preferences', 'error');
+                }
             } catch (error) {
-                showToast('Failed to update two-factor authentication', 'error');
+                console.error('Notification preferences error:', error);
+                showToast('Error updating notification preferences', 'error');
             }
         });
     }
 
-    // Notification preferences save button
-    const notifSaveBtn = document.querySelector('#content-notifications button');
-    if (notifSaveBtn) {
-        notifSaveBtn.addEventListener('click', async function() {
-            const data = {
-                section: 'notifications',
-                notify_booking_email: document.getElementById('notify-booking')?.checked || false,
-                notify_payment_email: document.getElementById('notify-payment')?.checked || false,
-                notify_reminder_email: document.getElementById('notify-reminder')?.checked || false,
-                notify_marketing_email: document.getElementById('notify-marketing')?.checked || false,
-                notify_urgent_sms: document.getElementById('notify-sms')?.checked || false
-            };
-
+    // Privacy Settings
+    const privacySettingsButton = document.querySelector('#content-privacy button');
+    if (privacySettingsButton) {
+        privacySettingsButton.addEventListener('click', async function() {
             try {
-                const response = await fetch('/admin-panel/apis/expert/settings.php', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                const formData = new FormData();
+                const checkboxes = document.querySelectorAll('#content-privacy input[type="checkbox"]');
+                checkboxes.forEach(checkbox => {
+                    formData.append(checkbox.id, checkbox.checked ? '1' : '0');
+                });
+
+                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/update-privacy.php`, {
+                    method: 'POST',
+                    body: formData
                 });
 
                 const result = await response.json();
-                showToast(result.message, result.success ? 'success' : 'error');
+                if (result.success) {
+                    showToast('Privacy settings updated');
+                } else {
+                    showToast(result.message || 'Failed to update privacy settings', 'error');
+                }
             } catch (error) {
-                showToast('Failed to update notification preferences', 'error');
+                console.error('Privacy settings error:', error);
+                showToast('Error updating privacy settings', 'error');
             }
         });
     }
 
-    // Privacy settings save button
-    const privacySaveBtn = document.querySelector('#content-privacy > div > button:last-child');
-    if (privacySaveBtn) {
-        privacySaveBtn.addEventListener('click', async function() {
-            const data = {
-                section: 'privacy',
-                show_in_search: document.getElementById('privacy-show-search')?.checked || false,
-                show_email: document.getElementById('privacy-show-email')?.checked || false,
-                accept_bookings: document.getElementById('privacy-accept-bookings')?.checked || false
-            };
-
+    // Security Settings - Password Change
+    const passwordForm = document.getElementById('passwordForm');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
             try {
-                const response = await fetch('/admin-panel/apis/expert/settings.php', {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(data)
+                const formData = new FormData(this);
+                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/change-password.php`, {
+                    method: 'POST',
+                    body: formData
                 });
 
                 const result = await response.json();
-                showToast(result.message, result.success ? 'success' : 'error');
+                if (result.success) {
+                    showToast('Password updated successfully');
+                    this.reset(); // Clear form
+                } else {
+                    showToast(result.message || 'Password update failed', 'error');
+                }
             } catch (error) {
-                showToast('Failed to update privacy settings', 'error');
+                console.error('Password change error:', error);
+                showToast('Error changing password', 'error');
             }
         });
     }
 
-    // Availability form submission
-    document.getElementById('availabilityForm')?.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const formData = {
-            section: 'availability',
-            day_of_week: this.querySelector('select[name="day_of_week"]')?.value || '',
-            start_time: this.querySelector('input[name="start_time"]')?.value || '',
-            end_time: this.querySelector('input[name="end_time"]')?.value || ''
-        };
+    // Deactivate Account
+    const deactivateButton = document.querySelector('#content-privacy .bg-red-600');
+    if (deactivateButton) {
+        deactivateButton.addEventListener('click', async function() {
+            try {
+                const result = await Swal.fire({
+                    title: 'Deactivate Account',
+                    text: 'Are you sure you want to temporarily disable your account?',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#d33',
+                    cancelButtonColor: '#3085d6',
+                    confirmButtonText: 'Yes, deactivate'
+                });
 
-        if (!formData.day_of_week || !formData.start_time || !formData.end_time) {
-            showToast('Please fill in all fields', 'error');
-            return;
-        }
+                if (result.isConfirmed) {
+                    const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/deactivate-account.php`, {
+                        method: 'POST'
+                    });
 
-        try {
-            const response = await fetch('/admin-panel/apis/expert/settings.php', {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
-
-            const result = await response.json();
-            showToast(result.message, result.success ? 'success' : 'error');
-            
-            if (result.success) {
-                this.reset();
-                setTimeout(() => window.location.reload(), 1500);
+                    const deactivationResult = await response.json();
+                    if (deactivationResult.success) {
+                        showToast('Account deactivated successfully');
+                        window.location.href = `${BASE_PATH}/index.php?panel=expert&page=auth`;
+                    } else {
+                        showToast(deactivationResult.message || 'Account deactivation failed', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Account deactivation error:', error);
+                showToast('Error deactivating account', 'error');
             }
-        } catch (error) {
-            showToast('Failed to add availability', 'error');
-        }
+        });
+    }
+
+    // Global error handling
+    window.addEventListener('error', function(event) {
+        console.error('Unhandled error:', event.error);
+        showToast('An unexpected error occurred', 'error');
     });
-
-    // Settings are already loaded from PHP, no DOMContentLoaded listener needed
 })();

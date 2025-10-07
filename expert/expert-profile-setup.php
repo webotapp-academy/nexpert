@@ -1,8 +1,19 @@
 <?php
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+// Check if user is logged in as expert
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    exit;
+}
+
 $page_title = "Profile Setup - Nexpert.ai";
 $panel_type = "expert";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 ?>
     <div class="max-w-4xl mx-auto px-4 py-8">
         <!-- Header -->
@@ -533,7 +544,7 @@ require_once 'includes/navigation.php';
             } else {
                 // Save profile (placeholder)
                 alert('Profile setup complete! Redirecting to dashboard...');
-                window.location.href = '?panel=expert&page=dashboard';
+                window.location.href = `${window.BASE_PATH}/index.php?panel=expert&page=dashboard`;
             }
         });
 
@@ -593,4 +604,4 @@ require_once 'includes/navigation.php';
         showStep(1);
     </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>

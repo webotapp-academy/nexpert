@@ -1,9 +1,22 @@
 <?php
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+
+// Check if user is logged in as expert
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
+    // Save the current URL to redirect back after login
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    exit;
+}
+
 $page_title = "Expert Dashboard - Nexpert.ai";
 $panel_type = "expert";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
-require_once 'admin-panel/apis/connection/pdo.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 
 // Check onboarding steps completion
 $userId = $_SESSION['user_id'] ?? null;
@@ -153,7 +166,7 @@ if ($expertProfileId) {
     <div class="mb-6 sm:mb-8">
         <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-3 sm:mb-4">Quick Actions</h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-            <a href="?panel=expert&page=profile-setup" class="bg-white rounded-lg shadow p-4 sm:p-6 hover:shadow-lg transition">
+            <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=profile-setup" class="bg-white rounded-lg shadow p-4 sm:p-6 hover:shadow-lg transition">
                 <div class="flex items-center space-x-3 sm:space-x-4">
                     <div class="w-10 h-10 sm:w-12 sm:h-12 bg-accent/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         <svg class="w-5 h-5 sm:w-6 sm:h-6 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -167,7 +180,7 @@ if ($expertProfileId) {
                 </div>
             </a>
 
-            <a href="?panel=expert&page=booking-management" class="bg-white rounded-lg shadow p-4 sm:p-6 hover:shadow-lg transition">
+            <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=booking-management" class="bg-white rounded-lg shadow p-4 sm:p-6 hover:shadow-lg transition">
                 <div class="flex items-center space-x-3 sm:space-x-4">
                     <div class="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         <svg class="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -181,7 +194,7 @@ if ($expertProfileId) {
                 </div>
             </a>
 
-            <a href="?panel=expert&page=earnings" class="bg-white rounded-lg shadow p-4 sm:p-6 hover:shadow-lg transition">
+            <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=earnings" class="bg-white rounded-lg shadow p-4 sm:p-6 hover:shadow-lg transition">
                 <div class="flex items-center space-x-3 sm:space-x-4">
                     <div class="w-10 h-10 sm:w-12 sm:h-12 bg-green-500/10 rounded-lg flex items-center justify-center flex-shrink-0">
                         <svg class="w-5 h-5 sm:w-6 sm:h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,7 +221,7 @@ if ($expertProfileId) {
                 </div>
                 <div>
                     <h3 class="font-semibold text-gray-900">
-                        <a href="?panel=expert&page=settings#profile" class="<?php echo $profileComplete ? 'text-green-600 hover:text-green-700' : 'text-accent hover:text-yellow-600'; ?>">
+                        <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=settings#profile" class="<?php echo $profileComplete ? 'text-green-600 hover:text-green-700' : 'text-accent hover:text-yellow-600'; ?>">
                             <?php echo $profileComplete ? 'Profile Setup Complete' : 'Complete Your Profile →'; ?>
                         </a>
                     </h3>
@@ -223,7 +236,7 @@ if ($expertProfileId) {
                 </div>
                 <div>
                     <h3 class="font-semibold text-gray-900">
-                        <a href="?panel=expert&page=settings#kyc" class="<?php echo $kycComplete ? 'text-green-600 hover:text-green-700' : 'text-accent hover:text-yellow-600'; ?>">
+                        <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=settings#kyc" class="<?php echo $kycComplete ? 'text-green-600 hover:text-green-700' : 'text-accent hover:text-yellow-600'; ?>">
                             <?php echo $kycComplete ? 'KYC Verification Complete' : 'Complete KYC Verification →'; ?>
                         </a>
                     </h3>
@@ -238,7 +251,7 @@ if ($expertProfileId) {
                 </div>
                 <div>
                     <h3 class="font-semibold text-gray-900">
-                        <a href="?panel=expert&page=settings#availability" class="<?php echo $availabilitySet ? 'text-green-600 hover:text-green-700' : 'text-accent hover:text-yellow-600'; ?>">
+                        <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=settings#availability" class="<?php echo $availabilitySet ? 'text-green-600 hover:text-green-700' : 'text-accent hover:text-yellow-600'; ?>">
                             <?php echo $availabilitySet ? 'Availability Set' : 'Set Your Availability →'; ?>
                         </a>
                     </h3>
@@ -253,7 +266,7 @@ if ($expertProfileId) {
                 </div>
                 <div>
                     <h3 class="font-semibold text-gray-900">
-                        <a href="?panel=expert&page=booking-management" class="<?php echo $firstBooking ? 'text-green-600 hover:text-green-700' : 'text-accent hover:text-yellow-600'; ?>">
+                        <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=booking-management" class="<?php echo $firstBooking ? 'text-green-600 hover:text-green-700' : 'text-accent hover:text-yellow-600'; ?>">
                             <?php echo $firstBooking ? 'First Booking Completed' : 'Accept Your First Booking →'; ?>
                         </a>
                     </h3>
@@ -278,4 +291,28 @@ if ($expertProfileId) {
     </div>
 </div>
 
-<?php require_once 'includes/footer.php'; ?>
+<script>
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+
+    // Utility function to resolve image paths
+    function resolveImagePath(imagePath) {
+        // If it's a full URL or a data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            return imagePath;
+        }
+        
+        // If no image path, use a default
+        if (!imagePath) {
+            return `${window.BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+        }
+        
+        // Remove leading slashes
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct full path
+        return `${window.BASE_PATH}/${normalizedPath}`;
+    }
+</script>
+
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>

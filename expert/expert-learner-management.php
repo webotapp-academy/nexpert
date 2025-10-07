@@ -1,9 +1,22 @@
 <?php
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+
+// Check if user is logged in as expert
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
+    // Save the current URL to redirect back after login
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    exit;
+}
+
 $page_title = "Learner Management - Nexpert.ai";
 $panel_type = "expert";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
-require_once 'admin-panel/apis/connection/pdo.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 
 // Get expert profile ID
 $userId = $_SESSION['user_id'] ?? null;
@@ -232,7 +245,7 @@ if ($expertProfileId) {
                 <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center">
-                            <img src="<?php echo htmlspecialchars($profilePhoto); ?>" alt="<?php echo htmlspecialchars($learner['full_name']); ?>" class="w-12 h-12 rounded-full mr-3 object-cover">
+                            <img src="<?php echo htmlspecialchars($profilePhoto); ?>" alt="<?php echo htmlspecialchars($learner['full_name']); ?>" class="w-12 h-12 rounded-full mr-3 object-cover learner-profile-photo">
                             <div>
                                 <h3 class="font-semibold text-gray-900"><?php echo htmlspecialchars($learner['full_name']); ?></h3>
                                 <p class="text-gray-600 text-sm"><?php echo htmlspecialchars($learner['email']); ?></p>
@@ -300,7 +313,7 @@ if ($expertProfileId) {
                     </svg>
                     <h3 class="text-xl font-semibold text-gray-900 mb-2">No Learners Yet</h3>
                     <p class="text-gray-600 mb-6">You don't have any learners yet. Start accepting bookings to see your learners here.</p>
-                    <a href="?panel=expert&page=dashboard" class="inline-block bg-accent text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition">
+                    <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=dashboard" class="inline-block bg-accent text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition">
                         Go to Dashboard
                     </a>
                 </div>
@@ -419,4 +432,34 @@ if ($expertProfileId) {
     </div>
     </div>
     </div>
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
+
+<script>
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+
+    // Utility function to resolve image paths
+    function resolveImagePath(imagePath) {
+        // If it's a full URL or a data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            return imagePath;
+        }
+        
+        // If no image path, use a default
+        if (!imagePath) {
+            return `${window.BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+        }
+        
+        // Remove leading slashes
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct full path
+        return `${window.BASE_PATH}/${normalizedPath}`;
+    }
+
+    // Update profile photo paths in the learners grid
+    document.querySelectorAll('.learner-profile-photo').forEach(img => {
+        const originalSrc = img.getAttribute('src');
+        img.setAttribute('src', resolveImagePath(originalSrc));
+    });
+</script>

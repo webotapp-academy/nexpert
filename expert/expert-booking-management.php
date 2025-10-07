@@ -1,9 +1,22 @@
 <?php
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+
+// Check if user is logged in as expert
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
+    // Save the current URL to redirect back after login
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    exit;
+}
+
 $page_title = "Booking Management - Nexpert.ai";
 $panel_type = "expert";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
-require_once 'admin-panel/apis/connection/pdo.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 
 // Get expert profile ID
 $userId = $_SESSION['user_id'] ?? null;
@@ -97,7 +110,7 @@ $totalPages = ceil($totalBookings / $limit);
                 <button id="exportBookings" class="bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-50 transition text-sm">
                     Export Data
                 </button>
-                <a href="?panel=expert&page=settings#availability" class="bg-accent text-white px-4 py-3 rounded-lg hover:bg-yellow-600 transition text-sm inline-block text-center">
+                <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=settings#availability" class="bg-accent text-white px-4 py-3 rounded-lg hover:bg-yellow-600 transition text-sm inline-block text-center">
                     Manage Availability
                 </a>
             </div>
@@ -308,7 +321,7 @@ $totalPages = ceil($totalBookings / $limit);
                     </span>
                     <div class="flex flex-wrap gap-2">
                         <?php if ($page > 1): ?>
-                            <a href="?panel=expert&page=booking-management&booking_page=<?php echo $page - 1; ?>" class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Previous</a>
+                            <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=booking-management&booking_page=<?php echo $page - 1; ?>" class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Previous</a>
                         <?php else: ?>
                             <button class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg disabled:opacity-50 cursor-not-allowed text-sm" disabled>Previous</button>
                         <?php endif; ?>
@@ -317,12 +330,12 @@ $totalPages = ceil($totalBookings / $limit);
                             <?php if ($i == $page): ?>
                                 <button class="px-4 py-3 text-white bg-accent border border-accent rounded-lg text-sm min-w-[44px]"><?php echo $i; ?></button>
                             <?php else: ?>
-                                <a href="?panel=expert&page=booking-management&booking_page=<?php echo $i; ?>" class="px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm min-w-[44px] text-center"><?php echo $i; ?></a>
+                                <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=booking-management&booking_page=<?php echo $i; ?>" class="px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm min-w-[44px] text-center"><?php echo $i; ?></a>
                             <?php endif; ?>
                         <?php endfor; ?>
                         
                         <?php if ($page < $totalPages): ?>
-                            <a href="?panel=expert&page=booking-management&booking_page=<?php echo $page + 1; ?>" class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Next</a>
+                            <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=booking-management&booking_page=<?php echo $page + 1; ?>" class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Next</a>
                         <?php else: ?>
                             <button class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg disabled:opacity-50 cursor-not-allowed text-sm" disabled>Next</button>
                         <?php endif; ?>
@@ -333,4 +346,35 @@ $totalPages = ceil($totalBookings / $limit);
         </div>
     </div>
     </div>
-<?php require_once 'includes/footer.php'; ?>
+
+<script>
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+
+    // Utility function to resolve image paths
+    function resolveImagePath(imagePath) {
+        // If it's a full URL or a data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            return imagePath;
+        }
+        
+        // If no image path, use a default
+        if (!imagePath) {
+            return `${window.BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+        }
+        
+        // Remove leading slashes
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct full path
+        return `${window.BASE_PATH}/${normalizedPath}`;
+    }
+
+    // Add any page-specific JavaScript here
+    document.getElementById('exportBookings').addEventListener('click', function() {
+        // Implement export functionality
+        alert('Export functionality will be implemented soon.');
+    });
+</script>
+
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>

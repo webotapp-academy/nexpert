@@ -76,6 +76,23 @@ try {
         
         // Don't expose email for privacy (could add a flag check here later)
         unset($expert['email']);
+        
+        // Normalize profile photo path
+        if (!empty($expert['profile_photo'])) {
+            // Remove any leading slashes and 'uploads/profiles/' if already present
+            $photo = ltrim($expert['profile_photo'], '/');
+            $photo = preg_replace('/^uploads\/profiles\//', '', $photo);
+            
+            // Check if the file exists
+            $full_path = $_SERVER['DOCUMENT_ROOT'] . '/nexpert/uploads/profiles/' . $photo;
+            
+            if (file_exists($full_path)) {
+                $expert['profile_photo'] = 'uploads/profiles/' . $photo;
+            } else {
+                // If file doesn't exist, set to null or a default image
+                $expert['profile_photo'] = null;
+            }
+        }
 
         echo json_encode([
             'success' => true,
@@ -86,7 +103,18 @@ try {
         echo json_encode(['success' => false, 'message' => 'Method not allowed']);
     }
 } catch (PDOException $e) {
+    // Log the full error details
     error_log("Expert Profile API Error: " . $e->getMessage());
+    error_log("Expert Profile API Trace: " . $e->getTraceAsString());
+    
+    // Log additional context
+    error_log("Request Method: " . $_SERVER['REQUEST_METHOD']);
+    error_log("Expert ID: " . ($_GET['expert_id'] ?? 'Not provided'));
+    
     http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error occurred']);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Server error occurred',
+        'error_details' => $e->getMessage() // Only in development, remove in production
+    ]);
 }

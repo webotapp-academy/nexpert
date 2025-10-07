@@ -1,8 +1,20 @@
 <?php
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+// Check if user is logged in as expert
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
+    // Save the current URL to redirect back after login
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    exit;
+}
+
 $page_title = "KYC Verification - Nexpert.ai";
 $panel_type = "expert";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 ?>
 
 <div class="max-w-4xl mx-auto px-4 py-8">
@@ -275,27 +287,32 @@ require_once 'includes/navigation.php';
 </div>
 
 <script>
-    // File upload preview handlers
-    document.getElementById('idDocumentFront').addEventListener('change', function(e) {
-        const preview = document.getElementById('idFrontPreview');
-        if (e.target.files.length > 0) {
-            preview.textContent = '✓ ' + e.target.files[0].name;
-            preview.classList.remove('hidden');
-        }
-    });
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
 
-    document.getElementById('idDocumentBack').addEventListener('change', function(e) {
-        const preview = document.getElementById('idBackPreview');
-        if (e.target.files.length > 0) {
-            preview.textContent = '✓ ' + e.target.files[0].name;
-            preview.classList.remove('hidden');
+    // Utility function to resolve image paths
+    function resolveImagePath(imagePath) {
+        // If it's a full URL or a data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            return imagePath;
         }
-    });
+        
+        // If no image path, use a default
+        if (!imagePath) {
+            return `${window.BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+        }
+        
+        // Remove leading slashes
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct full path
+        return `${window.BASE_PATH}/${normalizedPath}`;
+    }
 
     // Load existing KYC data on page load
     async function loadExistingKYC() {
         try {
-            const response = await fetch('/admin-panel/apis/expert/kyc.php');
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/expert/kyc.php`);
             const result = await response.json();
             
             if (result.success && result.data) {
@@ -366,7 +383,7 @@ require_once 'includes/navigation.php';
         data.submit = false;
         
         try {
-            const response = await fetch('/admin-panel/apis/expert/kyc.php', {
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/expert/kyc.php`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -378,7 +395,7 @@ require_once 'includes/navigation.php';
             
             if (result.success) {
                 alert(result.message);
-                window.location.href = '?panel=expert&page=dashboard';
+                window.location.href = `${window.BASE_PATH}/index.php?panel=expert&page=dashboard`;
             } else {
                 alert('Error: ' + result.message);
             }
@@ -408,7 +425,7 @@ require_once 'includes/navigation.php';
         data.submit = true;
 
         try {
-            const response = await fetch('/admin-panel/apis/expert/kyc.php', {
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/expert/kyc.php`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -420,7 +437,7 @@ require_once 'includes/navigation.php';
             
             if (result.success) {
                 alert(result.message + ' Our team will review your documents within 24-48 hours.');
-                window.location.href = '?panel=expert&page=dashboard';
+                window.location.href = `${window.BASE_PATH}/index.php?panel=expert&page=dashboard`;
             } else {
                 alert('Error: ' + result.message);
             }
@@ -431,4 +448,4 @@ require_once 'includes/navigation.php';
     });
 </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>

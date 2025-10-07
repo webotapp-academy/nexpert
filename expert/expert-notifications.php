@@ -1,8 +1,19 @@
 <?php
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+// Check if user is logged in as expert
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    exit;
+}
+
 $page_title = "Notifications - Nexpert.ai";
 $panel_type = "expert";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 ?>
     <div class="max-w-7xl mx-auto px-4 py-8">
             </div>
@@ -216,7 +227,7 @@ require_once 'includes/navigation.php';
                     <div class="space-y-4">
                         <div class="border border-gray-200 rounded-lg p-3">
                             <div class="flex items-center mb-2">
-                                <img src="https://via.placeholder.com/32x32" alt="Aarav" class="w-8 h-8 rounded-full mr-2">
+                                <img src="https://via.placeholder.com/32x32" alt="Aarav" class="w-8 h-8 rounded-full mr-2 session-profile-photo">
                                 <div>
                                     <p class="font-medium text-gray-900 text-sm">Aarav Patel</p>
                                     <p class="text-gray-600 text-xs">UX Consultation</p>
@@ -229,7 +240,7 @@ require_once 'includes/navigation.php';
                         
                         <div class="border border-gray-200 rounded-lg p-3">
                             <div class="flex items-center mb-2">
-                                <img src="https://via.placeholder.com/32x32" alt="Sneha" class="w-8 h-8 rounded-full mr-2">
+                                <img src="https://via.placeholder.com/32x32" alt="Sneha" class="w-8 h-8 rounded-full mr-2 session-profile-photo">
                                 <div>
                                     <p class="font-medium text-gray-900 text-sm">Sneha Gupta</p>
                                     <p class="text-gray-600 text-xs">Career Coaching</p>
@@ -242,7 +253,7 @@ require_once 'includes/navigation.php';
                         
                         <div class="border border-gray-200 rounded-lg p-3">
                             <div class="flex items-center mb-2">
-                                <img src="https://via.placeholder.com/32x32" alt="Ananya" class="w-8 h-8 rounded-full mr-2">
+                                <img src="https://via.placeholder.com/32x32" alt="Ananya" class="w-8 h-8 rounded-full mr-2 session-profile-photo">
                                 <div>
                                     <p class="font-medium text-gray-900 text-sm">Ananya Singh</p>
                                     <p class="text-gray-600 text-xs">Research Workshop</p>
@@ -309,4 +320,35 @@ require_once 'includes/navigation.php';
     </div>
     </div>
     </div>
-<?php require_once 'includes/footer.php'; ?>
+
+<script>
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+
+    // Utility function to resolve image paths
+    function resolveImagePath(imagePath) {
+        // If it's a full URL or a data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            return imagePath;
+        }
+        
+        // If no image path, use a default
+        if (!imagePath) {
+            return `${window.BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+        }
+        
+        // Remove leading slashes
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct full path
+        return `${window.BASE_PATH}/${normalizedPath}`;
+    }
+
+    // Update placeholder images in upcoming sessions
+    document.querySelectorAll('.session-profile-photo').forEach(img => {
+        const originalSrc = img.getAttribute('src');
+        img.setAttribute('src', resolveImagePath(originalSrc));
+    });
+</script>
+
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>

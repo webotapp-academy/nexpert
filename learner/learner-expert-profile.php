@@ -1,6 +1,11 @@
 <?php
 $page_title = "Expert Profile - Nexpert.ai";
 $panel_type = "learner";
+
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
 require_once 'includes/header.php';
 require_once 'includes/navigation.php';
 ?>
@@ -206,5 +211,9 @@ require_once 'includes/navigation.php';
     </div>
 </div>
 
-<script src="<?php echo BASE_PATH; ?>/admin-panel/js/learner-expert-profile.js"></script>
+<script>
+    // Use window.BASE_PATH to avoid redeclaration
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+</script>
+<script src="<?php echo $BASE_PATH; ?>/admin-panel/js/learner-expert-profile.js"></script>
 <?php require_once 'includes/footer.php'; ?>

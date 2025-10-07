@@ -1,9 +1,22 @@
 <?php
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+
+// Check if user is logged in as expert
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
+    // Save the current URL to redirect back after login
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    exit;
+}
+
 $page_title = "Earnings Dashboard - Nexpert.ai";
 $panel_type = "expert";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
-require_once 'admin-panel/apis/connection/pdo.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 
 // Get expert profile ID
 $userId = $_SESSION['user_id'] ?? null;
@@ -308,6 +321,9 @@ if ($expertProfileId) {
 
     <!-- Chart.js Script -->
     <script>
+        // Set BASE_PATH globally
+        window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+
         let revenueChart = null;
         let currentPeriod = 'month';
         let currentView = 'monthly';
@@ -315,7 +331,7 @@ if ($expertProfileId) {
         // Initialize chart
         async function loadChartData() {
             try {
-                const response = await fetch(`/admin-panel/apis/expert/earnings-data.php?period=${currentPeriod}&view=${currentView}`);
+                const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/expert/earnings-data.php?period=${currentPeriod}&view=${currentView}`);
                 const result = await response.json();
                 
                 if (result.success) {
@@ -397,4 +413,4 @@ if ($expertProfileId) {
     </script>
     </div>
     </div>
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>

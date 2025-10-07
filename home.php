@@ -704,6 +704,23 @@ require_once 'includes/navigation.php';
     </style>
 
     <script>
+    // Utility function to resolve image paths
+    function resolveImagePath(imagePath) {
+        // If it's a full URL or a data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            return imagePath;
+        }
+        
+        // Get the base path from the current location
+        const basePath = window.location.pathname.split('/').slice(0, -1).join('/');
+        
+        // Normalize the image path
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct the full URL
+        return `${basePath}/${normalizedPath}`;
+    }
+
     // Typing effect for search placeholder
     const placeholderTexts = [
         'e.g. Career Change',
@@ -769,7 +786,7 @@ require_once 'includes/navigation.php';
     // Load featured experts from database
     async function loadFeaturedExperts() {
         try {
-            const response = await fetch('/admin-panel/apis/learner/browse-experts.php?sort_by=latest&limit=6');
+            const response = await fetch('<?php echo BASE_PATH; ?>/admin-panel/apis/learner/browse-experts.php?sort_by=latest&limit=6');
             const result = await response.json();
             
             if (result.success && result.data.length > 0) {
@@ -783,11 +800,15 @@ require_once 'includes/navigation.php';
                     
                     const stars = '★'.repeat(Math.floor(expert.avg_rating || 5)) + '☆'.repeat(5 - Math.floor(expert.avg_rating || 5));
                     
+                    const imageSource = expert.profile_photo 
+                        ? resolveImagePath(expert.profile_photo)
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(expert.name)}&background=3B82F6&color=fff&size=200`;
+                    
                     const expertCard = `
                         <div class="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition duration-300 border">
                             <div class="p-6">
                                 <div class="flex items-center mb-4">
-                                    <img src="${expert.profile_photo || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(expert.name) + '&background=3B82F6&color=fff&size=200'}" 
+                                    <img src="${imageSource}" 
                                          alt="${escapeHtml(expert.name)}" 
                                          class="w-20 h-20 rounded-full mr-4 object-cover">
                                     <div>

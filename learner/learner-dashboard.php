@@ -1,18 +1,22 @@
 <?php
-require_once 'includes/session-config.php';
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
 
 // Check if user is logged in as learner
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
     // Save the current URL to redirect back after login
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header('Location: ?panel=learner&page=auth');
+    header('Location: ' . $BASE_PATH . '/index.php?panel=learner&page=auth');
     exit;
 }
 
 $page_title = "Dashboard - Nexpert.ai";
 $panel_type = "learner";
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 ?>
     <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Header -->
@@ -82,7 +86,7 @@ require_once 'includes/navigation.php';
             <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-xl font-semibold">Upcoming Sessions</h2>
-                    <a href="?panel=learner&page=booking" class="text-primary hover:text-secondary text-sm">View All</a>
+                    <a href="<?php echo $BASE_PATH; ?>/index.php?panel=learner&page=booking" class="text-primary hover:text-secondary text-sm">View All</a>
                 </div>
                 <div id="upcoming-sessions" class="space-y-4">
                     <p class="text-gray-500 text-center py-8">Loading sessions...</p>
@@ -95,13 +99,13 @@ require_once 'includes/navigation.php';
                 <div class="bg-white rounded-lg shadow-lg p-6">
                     <h2 class="text-xl font-semibold mb-4">Quick Actions</h2>
                     <div class="space-y-3">
-                        <a href="?panel=learner&page=browse-experts" class="block w-full bg-primary text-white py-3 px-4 rounded-lg text-center hover:bg-secondary transition">
+                        <a href="<?php echo $BASE_PATH; ?>/index.php?panel=learner&page=browse-experts" class="block w-full bg-primary text-white py-3 px-4 rounded-lg text-center hover:bg-secondary transition">
                             Find New Expert
                         </a>
-                        <a href="?panel=learner&page=booking" class="block w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg text-center hover:bg-gray-50 transition">
+                        <a href="<?php echo $BASE_PATH; ?>/index.php?panel=learner&page=booking" class="block w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg text-center hover:bg-gray-50 transition">
                             Schedule Session
                         </a>
-                        <a href="?panel=learner&page=profile" class="block w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg text-center hover:bg-gray-50 transition">
+                        <a href="<?php echo $BASE_PATH; ?>/index.php?panel=learner&page=profile" class="block w-full border border-gray-300 text-gray-700 py-3 px-4 rounded-lg text-center hover:bg-gray-50 transition">
                             Update Profile
                         </a>
                     </div>
@@ -147,164 +151,186 @@ require_once 'includes/navigation.php';
     </div>
 
 <script>
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
 
-document.addEventListener('DOMContentLoaded', async function() {
-    try {
-        const response = await fetch('/admin-panel/apis/learner/dashboard.php');
-        const result = await response.json();
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Utility function to resolve image paths
+    function resolveImagePath(imagePath) {
+        // If it's a full URL or a data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            return imagePath;
+        }
         
-        if (result.success) {
-            const data = result.data;
+        // If no image path, use a default
+        if (!imagePath) {
+            return `${window.BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+        }
+        
+        // Remove leading slashes
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct full path
+        return `${window.BASE_PATH}/${normalizedPath}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/dashboard.php`);
+            const result = await response.json();
             
-            // Update welcome message (using textContent for safety)
-            document.getElementById('welcome-message').textContent = `Welcome back, ${data.profile.full_name}!`;
-            
-            // Update stats
-            document.getElementById('total-sessions').textContent = data.stats.total_sessions;
-            document.getElementById('completed-sessions').textContent = data.stats.completed_sessions;
-            document.getElementById('progress').textContent = data.stats.progress + '%';
-            document.getElementById('active-experts').textContent = data.stats.active_experts;
-            
-            // Render upcoming sessions
-            const upcomingContainer = document.getElementById('upcoming-sessions');
-            if (data.upcoming_sessions.length === 0) {
-                upcomingContainer.innerHTML = '<p class="text-gray-500 text-center py-8">No upcoming sessions. <a href="?panel=learner&page=browse-experts" class="text-primary">Browse experts</a> to book a session.</p>';
-            } else {
-                upcomingContainer.innerHTML = data.upcoming_sessions.map(session => {
-                    const sessionDate = new Date(session.session_datetime);
-                    const formattedDate = sessionDate.toLocaleString('en-IN', {
-                        timeZone: 'Asia/Kolkata',
-                        month: 'short',
-                        day: 'numeric',
-                        hour: 'numeric',
-                        minute: '2-digit',
-                        hour12: true
-                    });
-                    
-                    return `
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
-                            <div class="flex justify-between items-start">
-                                <div class="flex">
-                                    <img src="${escapeHtml(session.profile_photo || 'attached_assets/stock_images/diverse_professional_1d96e39f.jpg')}" 
-                                         alt="${escapeHtml(session.expert_name)}" 
-                                         class="w-12 h-12 rounded-full mr-4 object-cover">
-                                    <div>
-                                        <h3 class="font-semibold">${escapeHtml(session.expert_name)}</h3>
-                                        <p class="text-gray-600 text-sm">${escapeHtml(session.tagline || 'Expert Session')}</p>
-                                        <div class="flex items-center mt-2 text-sm text-gray-500">
-                                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                            </svg>
-                                            ${formattedDate}
+            if (result.success) {
+                const data = result.data;
+                
+                // Update welcome message (using textContent for safety)
+                document.getElementById('welcome-message').textContent = `Welcome back, ${data.profile.full_name}!`;
+                
+                // Update stats
+                document.getElementById('total-sessions').textContent = data.stats.total_sessions;
+                document.getElementById('completed-sessions').textContent = data.stats.completed_sessions;
+                document.getElementById('progress').textContent = data.stats.progress + '%';
+                document.getElementById('active-experts').textContent = data.stats.active_experts;
+                
+                // Render upcoming sessions
+                const upcomingContainer = document.getElementById('upcoming-sessions');
+                if (data.upcoming_sessions.length === 0) {
+                    upcomingContainer.innerHTML = `<p class="text-gray-500 text-center py-8">No upcoming sessions. <a href="${window.BASE_PATH}/index.php?panel=learner&page=browse-experts" class="text-primary">Browse experts</a> to book a session.</p>`;
+                } else {
+                    upcomingContainer.innerHTML = data.upcoming_sessions.map(session => {
+                        const sessionDate = new Date(session.session_datetime);
+                        const formattedDate = sessionDate.toLocaleString('en-IN', {
+                            timeZone: 'Asia/Kolkata',
+                            month: 'short',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: '2-digit',
+                            hour12: true
+                        });
+                        
+                        return `
+                            <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex">
+                                        <img src="${escapeHtml(resolveImagePath(session.profile_photo))}" 
+                                             alt="${escapeHtml(session.expert_name)}" 
+                                             class="w-12 h-12 rounded-full mr-4 object-cover">
+                                        <div>
+                                            <h3 class="font-semibold">${escapeHtml(session.expert_name)}</h3>
+                                            <p class="text-gray-600 text-sm">${escapeHtml(session.tagline || 'Expert Session')}</p>
+                                            <div class="flex items-center mt-2 text-sm text-gray-500">
+                                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                                </svg>
+                                                ${formattedDate}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                <div class="flex space-x-2">
-                                    <span class="px-3 py-1 ${session.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} text-sm rounded">${escapeHtml(session.status)}</span>
+                                    <div class="flex space-x-2">
+                                        <span class="px-3 py-1 ${session.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} text-sm rounded">${escapeHtml(session.status)}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-            
-            // Render recent activity
-            const activityContainer = document.getElementById('recent-activity');
-            if (data.recent_activity.length === 0) {
-                activityContainer.innerHTML = '<p class="text-gray-500 text-sm">No recent activity</p>';
-            } else {
-                activityContainer.innerHTML = data.recent_activity.slice(0, 3).map(activity => {
-                    const updatedDate = new Date(activity.updated_at);
-                    const timeAgo = getTimeAgo(updatedDate);
-                    const statusColors = {
-                        'completed': 'bg-green-500',
-                        'confirmed': 'bg-blue-500',
-                        'pending': 'bg-yellow-500',
-                        'cancelled': 'bg-red-500'
-                    };
-                    
-                    return `
-                        <div class="flex items-center">
-                            <div class="w-2 h-2 ${statusColors[activity.status] || 'bg-gray-500'} rounded-full mr-3"></div>
-                            <div class="text-sm">
-                                <p class="text-gray-900">${activity.status === 'completed' ? 'Completed' : 'Booked'} session with ${escapeHtml(activity.expert_name)}</p>
-                                <p class="text-gray-500">${timeAgo}</p>
-                            </div>
-                        </div>
-                    `;
-                }).join('');
-            }
-            
-            // Render recent sessions table
-            const tableBody = document.getElementById('recent-sessions-table');
-            if (data.recent_sessions.length === 0) {
-                tableBody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-500">No completed sessions yet</td></tr>';
-            } else {
-                tableBody.innerHTML = data.recent_sessions.map(session => {
-                    const sessionDate = new Date(session.session_datetime);
-                    const formattedDate = sessionDate.toLocaleDateString('en-IN', {
-                        timeZone: 'Asia/Kolkata',
-                        month: 'short',
-                        day: 'numeric',
-                        year: 'numeric'
-                    });
-                    
-                    return `
-                        <tr class="border-b border-gray-100">
-                            <td class="py-3 px-4">
-                                <div class="flex items-center">
-                                    <img src="${escapeHtml(session.profile_photo || 'attached_assets/stock_images/diverse_professional_1d96e39f.jpg')}" 
-                                         alt="${escapeHtml(session.expert_name)}" 
-                                         class="w-8 h-8 rounded-full mr-3 object-cover">
-                                    <span>${escapeHtml(session.expert_name)}</span>
+                        `;
+                    }).join('');
+                }
+                
+                // Render recent activity
+                const activityContainer = document.getElementById('recent-activity');
+                if (data.recent_activity.length === 0) {
+                    activityContainer.innerHTML = '<p class="text-gray-500 text-sm">No recent activity</p>';
+                } else {
+                    activityContainer.innerHTML = data.recent_activity.slice(0, 3).map(activity => {
+                        const updatedDate = new Date(activity.updated_at);
+                        const timeAgo = getTimeAgo(updatedDate);
+                        const statusColors = {
+                            'completed': 'bg-green-500',
+                            'confirmed': 'bg-blue-500',
+                            'pending': 'bg-yellow-500',
+                            'cancelled': 'bg-red-500'
+                        };
+                        
+                        return `
+                            <div class="flex items-center">
+                                <div class="w-2 h-2 ${statusColors[activity.status] || 'bg-gray-500'} rounded-full mr-3"></div>
+                                <div class="text-sm">
+                                    <p class="text-gray-900">${activity.status === 'completed' ? 'Completed' : 'Booked'} session with ${escapeHtml(activity.expert_name)}</p>
+                                    <p class="text-gray-500">${timeAgo}</p>
                                 </div>
-                            </td>
-                            <td class="py-3 px-4">${escapeHtml(session.tagline || 'Expert Session')}</td>
-                            <td class="py-3 px-4">${formattedDate}</td>
-                            <td class="py-3 px-4">${session.duration_minutes} min</td>
-                            <td class="py-3 px-4">
-                                <span class="px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full">Completed</span>
-                            </td>
-                            <td class="py-3 px-4">
-                                <button class="text-primary hover:text-secondary text-sm">View Details</button>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
+                            </div>
+                        `;
+                    }).join('');
+                }
+                
+                // Render recent sessions table
+                const tableBody = document.getElementById('recent-sessions-table');
+                if (data.recent_sessions.length === 0) {
+                    tableBody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-gray-500">No completed sessions yet</td></tr>';
+                } else {
+                    tableBody.innerHTML = data.recent_sessions.map(session => {
+                        const sessionDate = new Date(session.session_datetime);
+                        const formattedDate = sessionDate.toLocaleDateString('en-IN', {
+                            timeZone: 'Asia/Kolkata',
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                        });
+                        
+                        return `
+                            <tr class="border-b border-gray-100">
+                                <td class="py-3 px-4">
+                                    <div class="flex items-center">
+                                        <img src="${escapeHtml(resolveImagePath(session.profile_photo))}" 
+                                             alt="${escapeHtml(session.expert_name)}" 
+                                             class="w-8 h-8 rounded-full mr-3 object-cover">
+                                        <span>${escapeHtml(session.expert_name)}</span>
+                                    </div>
+                                </td>
+                                <td class="py-3 px-4">${escapeHtml(session.tagline || 'Expert Session')}</td>
+                                <td class="py-3 px-4">${formattedDate}</td>
+                                <td class="py-3 px-4">${session.duration_minutes} min</td>
+                                <td class="py-3 px-4">
+                                    <span class="px-2 py-1 bg-green-100 text-green-800 text-sm rounded-full">Completed</span>
+                                </td>
+                                <td class="py-3 px-4">
+                                    <button class="text-primary hover:text-secondary text-sm">View Details</button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            } else {
+                console.error('Error loading dashboard:', result.message);
             }
-        } else {
-            console.error('Error loading dashboard:', result.message);
+        } catch (error) {
+            console.error('Error:', error);
         }
-    } catch (error) {
-        console.error('Error:', error);
-    }
-});
+    });
 
-function getTimeAgo(date) {
-    const seconds = Math.floor((new Date() - date) / 1000);
-    const intervals = {
-        year: 31536000,
-        month: 2592000,
-        week: 604800,
-        day: 86400,
-        hour: 3600,
-        minute: 60
-    };
-    
-    for (const [unit, secondsInUnit] of Object.entries(intervals)) {
-        const interval = Math.floor(seconds / secondsInUnit);
-        if (interval >= 1) {
-            return `${interval} ${unit}${interval !== 1 ? 's' : ''} ago`;
+    function getTimeAgo(date) {
+        const seconds = Math.floor((new Date() - date) / 1000);
+        const intervals = {
+            year: 31536000,
+            month: 2592000,
+            week: 604800,
+            day: 86400,
+            hour: 3600,
+            minute: 60
+        };
+        
+        for (const [unit, secondsInUnit] of Object.entries(intervals)) {
+            const interval = Math.floor(seconds / secondsInUnit);
+            if (interval >= 1) {
+                return `${interval} ${unit}${interval !== 1 ? 's' : ''} ago`;
+            }
         }
+        return 'just now';
     }
-    return 'just now';
-}
 </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>

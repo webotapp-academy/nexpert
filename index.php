@@ -1,6 +1,9 @@
 <?php
 require_once 'includes/session-config.php';
 
+// Define BASE_PATH for use in other files
+$BASE_PATH = '/nexpert';
+
 // Main router for Nexpert.ai application
 // If no panel specified, show homepage
 if (!isset($_GET['panel']) && !isset($_GET['page'])) {

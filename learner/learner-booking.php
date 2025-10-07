@@ -1,6 +1,11 @@
 <?php
 $page_title = "Book Session - Nexpert.ai";
 $panel_type = "learner";
+
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
 require_once 'includes/header.php';
 require_once 'includes/navigation.php';
 ?>
@@ -163,226 +168,247 @@ require_once 'includes/navigation.php';
 </div>
 
 <script>
-(function() {
-    'use strict';
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
 
-    let expertData = null;
-    let selectedDate = null;
-    let selectedTime = null;
+    (function() {
+        'use strict';
 
-    // Get expert ID from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const expertId = urlParams.get('expert_id');
+        let expertData = null;
+        let selectedDate = null;
+        let selectedTime = null;
 
-    if (!expertId) {
-        alert('No expert selected');
-        window.location.href = '/?panel=learner&page=browse-experts';
-        return;
-    }
+        // Get expert ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const expertId = urlParams.get('expert_id');
 
-    // Set minimum date to today
-    const dateInput = document.getElementById('session-date');
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.min = today;
+        if (!expertId) {
+            alert('No expert selected');
+            window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=browse-experts`;
+            return;
+        }
 
-    // Load expert and availability data
-    async function loadExpertData() {
-        try {
-            const response = await fetch(`/admin-panel/apis/learner/booking.php?expert_id=${expertId}`);
-            const result = await response.json();
+        // Set minimum date to today
+        const dateInput = document.getElementById('session-date');
+        const today = new Date().toISOString().split('T')[0];
+        dateInput.min = today;
 
-            if (!result.success) {
-                alert(result.message || 'Failed to load expert data');
-                window.location.href = '/?panel=learner&page=browse-experts';
+        // Utility function to resolve image paths
+        function resolveImagePath(imagePath) {
+            // If it's a full URL or a data URI, return as-is
+            if (/^(https?:\/\/|data:)/.test(imagePath)) {
+                return imagePath;
+            }
+            
+            // If no image path, use a default
+            if (!imagePath) {
+                return `${window.BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+            }
+            
+            // Remove leading slashes
+            const normalizedPath = imagePath.replace(/^\/+/, '');
+            
+            // Construct full path
+            return `${window.BASE_PATH}/${normalizedPath}`;
+        }
+
+        // Load expert and availability data
+        async function loadExpertData() {
+            try {
+                const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/booking.php?expert_id=${expertId}`);
+                const result = await response.json();
+
+                if (!result.success) {
+                    alert(result.message || 'Failed to load expert data');
+                    window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=browse-experts`;
+                    return;
+                }
+
+                expertData = result.data;
+                renderExpertInfo();
+                renderAvailabilitySchedule();
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Failed to load expert data');
+            }
+        }
+
+        function renderExpertInfo() {
+            document.getElementById('expert-name').textContent = expertData.name || 'Expert';
+            document.getElementById('expert-title').textContent = expertData.professional_title || 'Professional';
+            
+            const rating = Math.max(0, Math.min(5, Math.floor(Number(expertData.avg_rating) || 0)));
+            document.getElementById('expert-rating-stars').textContent = '★'.repeat(rating) + '☆'.repeat(5 - rating);
+            document.getElementById('expert-rating-value').textContent = `(${(Number(expertData.avg_rating) || 0).toFixed(1)})`;
+            
+            const hourlyRate = Number(expertData.hourly_rate) || 0;
+            document.getElementById('session-price').textContent = `₹${hourlyRate}`;
+            
+            const photoContainer = document.getElementById('expert-photo');
+            photoContainer.innerHTML = `<img src="${resolveImagePath(expertData.profile_photo)}" alt="${expertData.name}" class="w-full h-full object-cover">`;
+        }
+
+        function renderAvailabilitySchedule() {
+            const container = document.getElementById('availability-schedule');
+            // Database uses 0=Monday, 6=Sunday
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            
+            if (!expertData.availability || expertData.availability.length === 0) {
+                container.innerHTML = '<p class="text-gray-600">No availability set. Please contact the expert.</p>';
                 return;
             }
 
-            expertData = result.data;
-            renderExpertInfo();
-            renderAvailabilitySchedule();
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to load expert data');
-        }
-    }
-
-    function renderExpertInfo() {
-        document.getElementById('expert-name').textContent = expertData.name || 'Expert';
-        document.getElementById('expert-title').textContent = expertData.professional_title || 'Professional';
-        
-        const rating = Math.max(0, Math.min(5, Math.floor(Number(expertData.avg_rating) || 0)));
-        document.getElementById('expert-rating-stars').textContent = '★'.repeat(rating) + '☆'.repeat(5 - rating);
-        document.getElementById('expert-rating-value').textContent = `(${(Number(expertData.avg_rating) || 0).toFixed(1)})`;
-        
-        const hourlyRate = Number(expertData.hourly_rate) || 0;
-        document.getElementById('session-price').textContent = `₹${hourlyRate}`;
-        
-        if (expertData.profile_photo) {
-            const photoContainer = document.getElementById('expert-photo');
-            photoContainer.innerHTML = `<img src="${expertData.profile_photo}" alt="${expertData.name}" class="w-full h-full object-cover">`;
-        }
-    }
-
-    function renderAvailabilitySchedule() {
-        const container = document.getElementById('availability-schedule');
-        // Database uses 0=Monday, 6=Sunday
-        const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        
-        if (!expertData.availability || expertData.availability.length === 0) {
-            container.innerHTML = '<p class="text-gray-600">No availability set. Please contact the expert.</p>';
-            return;
-        }
-
-        const schedule = {};
-        expertData.availability.forEach(slot => {
-            const day = days[parseInt(slot.day_of_week)];
-            if (!schedule[day]) {
-                schedule[day] = [];
-            }
-            schedule[day].push(`${slot.start_time} - ${slot.end_time}`);
-        });
-
-        const html = Object.entries(schedule).map(([day, times]) => 
-            `<div class="flex justify-between py-2 border-b border-blue-100 last:border-0">
-                <span class="font-semibold text-blue-900">${day}:</span>
-                <span class="text-blue-700">${times.join(', ')}</span>
-            </div>`
-        ).join('');
-        
-        container.innerHTML = html;
-    }
-
-    function getAvailableTimeSlotsForDate(date) {
-        // JavaScript getDay() returns 0=Sunday, 6=Saturday
-        // Database uses 0=Monday, 6=Sunday
-        let dayOfWeek = new Date(date).getDay();
-        dayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to database format
-        const availability = expertData.availability.filter(slot => parseInt(slot.day_of_week) === dayOfWeek);
-        
-        const timeSlots = [];
-        availability.forEach(slot => {
-            const [startHour, startMin] = slot.start_time.split(':').map(Number);
-            const [endHour, endMin] = slot.end_time.split(':').map(Number);
-            
-            for (let hour = startHour; hour < endHour; hour++) {
-                timeSlots.push(`${String(hour).padStart(2, '0')}:00`);
-                if (hour + 0.5 < endHour || (hour + 1 === endHour && endMin >= 30)) {
-                    timeSlots.push(`${String(hour).padStart(2, '0')}:30`);
+            const schedule = {};
+            expertData.availability.forEach(slot => {
+                const day = days[parseInt(slot.day_of_week)];
+                if (!schedule[day]) {
+                    schedule[day] = [];
                 }
-            }
-        });
-        
-        return timeSlots;
-    }
-
-    function renderTimeSlots() {
-        const container = document.getElementById('time-slots-container');
-        
-        if (!selectedDate) {
-            container.innerHTML = `
-                <div class="col-span-full text-center py-12">
-                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <p class="text-gray-500">Please select a date first</p>
-                </div>`;
-            return;
-        }
-
-        const slots = getAvailableTimeSlotsForDate(selectedDate);
-        
-        if (slots.length === 0) {
-            container.innerHTML = `
-                <div class="col-span-full text-center py-12">
-                    <svg class="w-16 h-16 text-red-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <p class="text-gray-500 font-medium">No slots available for this date</p>
-                    <p class="text-gray-400 text-sm mt-1">Please try another day</p>
-                </div>`;
-            return;
-        }
-
-        container.innerHTML = slots.map(time => `
-            <button class="time-slot-btn group px-4 py-3 border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-blue-50 transition-all duration-200 text-sm font-semibold text-gray-700 hover:text-primary hover:shadow-md transform hover:-translate-y-0.5"
-                    data-time="${time}">
-                <div class="flex items-center justify-center gap-1">
-                    <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    ${time}
-                </div>
-            </button>
-        `).join('');
-
-        document.querySelectorAll('.time-slot-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.time-slot-btn').forEach(b => {
-                    b.classList.remove('border-primary', 'bg-blue-100', 'text-primary', 'ring-4', 'ring-blue-100');
-                    b.classList.add('border-gray-200', 'text-gray-700');
-                });
-                this.classList.remove('border-gray-200', 'text-gray-700');
-                this.classList.add('border-primary', 'bg-blue-100', 'text-primary', 'ring-4', 'ring-blue-100');
-                
-                selectedTime = this.dataset.time;
-                updateSelectedDateTime();
+                schedule[day].push(`${slot.start_time} - ${slot.end_time}`);
             });
+
+            const html = Object.entries(schedule).map(([day, times]) => 
+                `<div class="flex justify-between py-2 border-b border-blue-100 last:border-0">
+                    <span class="font-semibold text-blue-900">${day}:</span>
+                    <span class="text-blue-700">${times.join(', ')}</span>
+                </div>`
+            ).join('');
+            
+            container.innerHTML = html;
+        }
+
+        function getAvailableTimeSlotsForDate(date) {
+            // JavaScript getDay() returns 0=Sunday, 6=Saturday
+            // Database uses 0=Monday, 6=Sunday
+            let dayOfWeek = new Date(date).getDay();
+            dayOfWeek = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // Convert to database format
+            const availability = expertData.availability.filter(slot => parseInt(slot.day_of_week) === dayOfWeek);
+            
+            const timeSlots = [];
+            availability.forEach(slot => {
+                const [startHour, startMin] = slot.start_time.split(':').map(Number);
+                const [endHour, endMin] = slot.end_time.split(':').map(Number);
+                
+                for (let hour = startHour; hour < endHour; hour++) {
+                    timeSlots.push(`${String(hour).padStart(2, '0')}:00`);
+                    if (hour + 0.5 < endHour || (hour + 1 === endHour && endMin >= 30)) {
+                        timeSlots.push(`${String(hour).padStart(2, '0')}:30`);
+                    }
+                }
+            });
+            
+            return timeSlots;
+        }
+
+        function renderTimeSlots() {
+            const container = document.getElementById('time-slots-container');
+            
+            if (!selectedDate) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-gray-500">Please select a date first</p>
+                    </div>`;
+                return;
+            }
+
+            const slots = getAvailableTimeSlotsForDate(selectedDate);
+            
+            if (slots.length === 0) {
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <svg class="w-16 h-16 text-red-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <p class="text-gray-500 font-medium">No slots available for this date</p>
+                        <p class="text-gray-400 text-sm mt-1">Please try another day</p>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = slots.map(time => `
+                <button class="time-slot-btn group px-4 py-3 border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-blue-50 transition-all duration-200 text-sm font-semibold text-gray-700 hover:text-primary hover:shadow-md transform hover:-translate-y-0.5"
+                        data-time="${time}">
+                    <div class="flex items-center justify-center gap-1">
+                        <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        ${time}
+                    </div>
+                </button>
+            `).join('');
+
+            document.querySelectorAll('.time-slot-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.time-slot-btn').forEach(b => {
+                        b.classList.remove('border-primary', 'bg-blue-100', 'text-primary', 'ring-4', 'ring-blue-100');
+                        b.classList.add('border-gray-200', 'text-gray-700');
+                    });
+                    this.classList.remove('border-gray-200', 'text-gray-700');
+                    this.classList.add('border-primary', 'bg-blue-100', 'text-primary', 'ring-4', 'ring-blue-100');
+                    
+                    selectedTime = this.dataset.time;
+                    updateSelectedDateTime();
+                });
+            });
+        }
+
+        function updateSelectedDateTime() {
+            const container = document.getElementById('selected-datetime');
+            const confirmBtn = document.getElementById('confirm-booking-btn');
+            
+            if (selectedDate && selectedTime) {
+                const date = new Date(selectedDate);
+                const formattedDate = date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+                container.innerHTML = `
+                    <div class="flex items-center gap-2 mb-2">
+                        <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                        <span class="font-bold text-green-800">Time Selected</span>
+                    </div>
+                    <div class="font-semibold text-gray-900 text-lg">${formattedDate}</div>
+                    <div class="text-primary font-bold text-xl mt-1">${selectedTime}</div>
+                `;
+                confirmBtn.disabled = false;
+            } else {
+                container.innerHTML = `
+                    <div class="flex items-center gap-2 text-gray-500">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Please select a date and time
+                    </div>
+                `;
+                confirmBtn.disabled = true;
+            }
+        }
+
+        // Event listeners
+        dateInput.addEventListener('change', function() {
+            selectedDate = this.value;
+            selectedTime = null;
+            renderTimeSlots();
+            updateSelectedDateTime();
         });
-    }
 
-    function updateSelectedDateTime() {
-        const container = document.getElementById('selected-datetime');
-        const confirmBtn = document.getElementById('confirm-booking-btn');
-        
-        if (selectedDate && selectedTime) {
-            const date = new Date(selectedDate);
-            const formattedDate = date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
-            container.innerHTML = `
-                <div class="flex items-center gap-2 mb-2">
-                    <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                    </svg>
-                    <span class="font-bold text-green-800">Time Selected</span>
-                </div>
-                <div class="font-semibold text-gray-900 text-lg">${formattedDate}</div>
-                <div class="text-primary font-bold text-xl mt-1">${selectedTime}</div>
-            `;
-            confirmBtn.disabled = false;
-        } else {
-            container.innerHTML = `
-                <div class="flex items-center gap-2 text-gray-500">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    Please select a date and time
-                </div>
-            `;
-            confirmBtn.disabled = true;
-        }
-    }
+        document.getElementById('confirm-booking-btn').addEventListener('click', function() {
+            if (!selectedDate || !selectedTime) {
+                alert('Please select a date and time');
+                return;
+            }
 
-    // Event listeners
-    dateInput.addEventListener('change', function() {
-        selectedDate = this.value;
-        selectedTime = null;
-        renderTimeSlots();
-        updateSelectedDateTime();
-    });
+            const sessionDateTime = `${selectedDate} ${selectedTime}:00`;
+            const hourlyRate = Number(expertData.hourly_rate) || 0;
+            
+            // Ensure the payment page uses the correct base path
+            window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=payments&expert_id=${expertId}&datetime=${encodeURIComponent(sessionDateTime)}&amount=${hourlyRate}`;
+        });
 
-    document.getElementById('confirm-booking-btn').addEventListener('click', function() {
-        if (!selectedDate || !selectedTime) {
-            alert('Please select a date and time');
-            return;
-        }
-
-        const sessionDateTime = `${selectedDate} ${selectedTime}:00`;
-        const hourlyRate = Number(expertData.hourly_rate) || 0;
-        
-        window.location.href = `/?panel=learner&page=payments&expert_id=${expertId}&datetime=${encodeURIComponent(sessionDateTime)}&amount=${hourlyRate}`;
-    });
-
-    // Initialize
-    loadExpertData();
-})();
+        // Initialize
+        loadExpertData();
+    })();
 </script>
 <?php require_once 'includes/footer.php'; ?>

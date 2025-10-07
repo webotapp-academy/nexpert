@@ -1,6 +1,23 @@
 (function() {
     'use strict';
 
+    // Utility function to resolve image paths
+    function resolveImagePath(imagePath) {
+        // If it's a full URL or a data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            return imagePath;
+        }
+        
+        // Get the base path from the current location
+        const basePath = window.location.pathname.split('/').slice(0, -1).join('/');
+        
+        // Normalize the image path
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct the full URL
+        return `${basePath}/${normalizedPath}`;
+    }
+
     let experts = [];
     let currentPage = 1;
     let totalPages = 1;
@@ -87,7 +104,7 @@
                     <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 pb-3">
                         <div class="flex items-center">
                             <div class="relative rounded-full overflow-hidden border-4 border-white shadow-lg" style="width: 64px; height: 64px;">
-                                <img src="${escapeHtml(expert.profile_photo || 'attached_assets/stock_images/diverse_professional_1d96e39f.jpg')}" 
+                                <img src="${escapeHtml(resolveImagePath(expert.profile_photo || 'attached_assets/stock_images/diverse_professional_1d96e39f.jpg'))}" 
                                      alt="${escapeHtml(expert.name)}" 
                                      class="w-full h-full object-cover">
                                 <div class="absolute -bottom-1 -right-1 bg-green-500 w-5 h-5 rounded-full border-2 border-white"></div>

@@ -2,15 +2,16 @@ document.addEventListener('DOMContentLoaded', async function() {
     const urlParams = new URLSearchParams(window.location.search);
     const expertId = urlParams.get('expert_id');
 
-    const basePath = typeof BASE_PATH !== 'undefined' ? BASE_PATH : '';
+    // Use window.BASE_PATH instead of BASE_PATH
+    const BASE_PATH = window.BASE_PATH || '';
 
     if (!expertId) {
-        window.location.href = basePath + '/index.php?panel=learner&page=browse-experts';
+        window.location.href = BASE_PATH + '/index.php?panel=learner&page=browse-experts';
         return;
     }
 
     try {
-        const response = await fetch(basePath + `/admin-panel/apis/learner/expert-profile.php?expert_id=${expertId}`);
+        const response = await fetch(BASE_PATH + `/admin-panel/apis/learner/expert-profile.php?expert_id=${expertId}`);
         
         console.log('Response status:', response.status);
         
@@ -28,7 +29,7 @@ document.addEventListener('DOMContentLoaded', async function() {
                 text: data.message || 'The expert profile could not be found.',
                 confirmButtonColor: '#3B82F6'
             }).then(() => {
-                window.location.href = basePath + '/index.php?panel=learner&page=browse-experts';
+                window.location.href = BASE_PATH + '/index.php?panel=learner&page=browse-experts';
             });
             return;
         }
@@ -43,7 +44,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             text: 'Failed to load expert profile. Please try again.',
             confirmButtonColor: '#3B82F6'
         }).then(() => {
-            window.location.href = basePath + '/index.php?panel=learner&page=browse-experts';
+            window.location.href = BASE_PATH + '/index.php?panel=learner&page=browse-experts';
         });
     }
 });
@@ -52,6 +53,24 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
+}
+
+function resolveImagePath(imagePath) {
+    // If it's a full URL or a data URI, return as-is
+    if (/^(https?:\/\/|data:)/.test(imagePath)) {
+        return imagePath;
+    }
+    
+    // If no image path, use a default
+    if (!imagePath) {
+        return `${window.BASE_PATH || ''}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+    }
+    
+    // Remove leading slashes
+    const normalizedPath = imagePath.replace(/^\/+/, '');
+    
+    // Construct full path
+    return `${window.BASE_PATH || ''}/${normalizedPath}`;
 }
 
 function renderExpertProfile(expert) {
@@ -80,21 +99,19 @@ function renderExpertProfile(expert) {
     document.getElementById('expert-experience-years').textContent = Number(expert.experience_years) || 0;
     document.getElementById('expert-total-reviews').textContent = Number(expert.review_count) || 0;
     
-    if (expert.profile_photo) {
-        const photoContainer = document.getElementById('expert-photo');
-        const img = document.createElement('img');
-        img.src = expert.profile_photo;
-        img.alt = expert.name || 'Expert';
-        img.className = 'w-full h-full object-cover';
-        photoContainer.innerHTML = '';
-        photoContainer.appendChild(img);
-    }
+    const photoContainer = document.getElementById('expert-photo');
+    const img = document.createElement('img');
+    img.src = resolveImagePath(expert.profile_photo);
+    img.alt = expert.name || 'Expert';
+    img.className = 'w-full h-full object-cover';
+    photoContainer.innerHTML = '';
+    photoContainer.appendChild(img);
     
     if (expert.id) {
-        document.getElementById('book-session-btn').href = `/index.php?panel=learner&page=booking&expert_id=${expert.id}`;
+        document.getElementById('book-session-btn').href = `${BASE_PATH}/index.php?panel=learner&page=booking&expert_id=${expert.id}`;
         const sidebarBookBtn = document.getElementById('sidebar-book-btn');
         if (sidebarBookBtn) {
-            sidebarBookBtn.href = `/index.php?panel=learner&page=booking&expert_id=${expert.id}`;
+            sidebarBookBtn.href = `${BASE_PATH}/index.php?panel=learner&page=booking&expert_id=${expert.id}`;
         }
     }
 }

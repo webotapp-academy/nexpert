@@ -127,6 +127,23 @@ try {
             
             // Ensure hourly_rate is set
             $expert['hourly_rate'] = $expert['hourly_rate'] ?? 0;
+            
+            // Normalize profile photo path
+            if (!empty($expert['profile_photo'])) {
+                // Remove any leading slashes and 'uploads/profiles/' if already present
+                $photo = ltrim($expert['profile_photo'], '/');
+                $photo = preg_replace('/^uploads\/profiles\//', '', $photo);
+                
+                // Check if the file exists
+                $full_path = $_SERVER['DOCUMENT_ROOT'] . '/nexpert/uploads/profiles/' . $photo;
+                
+                if (file_exists($full_path)) {
+                    $expert['profile_photo'] = 'uploads/profiles/' . $photo;
+                } else {
+                    // If file doesn't exist, set to null or a default image
+                    $expert['profile_photo'] = null;
+                }
+            }
         }
 
         echo json_encode([

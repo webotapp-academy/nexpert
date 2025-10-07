@@ -1,211 +1,236 @@
 <?php
+// Enable error logging
+ini_set('display_errors', 1);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+
+// Allow PUT method
+header('Access-Control-Allow-Methods: PUT, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, X-Requested-With');
 header('Content-Type: application/json');
-require_once __DIR__ . '/../connection/pdo.php';
 
-// Start session to get user_id
-session_start();
+// Log all incoming requests
+error_log('Incoming Request Method: ' . $_SERVER['REQUEST_METHOD']);
+error_log('Request Headers: ' . print_r(getallheaders(), true));
+error_log('Request Body: ' . file_get_contents('php://input'));
 
-// Check if expert is logged in
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'expert') {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized access']);
+// Handle OPTIONS preflight request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
     exit;
 }
 
-$userId = $_SESSION['user_id'];
-$method = $_SERVER['REQUEST_METHOD'];
+// Include necessary files
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+
+// Check if user is logged in as expert
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
+    error_log('Unauthorized access attempt');
+    error_log('Session User ID: ' . ($_SESSION['user_id'] ?? 'Not set'));
+    error_log('Session Role: ' . ($_SESSION['role'] ?? 'Not set'));
+
+    http_response_code(403);
+    echo json_encode([
+        'success' => false, 
+        'message' => 'Unauthorized access'
+    ]);
+    exit;
+}
 
 try {
-    switch ($method) {
-        case 'GET':
-            // Fetch all settings for the expert
-            $stmt = $pdo->prepare("
-                SELECT 
-                    u.email, u.phone,
-                    ep.full_name, ep.tagline, ep.bio_short, ep.bio_full, 
-                    ep.expertise_verticals, ep.credentials, ep.experience_years, ep.timezone,
-                    ep.profile_photo,
-                    eb.account_holder_name, eb.bank_name, eb.branch_name,
-                    eb.account_number, eb.ifsc_code, eb.account_type
-                FROM users u
-                LEFT JOIN expert_profiles ep ON u.id = ep.user_id
-                LEFT JOIN expert_bank_details eb ON u.id = eb.user_id
-                WHERE u.id = ?
-            ");
-            $stmt->execute([$userId]);
-            $settings = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$settings) {
-                http_response_code(404);
-                echo json_encode(['success' => false, 'message' => 'Settings not found']);
-                exit;
-            }
+    // Ensure PUT method is used
+    if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
+        error_log('Invalid request method: ' . $_SERVER['REQUEST_METHOD']);
+        http_response_code(405);
+        throw new Exception('Method Not Allowed');
+    }
 
-            echo json_encode(['success' => true, 'data' => $settings]);
+    // Parse PUT data
+    $putData = json_decode(file_get_contents('php://input'), true);
+    
+    if (!$putData) {
+        error_log('Invalid or empty request data');
+        throw new Exception('Invalid request data');
+    }
+
+    error_log('Parsed PUT Data: ' . print_r($putData, true));
+
+    $userId = $_SESSION['user_id'];
+    $section = $putData['section'] ?? null;
+
+    // Validate section
+    $validSections = [
+        'profile', 
+        'bank', 
+        'password', 
+        'notifications', 
+        'privacy', 
+        'two_factor'
+    ];
+    
+    if (!$section || !in_array($section, $validSections)) {
+        error_log('Invalid section: ' . ($section ?? 'NULL'));
+        throw new Exception('Invalid section');
+    }
+
+    // Database connection
+    $pdo->beginTransaction();
+
+    // Handle different sections
+    switch ($section) {
+        case 'profile':
+            $stmt = $pdo->prepare("
+                UPDATE expert_profiles 
+                SET 
+                    full_name = :full_name, 
+                    tagline = :tagline, 
+                    bio_full = :bio_full, 
+                    timezone = :timezone, 
+                    experience_years = :experience_years
+                WHERE user_id = :user_id
+            ");
+            $result = $stmt->execute([
+                ':full_name' => $putData['full_name'] ?? '',
+                ':tagline' => $putData['tagline'] ?? '',
+                ':bio_full' => $putData['bio_full'] ?? '',
+                ':timezone' => $putData['timezone'] ?? 'UTC',
+                ':experience_years' => $putData['experience_years'] ?? null,
+                ':user_id' => $userId
+            ]);
+
+            error_log('Profile Update Result: ' . ($result ? 'Success' : 'Failure'));
+            error_log('Affected Rows: ' . $stmt->rowCount());
             break;
 
-        case 'PUT':
-            // Update settings
-            $input = json_decode(file_get_contents('php://input'), true);
-            $section = $input['section'] ?? '';
+        case 'bank':
+            $stmt = $pdo->prepare("
+                INSERT INTO expert_bank_details 
+                (user_id, account_holder_name, bank_name, branch_name, account_number, ifsc_code, account_type)
+                VALUES (:user_id, :account_holder_name, :bank_name, :branch_name, :account_number, :ifsc_code, :account_type)
+                ON DUPLICATE KEY UPDATE 
+                account_holder_name = :account_holder_name, 
+                bank_name = :bank_name, 
+                branch_name = :branch_name, 
+                account_number = :account_number, 
+                ifsc_code = :ifsc_code, 
+                account_type = :account_type
+            ");
+            $stmt->execute([
+                ':user_id' => $userId,
+                ':account_holder_name' => $putData['account_holder_name'] ?? '',
+                ':bank_name' => $putData['bank_name'] ?? '',
+                ':branch_name' => $putData['branch_name'] ?? '',
+                ':account_number' => $putData['account_number'] ?? '',
+                ':ifsc_code' => $putData['ifsc_code'] ?? '',
+                ':account_type' => $putData['account_type'] ?? ''
+            ]);
+            break;
 
-            switch ($section) {
-                case 'profile':
-                    // Update profile information
-                    $stmt = $pdo->prepare("
-                        UPDATE expert_profiles 
-                        SET full_name = ?, tagline = ?, bio_short = ?, bio_full = ?, 
-                            expertise_verticals = ?, credentials = ?, experience_years = ?, timezone = ?
-                        WHERE user_id = ?
-                    ");
-                    $stmt->execute([
-                        $input['full_name'] ?? '',
-                        $input['tagline'] ?? '',
-                        $input['bio_short'] ?? '',
-                        $input['bio_full'] ?? '',
-                        isset($input['expertise_verticals']) ? json_encode($input['expertise_verticals']) : null,
-                        $input['credentials'] ?? '',
-                        $input['experience_years'] ?? null,
-                        $input['timezone'] ?? 'UTC',
-                        $userId
-                    ]);
+        case 'password':
+            // Validate current password and new password
+            $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ?");
+            $stmt->execute([$userId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-                    echo json_encode(['success' => true, 'message' => 'Profile updated successfully']);
-                    break;
-
-                case 'bank':
-                    // Update bank details
-                    $stmt = $pdo->prepare("
-                        INSERT INTO expert_bank_details 
-                        (user_id, account_holder_name, bank_name, branch_name, account_number, ifsc_code, account_type)
-                        VALUES (?, ?, ?, ?, ?, ?, ?)
-                        ON DUPLICATE KEY UPDATE
-                        account_holder_name = VALUES(account_holder_name),
-                        bank_name = VALUES(bank_name),
-                        branch_name = VALUES(branch_name),
-                        account_number = VALUES(account_number),
-                        ifsc_code = VALUES(ifsc_code),
-                        account_type = VALUES(account_type)
-                    ");
-                    $stmt->execute([
-                        $userId,
-                        $input['account_holder_name'],
-                        $input['bank_name'],
-                        $input['branch_name'],
-                        $input['account_number'],
-                        $input['ifsc_code'],
-                        $input['account_type']
-                    ]);
-
-                    echo json_encode(['success' => true, 'message' => 'Bank details updated successfully']);
-                    break;
-
-                case 'password':
-                    // Verify current password
-                    $stmt = $pdo->prepare("SELECT password_hash FROM users WHERE id = ?");
-                    $stmt->execute([$userId]);
-                    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-
-                    if (!password_verify($input['current_password'], $user['password_hash'])) {
-                        http_response_code(400);
-                        echo json_encode(['success' => false, 'message' => 'Current password is incorrect']);
-                        exit;
-                    }
-
-                    // Update password
-                    $new_password_hash = password_hash($input['new_password'], PASSWORD_BCRYPT);
-                    $stmt = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
-                    $stmt->execute([$new_password_hash, $userId]);
-
-                    echo json_encode(['success' => true, 'message' => 'Password updated successfully']);
-                    break;
-
-                case 'notifications':
-                    // Update notification preferences
-                    $stmt = $pdo->prepare("
-                        UPDATE expert_profiles 
-                        SET notify_booking_email = ?, 
-                            notify_payment_email = ?, 
-                            notify_reminder_email = ?,
-                            notify_marketing_email = ?,
-                            notify_urgent_sms = ?
-                        WHERE user_id = ?
-                    ");
-                    $stmt->execute([
-                        $input['notify_booking_email'] ? 1 : 0,
-                        $input['notify_payment_email'] ? 1 : 0,
-                        $input['notify_reminder_email'] ? 1 : 0,
-                        $input['notify_marketing_email'] ? 1 : 0,
-                        $input['notify_urgent_sms'] ? 1 : 0,
-                        $userId
-                    ]);
-
-                    echo json_encode(['success' => true, 'message' => 'Notification preferences updated successfully']);
-                    break;
-
-                case 'privacy':
-                    // Update privacy settings
-                    $stmt = $pdo->prepare("
-                        UPDATE expert_profiles 
-                        SET show_in_search = ?, 
-                            show_email = ?, 
-                            accept_bookings = ?
-                        WHERE user_id = ?
-                    ");
-                    $stmt->execute([
-                        $input['show_in_search'] ? 1 : 0,
-                        $input['show_email'] ? 1 : 0,
-                        $input['accept_bookings'] ? 1 : 0,
-                        $userId
-                    ]);
-
-                    echo json_encode(['success' => true, 'message' => 'Privacy settings updated successfully']);
-                    break;
-
-                case 'two_factor':
-                    // Update two-factor authentication
-                    $stmt = $pdo->prepare("
-                        UPDATE expert_profiles 
-                        SET two_factor_enabled = ?
-                        WHERE user_id = ?
-                    ");
-                    $stmt->execute([
-                        $input['enabled'] ? 1 : 0,
-                        $userId
-                    ]);
-
-                    echo json_encode(['success' => true, 'message' => 'Two-factor authentication updated successfully']);
-                    break;
-
-                case 'availability':
-                    // Add availability slot
-                    $stmt = $pdo->prepare("
-                        INSERT INTO expert_availability 
-                        (expert_id, day_of_week, start_time, end_time, is_active)
-                        VALUES (?, ?, ?, ?, 1)
-                    ");
-                    $stmt->execute([
-                        $userId,
-                        $input['day_of_week'],
-                        $input['start_time'],
-                        $input['end_time']
-                    ]);
-
-                    echo json_encode(['success' => true, 'message' => 'Availability slot added successfully']);
-                    break;
-
-                default:
-                    http_response_code(400);
-                    echo json_encode(['success' => false, 'message' => 'Invalid section']);
+            if (!$user || !password_verify($putData['current_password'], $user['password'])) {
+                throw new Exception('Current password is incorrect');
             }
+
+            // Validate new password
+            $newPassword = $putData['new_password'] ?? '';
+            if (strlen($newPassword) < 6) {
+                throw new Exception('New password must be at least 6 characters long');
+            }
+
+            // Hash new password
+            $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+
+            // Update password
+            $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $stmt->execute([$hashedPassword, $userId]);
+            break;
+
+        case 'notifications':
+            $stmt = $pdo->prepare("
+                UPDATE expert_profiles 
+                SET 
+                    notify_booking_email = :booking,
+                    notify_payment_email = :payment,
+                    notify_reminder_email = :reminder,
+                    notify_marketing_email = :marketing,
+                    notify_urgent_sms = :sms
+                WHERE user_id = :user_id
+            ");
+            $stmt->execute([
+                ':booking' => $putData['notify_booking_email'] ?? false,
+                ':payment' => $putData['notify_payment_email'] ?? false,
+                ':reminder' => $putData['notify_reminder_email'] ?? false,
+                ':marketing' => $putData['notify_marketing_email'] ?? false,
+                ':sms' => $putData['notify_urgent_sms'] ?? false,
+                ':user_id' => $userId
+            ]);
+            break;
+
+        case 'privacy':
+            $stmt = $pdo->prepare("
+                UPDATE expert_profiles 
+                SET 
+                    show_in_search = :search,
+                    show_email = :email,
+                    accept_bookings = :bookings
+                WHERE user_id = :user_id
+            ");
+            $stmt->execute([
+                ':search' => $putData['show_in_search'] ?? false,
+                ':email' => $putData['show_email'] ?? false,
+                ':bookings' => $putData['accept_bookings'] ?? false,
+                ':user_id' => $userId
+            ]);
+            break;
+
+        case 'two_factor':
+            $stmt = $pdo->prepare("
+                UPDATE expert_profiles 
+                SET two_factor_enabled = :enabled 
+                WHERE user_id = :user_id
+            ");
+            $stmt->execute([
+                ':enabled' => $putData['enabled'] ?? false,
+                ':user_id' => $userId
+            ]);
             break;
 
         default:
-            http_response_code(405);
-            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+            throw new Exception('Invalid section');
     }
-} catch (PDOException $e) {
-    error_log("Settings API Error: " . $e->getMessage());
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => 'Server error occurred']);
+
+    // Commit transaction
+    $pdo->commit();
+
+    // Return success response
+    echo json_encode([
+        'success' => true,
+        'message' => ucfirst($section) . ' settings updated successfully'
+    ]);
+
+} catch (Exception $e) {
+    // Rollback transaction if needed
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
+
+    // Log the error
+    error_log('Settings Update Error: ' . $e->getMessage());
+    error_log('User ID: ' . $userId);
+    error_log('Section: ' . $section);
+    error_log('Request Data: ' . print_r($putData, true));
+    error_log('Full Trace: ' . $e->getTraceAsString());
+
+    // Return error response
+    http_response_code(400);
+    echo json_encode([
+        'success' => false,
+        'message' => $e->getMessage()
+    ]);
 }

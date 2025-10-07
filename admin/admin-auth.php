@@ -1,3 +1,17 @@
+<?php
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+// Include session configuration
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
+
+// Check if already logged in as admin
+if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
+    header('Location: ' . $BASE_PATH . '/index.php?panel=admin&page=dashboard');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,6 +19,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Login - Nexpert.ai</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -72,7 +87,7 @@
 
                 <!-- Back to Home -->
                 <div class="mt-6 text-center">
-                    <a href="/" class="text-sm text-primary hover:text-secondary">← Back to Homepage</a>
+                    <a href="<?php echo $BASE_PATH; ?>/index.php" class="text-sm text-primary hover:text-secondary">← Back to Homepage</a>
                 </div>
             </div>
 
@@ -84,30 +99,77 @@
     </div>
 
     <script>
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+
     document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         const email = document.getElementById('adminEmail').value;
         const password = document.getElementById('adminPassword').value;
         
+        // Disable submit button and show loading state
+        const submitButton = this.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.innerHTML = `
+            <span class="flex items-center justify-center">
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Signing In...
+            </span>
+        `;
+        
         try {
-            const response = await fetch('/admin-panel/apis/admin/auth.php', {
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/admin/auth.php`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
                 body: JSON.stringify({ email, password })
             });
             
             const result = await response.json();
             
+            // Restore button state
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Sign In to Admin Portal';
+            
             if (result.success) {
-                window.location.href = '?panel=admin&page=dashboard';
+                // Use SweetAlert for success notification
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Login Successful',
+                    text: 'Redirecting to Admin Dashboard...',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                
+                window.location.href = `${window.BASE_PATH}/index.php?panel=admin&page=dashboard`;
             } else {
-                alert(result.message || 'Invalid credentials');
+                // Use SweetAlert for error notification
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Login Failed',
+                    text: result.message || 'Invalid credentials',
+                    confirmButtonColor: '#3085d6'
+                });
             }
         } catch (error) {
             console.error('Login error:', error);
-            alert('Login failed. Please try again.');
+            
+            // Restore button state
+            submitButton.disabled = false;
+            submitButton.innerHTML = 'Sign In to Admin Portal';
+            
+            // Use SweetAlert for network/unexpected errors
+            Swal.fire({
+                icon: 'error',
+                title: 'Login Error',
+                text: 'Login failed. Please check your connection and try again.',
+                confirmButtonColor: '#3085d6'
+            });
         }
     });
     </script>

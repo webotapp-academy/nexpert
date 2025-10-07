@@ -1,10 +1,14 @@
 <?php
-require_once 'includes/admin-auth-check.php';
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/admin-auth-check.php';
 
 $page_title = "Expert Management - Admin";
 $panel_type = "admin";
-require_once 'includes/header.php';
-require_once 'includes/admin-sidebar.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/admin-sidebar.php';
 ?>
 
     <!-- Page Header -->
@@ -95,8 +99,10 @@ require_once 'includes/admin-sidebar.php';
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-let currentExpertId = null;
+// Set BASE_PATH globally
+window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
 
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -108,7 +114,7 @@ async function loadExperts() {
     const verificationStatus = document.getElementById('verification-filter').value;
     const accountStatus = document.getElementById('status-filter').value;
     
-    let url = '/admin-panel/apis/admin/experts.php?';
+    let url = `${window.BASE_PATH}/admin-panel/apis/admin/experts.php?`;
     if (verificationStatus) url += `verification_status=${verificationStatus}&`;
     if (accountStatus) url += `status=${accountStatus}`;
     
@@ -192,7 +198,7 @@ async function viewExpert(expertId) {
     currentExpertId = expertId;
     
     try {
-        const response = await window.AdminAPI.fetch(`/admin-panel/apis/admin/kyc.php?expert_id=${expertId}`);
+        const response = await window.AdminAPI.fetch(`${window.BASE_PATH}/admin-panel/apis/admin/kyc.php?expert_id=${expertId}`);
         const data = await response.json();
         
         if (data.success && data.data) {
@@ -349,7 +355,7 @@ async function updateVerification(status) {
     if (!currentExpertId) return;
     
     try {
-        const response = await window.AdminAPI.fetch('/admin-panel/apis/admin/experts.php?action=verify', {
+        const response = await window.AdminAPI.fetch(`${window.BASE_PATH}/admin-panel/apis/admin/experts.php?action=verify`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -379,7 +385,7 @@ async function editExpert(expertId) {
     currentExpertId = expertId;
     
     try {
-        const response = await window.AdminAPI.fetch(`/admin-panel/apis/admin/experts.php?expert_id=${expertId}`);
+        const response = await window.AdminAPI.fetch(`${window.BASE_PATH}/admin-panel/apis/admin/experts.php?expert_id=${expertId}`);
         const data = await response.json();
         
         if (data.success) {
@@ -463,7 +469,7 @@ async function saveExpertProfile() {
     }
     
     try {
-        const response = await window.AdminAPI.fetch('/admin-panel/apis/admin/kyc.php', {
+        const response = await window.AdminAPI.fetch(`${window.BASE_PATH}/admin-panel/apis/admin/kyc.php`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -506,7 +512,7 @@ async function deleteExpert(expertId) {
     }
     
     try {
-        const response = await window.AdminAPI.fetch('/admin-panel/apis/admin/experts.php', {
+        const response = await window.AdminAPI.fetch(`${window.BASE_PATH}/admin-panel/apis/admin/experts.php`, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ expert_id: expertId })
@@ -529,5 +535,5 @@ async function deleteExpert(expertId) {
 loadExperts();
 </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
 </div> <!-- Close admin-sidebar main content div -->

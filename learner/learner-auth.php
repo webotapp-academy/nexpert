@@ -1,10 +1,14 @@
 <?php
-require_once "<?php echo BASE_PATH; ?>/includes/session-config.php";
+// Define BASE_PATH
+$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
+$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
 
 $page_title = "Learner Auth - Nexpert.ai";
 $panel_type = "learner";
-require_once "<?php echo BASE_PATH; ?>/includes/header.php";
-require_once "<?php echo BASE_PATH; ?>/includes/navigation.php";
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 ?>
 
     <div class="min-h-screen flex">
@@ -202,6 +206,9 @@ require_once "<?php echo BASE_PATH; ?>/includes/navigation.php";
         }
     }
 
+    // Set BASE_PATH globally
+    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+
     // Sign In Form Handler
     document.getElementById('signInForm').addEventListener('submit', async function(e) {
         e.preventDefault();
@@ -220,7 +227,7 @@ require_once "<?php echo BASE_PATH; ?>/includes/navigation.php";
         }
         
         try {
-            const response = await fetch('/admin-panel/apis/learner/auth.php', {
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/auth.php`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -243,7 +250,7 @@ require_once "<?php echo BASE_PATH; ?>/includes/navigation.php";
                     showConfirmButton: false
                 });
                 // Check if there's a redirect URL, otherwise go to dashboard
-                const redirectUrl = result.redirect_url || '?panel=learner&page=dashboard';
+                const redirectUrl = result.redirect_url || `${window.BASE_PATH}/index.php?panel=learner&page=dashboard`;
                 window.location.href = redirectUrl;
             } else {
                 Swal.fire({
@@ -316,7 +323,7 @@ require_once "<?php echo BASE_PATH; ?>/includes/navigation.php";
         spinner.classList.remove('hidden');
         
         try {
-            const response = await fetch('/admin-panel/apis/learner/register.php', {
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/register.php`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -340,7 +347,7 @@ require_once "<?php echo BASE_PATH; ?>/includes/navigation.php";
                     timer: 2000
                 });
                 // Check if there's a redirect URL, otherwise go to dashboard
-                const redirectUrl = result.redirect_url || '?panel=learner&page=dashboard';
+                const redirectUrl = result.redirect_url || `${window.BASE_PATH}/index.php?panel=learner&page=dashboard`;
                 window.location.href = redirectUrl;
             } else {
                 Swal.fire({
@@ -446,4 +453,4 @@ require_once "<?php echo BASE_PATH; ?>/includes/navigation.php";
     }
     </script>
 
-<?php require_once 'includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
