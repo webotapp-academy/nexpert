@@ -1,26 +1,18 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// For online deployment, set BASE_PATH to empty for root directory
+$BASE_PATH = '';
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
+require_once dirname(__DIR__) . '/includes/session-config.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
-    // Prevent redirect loop by checking current page
-    $currentPage = $_SERVER['REQUEST_URI'];
-    $authPage = $BASE_PATH . '/index.php?panel=expert&page=auth';
-    $settingsPage = $BASE_PATH . '/index.php?panel=expert&page=settings';
-    
-    if ($currentPage !== $authPage && $currentPage !== $settingsPage) {
-        // Save the current URL to redirect back after login
-        $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-        header('Location: ' . $authPage);
-        exit;
-    }
+    // Save the current URL to redirect back after login
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    exit;
 }
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
 
 // Get user_id from session
 $userId = $_SESSION['user_id'] ?? null;
@@ -158,8 +150,8 @@ function getVerificationMessage($status) {
 $page_title = "Expert Settings - Nexpert.ai";
 $panel_type = "expert";
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 ?>
 
     <div class="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-8">
@@ -232,7 +224,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                 <div id="content-profile" class="tab-content bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8">
                     <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Profile Information</h2>
                     
-                    <form id="profileForm">
+                    <form id="profileForm" onsubmit="return false;" method="post" action="javascript:void(0);">
                         <!-- Profile Photo -->
                         <div class="flex flex-col sm:flex-row items-center sm:space-x-6 mb-6 pb-6 border-b space-y-4 sm:space-y-0">
                             <div id="profilePhotoPreview" class="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 flex items-center justify-center text-gray-400 overflow-hidden">
@@ -984,7 +976,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                     };
                     
                     // Send data via fetch
-                    fetch(`${window.BASE_PATH}/admin-panel/apis/expert/update-pricing.php`, {
+                    fetch(`admin-panel/apis/expert/update-pricing.php`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
@@ -1011,7 +1003,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                             });
                             
                             // Reload pricing data
-                            return fetch(`${window.BASE_PATH}/admin-panel/apis/expert/get-pricing.php`);
+                            return fetch(`admin-panel/apis/expert/get-pricing.php`);
                         } else {
                             throw new Error(result.message || 'Failed to add pricing tier');
                         }
@@ -1067,7 +1059,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
             }).then(async (result) => {
                 if (result.isConfirmed) {
                     try {
-                        const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/expert/delete-pricing.php`, {
+                        const response = await fetch(`admin-panel/apis/expert/delete-pricing.php`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -1090,7 +1082,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                             });
                             
                             // Reload pricing data
-                            const pricingResponse = await fetch(`${window.BASE_PATH}/admin-panel/apis/expert/get-pricing.php`);
+                            const pricingResponse = await fetch(`admin-panel/apis/expert/get-pricing.php`);
                             const pricingData = await pricingResponse.json();
 
                             if (pricingData.success) {
@@ -1172,4 +1164,4 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
     }
 </style>
 
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>

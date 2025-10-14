@@ -1,15 +1,16 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// Use centralized session + config (defines BASE_PATH & BASE_URL constants)
+require_once dirname(__DIR__) . '/includes/session-config.php';
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
+// For backward compatibility keep a local variable used in the markup
+// but ensure it always points to application root (not current directory)
+$BASE_PATH = BASE_PATH; // e.g. /nexpert
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
     // Prevent redirect loop by checking current page
     $currentPage = $_SERVER['REQUEST_URI'];
-    $authPage = $BASE_PATH . '/index.php?panel=expert&page=auth';
+    $authPage = BASE_PATH . '/index.php?panel=expert&page=auth';
     
     if ($currentPage !== $authPage) {
         // Save the current URL to redirect back after login
@@ -21,13 +22,13 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
 
 $page_title = "Expert Authentication - Nexpert.ai";
 $panel_type = "expert";
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 ?>
 
 <script>
-    // Set BASE_PATH globally
-    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    // Set BASE_PATH (application root) globally for JS
+    window.BASE_PATH = '<?php echo BASE_PATH; ?>';
 
     // Utility function to resolve image paths
     function resolveImagePath(imagePath) {
@@ -277,6 +278,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
             
             const result = await response.json();
             
+            console.log('[Expert Login] Raw response:', result);
             if (result.success) {
                 // Successful login
                 await Swal.fire({
@@ -289,11 +291,14 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                 });
                 
                 // Check if expert needs to complete KYC
+                let target;
                 if (result.user.verification_status === 'pending' || !result.user.verification_status) {
-                    window.location.href = window.BASE_PATH + '?panel=expert&page=kyc';
+                    target = window.BASE_PATH + '/index.php?panel=expert&page=kyc';
                 } else {
-                    window.location.href = window.BASE_PATH + '?panel=expert&page=dashboard';
+                    target = window.BASE_PATH + '/index.php?panel=expert&page=dashboard';
                 }
+                console.log('[Expert Login] Redirecting to:', target, 'BASE_PATH:', window.BASE_PATH, 'verification_status:', result.user.verification_status);
+                window.location.href = target;
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -301,6 +306,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                     text: result.message,
                     confirmButtonColor: '#F59E0B'
                 });
+                console.warn('[Expert Login] Failure message:', result.message);
             }
         } catch (error) {
             console.error('Error:', error);
@@ -494,4 +500,4 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
     }
     </script>
 
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>

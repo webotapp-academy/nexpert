@@ -21,8 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Include necessary files
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
@@ -42,6 +42,9 @@ try {
     // Ensure PUT method is used
     if ($_SERVER['REQUEST_METHOD'] !== 'PUT') {
         error_log('Invalid request method: ' . $_SERVER['REQUEST_METHOD']);
+        error_log('Request Headers: ' . print_r(getallheaders(), true));
+        error_log('Request Body: ' . file_get_contents('php://input'));
+        
         http_response_code(405);
         throw new Exception('Method Not Allowed');
     }
@@ -51,6 +54,7 @@ try {
     
     if (!$putData) {
         error_log('Invalid or empty request data');
+        error_log('Raw input: ' . file_get_contents('php://input'));
         throw new Exception('Invalid request data');
     }
 
@@ -71,6 +75,7 @@ try {
     
     if (!$section || !in_array($section, $validSections)) {
         error_log('Invalid section: ' . ($section ?? 'NULL'));
+        error_log('Valid sections: ' . implode(', ', $validSections));
         throw new Exception('Invalid section');
     }
 
@@ -80,15 +85,19 @@ try {
     // Handle different sections
     switch ($section) {
         case 'profile':
+            // Update both expert_profiles and users tables
             $stmt = $pdo->prepare("
-                UPDATE expert_profiles 
+                UPDATE expert_profiles ep
+                JOIN users u ON u.id = ep.user_id
                 SET 
-                    full_name = :full_name, 
-                    tagline = :tagline, 
-                    bio_full = :bio_full, 
-                    timezone = :timezone, 
-                    experience_years = :experience_years
-                WHERE user_id = :user_id
+                    ep.full_name = :full_name, 
+                    ep.tagline = :tagline, 
+                    ep.bio_full = :bio_full, 
+                    ep.timezone = :timezone, 
+                    ep.experience_years = :experience_years,
+                    u.email = :email,
+                    u.phone = :phone
+                WHERE ep.user_id = :user_id
             ");
             $result = $stmt->execute([
                 ':full_name' => $putData['full_name'] ?? '',
@@ -96,6 +105,8 @@ try {
                 ':bio_full' => $putData['bio_full'] ?? '',
                 ':timezone' => $putData['timezone'] ?? 'UTC',
                 ':experience_years' => $putData['experience_years'] ?? null,
+                ':email' => $putData['email'] ?? '',
+                ':phone' => $putData['phone'] ?? '',
                 ':user_id' => $userId
             ]);
 
@@ -220,17 +231,26 @@ try {
         $pdo->rollBack();
     }
 
-    // Log the error
+    // Detailed error logging
     error_log('Settings Update Error: ' . $e->getMessage());
-    error_log('User ID: ' . $userId);
-    error_log('Section: ' . $section);
-    error_log('Request Data: ' . print_r($putData, true));
+    error_log('User ID: ' . ($userId ?? 'Not Set'));
+    error_log('Section: ' . ($section ?? 'Not Set'));
+    error_log('Request Data: ' . print_r($putData ?? [], true));
     error_log('Full Trace: ' . $e->getTraceAsString());
+
+    // Log server environment details
+    error_log('Request Method: ' . ($_SERVER['REQUEST_METHOD'] ?? 'Not Set'));
+    error_log('Request URI: ' . ($_SERVER['REQUEST_URI'] ?? 'Not Set'));
+    error_log('Server Protocol: ' . ($_SERVER['SERVER_PROTOCOL'] ?? 'Not Set'));
 
     // Return error response
     http_response_code(400);
     echo json_encode([
         'success' => false,
-        'message' => $e->getMessage()
+        'message' => $e->getMessage(),
+        'details' => [
+            'section' => $section ?? 'unknown',
+            'user_id' => $userId ?? 'unknown'
+        ]
     ]);
 }

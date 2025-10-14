@@ -1,22 +1,22 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// Include session configuration and path setup
+require_once dirname(__DIR__) . '/includes/session-config.php';
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+// Use the BASE_PATH constant from session-config
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
     // Save the current URL to redirect back after login
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    header('Location: ' . BASE_PATH . '/index.php?panel=expert&page=auth');
     exit;
 }
 
 $page_title = "Booking Management - Nexpert.ai";
 $panel_type = "expert";
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
 // Get expert profile ID
 $userId = $_SESSION['user_id'] ?? null;
@@ -44,14 +44,17 @@ $thisMonthEarnings = 0;
 $bookings = [];
 $totalBookings = 0;
 
-if ($expertProfileId) {
-    // Get booking stats
+if ($expertProfileId && $userId) {
+    // DEBUG: Let's see what expert profile ID we're using
+    echo "<!-- DEBUG: Expert Profile ID: " . $expertProfileId . ", User ID: " . $userId . " -->";
+    
+    // Get booking stats - expert_id in bookings table refers to users.id, not expert_profiles.id
     $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM bookings WHERE expert_id = ? AND status = 'pending'");
-    $stmt->execute([$expertProfileId]);
+    $stmt->execute([$userId]); // Use userId instead of expertProfileId
     $pendingCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
     
     $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM bookings WHERE expert_id = ? AND status = 'confirmed'");
-    $stmt->execute([$expertProfileId]);
+    $stmt->execute([$userId]);
     $confirmedCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
     
     $stmt = $pdo->prepare("
@@ -60,7 +63,7 @@ if ($expertProfileId) {
         AND WEEK(session_datetime) = WEEK(CURRENT_DATE())
         AND YEAR(session_datetime) = YEAR(CURRENT_DATE())
     ");
-    $stmt->execute([$expertProfileId]);
+    $stmt->execute([$userId]);
     $thisWeekCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
     
     $stmt = $pdo->prepare("
@@ -71,28 +74,33 @@ if ($expertProfileId) {
         AND MONTH(b.session_datetime) = MONTH(CURRENT_DATE())
         AND YEAR(b.session_datetime) = YEAR(CURRENT_DATE())
     ");
-    $stmt->execute([$expertProfileId]);
+    $stmt->execute([$userId]);
     $thisMonthEarnings = $stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
     
-    // Get total count for pagination
-    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM bookings WHERE expert_id = ?");
-    $stmt->execute([$expertProfileId]);
+    // Get total count for pagination (only confirmed bookings)
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM bookings WHERE expert_id = ? AND status = 'confirmed'");
+    $stmt->execute([$userId]);
     $totalBookings = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
     
-    // Get bookings with learner info
+    // Get bookings with learner info (only confirmed bookings)
     $stmt = $pdo->prepare("
-        SELECT b.*, lp.full_name as learner_name, u.email as learner_email, 
-               lp.id as learner_profile_id, p.amount, p.status as payment_status
+        SELECT b.*, 
+               lp.full_name as learner_name, u.email as learner_email, 
+               lp.id as learner_profile_id, lp.profile_photo as learner_photo,
+               p.amount, p.status as payment_status
         FROM bookings b
         LEFT JOIN learner_profiles lp ON b.learner_id = lp.id
         LEFT JOIN users u ON lp.user_id = u.id
         LEFT JOIN payments p ON b.id = p.booking_id
-        WHERE b.expert_id = ?
+        WHERE b.expert_id = ? AND b.status = 'confirmed'
         ORDER BY b.session_datetime DESC
         LIMIT ? OFFSET ?
     ");
-    $stmt->execute([$expertProfileId, $limit, $offset]);
+    $stmt->execute([$userId, $limit, $offset]);
     $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // DEBUG: Let's see how many bookings we found
+    echo "<!-- DEBUG: Found " . count($bookings) . " bookings for user ID " . $userId . " -->";
 }
 
 $totalPages = ceil($totalBookings / $limit);
@@ -118,6 +126,8 @@ $totalPages = ceil($totalBookings / $limit);
 
         <!-- Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+            <!-- Pending Requests Card - Hidden as we only show confirmed bookings -->
+            <!-- 
             <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
                 <div class="flex items-center">
                     <div class="p-2 sm:p-3 bg-yellow-500 rounded-full">
@@ -131,6 +141,7 @@ $totalPages = ceil($totalBookings / $limit);
                     </div>
                 </div>
             </div>
+            -->
             <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
                 <div class="flex items-center">
                     <div class="p-2 sm:p-3 bg-green-500 rounded-full">
@@ -221,8 +232,8 @@ $totalPages = ceil($totalBookings / $limit);
                 <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-3">
                     <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Recent Bookings</h2>
                     <div class="flex gap-2">
-                        <button class="px-4 py-3 bg-accent text-white rounded text-sm">Pending</button>
-                        <button class="px-4 py-3 bg-gray-200 text-gray-700 rounded text-sm">All Bookings</button>
+                        <button class="px-4 py-3 bg-accent text-white rounded text-sm">Confirmed</button>
+                        <!-- <button class="px-4 py-3 bg-gray-200 text-gray-700 rounded text-sm">All Bookings</button> -->
                     </div>
                 </div>
             </div>
@@ -264,9 +275,23 @@ $totalPages = ceil($totalBookings / $limit);
                             <tr class="border-b border-gray-100 hover:bg-gray-50">
                                 <td class="py-4 px-6">
                                     <div class="flex items-center">
-                                        <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                                            <span class="text-gray-600 font-semibold"><?php echo strtoupper(substr($booking['learner_name'] ?? 'U', 0, 1)); ?></span>
-                                        </div>
+                                        <?php 
+                                        $learnerPhotoPath = $booking['learner_photo'] ?? '';
+                                        if ($learnerPhotoPath && file_exists($_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/' . $learnerPhotoPath)) {
+                                            $learnerImageSrc = BASE_PATH . '/' . $learnerPhotoPath;
+                                        } else {
+                                            $learnerImageSrc = '';
+                                        }
+                                        ?>
+                                        <?php if ($learnerImageSrc): ?>
+                                            <img src="<?php echo htmlspecialchars($learnerImageSrc); ?>" 
+                                                 alt="<?php echo htmlspecialchars($booking['learner_name'] ?? 'Learner'); ?>" 
+                                                 class="w-10 h-10 rounded-full mr-3 object-cover">
+                                        <?php else: ?>
+                                            <div class="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                                                <span class="text-gray-600 font-semibold"><?php echo strtoupper(substr($booking['learner_name'] ?? 'U', 0, 1)); ?></span>
+                                            </div>
+                                        <?php endif; ?>
                                         <div>
                                             <p class="font-medium text-gray-900"><?php echo htmlspecialchars($booking['learner_name'] ?? 'Unknown'); ?></p>
                                             <p class="text-gray-600 text-sm"><?php echo htmlspecialchars($booking['learner_email'] ?? ''); ?></p>
@@ -293,10 +318,7 @@ $totalPages = ceil($totalBookings / $limit);
                                 </td>
                                 <td class="py-4 px-6">
                                     <div class="flex flex-wrap gap-2">
-                                        <?php if ($booking['status'] === 'pending'): ?>
-                                            <button class="bg-green-600 text-white px-4 py-3 rounded text-sm hover:bg-green-700 transition">Approve</button>
-                                            <button class="bg-red-600 text-white px-4 py-3 rounded text-sm hover:bg-red-700 transition">Reject</button>
-                                        <?php elseif ($booking['status'] === 'confirmed'): ?>
+                                        <?php if ($booking['status'] === 'confirmed'): ?>
                                             <button class="bg-primary text-white px-4 py-3 rounded text-sm hover:bg-secondary transition">Join Session</button>
                                         <?php elseif ($booking['status'] === 'completed'): ?>
                                             <button class="bg-gray-500 text-white px-4 py-3 rounded text-sm">View Details</button>
@@ -351,6 +373,13 @@ $totalPages = ceil($totalBookings / $limit);
     // Set BASE_PATH globally
     window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
 
+    // Escape HTML to prevent XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     // Utility function to resolve image paths
     function resolveImagePath(imagePath) {
         // If it's a full URL or a data URI, return as-is
@@ -377,4 +406,4 @@ $totalPages = ceil($totalBookings / $limit);
     });
 </script>
 
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>

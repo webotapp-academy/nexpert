@@ -1,22 +1,25 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// Central session + config (defines BASE_PATH / BASE_URL and starts session)
+require_once dirname(__DIR__) . '/includes/session-config.php';
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+// DB connection
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
+
+// Local helper variable for templates
+$BASE_PATH = BASE_PATH; // consistent root path
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
     // Save the current URL to redirect back after login
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    header('Location: ' . BASE_PATH . '/index.php?panel=expert&page=auth');
     exit;
 }
 
 $page_title = "Expert Dashboard - Nexpert.ai";
 $panel_type = "expert";
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
 // Check onboarding steps completion
 $userId = $_SESSION['user_id'] ?? null;
@@ -315,4 +318,4 @@ if ($expertProfileId) {
     }
 </script>
 
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>

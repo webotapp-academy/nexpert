@@ -16,8 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Include necessary files
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
 
 // Log incoming request
 error_log('Incoming Request Method: ' . $_SERVER['REQUEST_METHOD']);

@@ -4,7 +4,7 @@ $BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/'
 $BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
 
 // Include session configuration
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
+require_once dirname(__DIR__) . '/includes/session-config.php';
 
 // Check if already logged in as admin
 if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {

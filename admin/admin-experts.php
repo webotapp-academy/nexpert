@@ -3,12 +3,12 @@
 $BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
 $BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/admin-auth-check.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/admin-auth-check.php';
 
 $page_title = "Expert Management - Admin";
 $panel_type = "admin";
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/admin-sidebar.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/admin-sidebar.php';
 ?>
 
     <!-- Page Header -->
@@ -535,5 +535,5 @@ async function deleteExpert(expertId) {
 loadExperts();
 </script>
 
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>
 </div> <!-- Close admin-sidebar main content div -->

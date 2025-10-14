@@ -1,5 +1,6 @@
 <?php
-session_start();
+// Use centralized session configuration to ensure cookie params match front-end pages
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php';
 header('Content-Type: application/json');
 require_once __DIR__ . '/../connection/pdo.php';
 

@@ -1,6 +1,10 @@
 <?php
 $page_title = "Browse Experts - Nexpert.ai";
 $panel_type = "learner";
+
+// For online deployment, set BASE_PATH to empty for root directory
+$BASE_PATH = '';
+
 require_once 'includes/header.php';
 require_once 'includes/navigation.php';
 ?>

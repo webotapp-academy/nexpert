@@ -19,12 +19,12 @@ $isHttps = (
     (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443)
 );
 
-// Set secure session cookie params
+// Set secure session cookie params for localhost
 session_set_cookie_params([
-    'lifetime' => 3600, // 1 hour
-    'path' => '/',
+    'lifetime' => 7200, // 2 hours for development  
+    'path' => BASE_PATH . '/',
     'domain' => '',
-    'secure' => $isHttps,
+    'secure' => false, // HTTP for localhost
     'httponly' => true,
     'samesite' => 'Lax'
 ]);

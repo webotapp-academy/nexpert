@@ -1,8 +1,7 @@
 <?php
 header('Content-Type: application/json');
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php';
 require_once __DIR__ . '/../connection/pdo.php';
-
-session_start();
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -135,7 +134,7 @@ try {
                 $photo = preg_replace('/^uploads\/profiles\//', '', $photo);
                 
                 // Check if the file exists
-                $full_path = $_SERVER['DOCUMENT_ROOT'] . '/nexpert/uploads/profiles/' . $photo;
+                $full_path = $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/uploads/profiles/' . $photo;
                 
                 if (file_exists($full_path)) {
                     $expert['profile_photo'] = 'uploads/profiles/' . $photo;

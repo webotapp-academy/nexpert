@@ -1,9 +1,10 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// Include session configuration and path setup
+require_once dirname(__DIR__) . '/includes/session-config.php';
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
+// For backward compatibility keep a local variable used in the markup
+// but ensure it always points to application root (not current directory)
+$BASE_PATH = BASE_PATH; // e.g. /nexpert
 
 // Check if user is logged in as learner
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
@@ -15,8 +16,8 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
 
 $page_title = "Dashboard - Nexpert.ai";
 $panel_type = "learner";
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 ?>
     <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Header -->
@@ -153,6 +154,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 <script>
     // Set BASE_PATH globally
     window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    console.log('Dashboard BASE_PATH detected as:', window.BASE_PATH);
 
     // Escape HTML to prevent XSS
     function escapeHtml(text) {
@@ -182,8 +184,17 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 
     document.addEventListener('DOMContentLoaded', async function() {
         try {
+            console.log('Loading dashboard data from:', `${window.BASE_PATH}/admin-panel/apis/learner/dashboard.php`);
             const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/dashboard.php`);
+            console.log('Dashboard response status:', response.status);
+            console.log('Dashboard response ok:', response.ok);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const result = await response.json();
+            console.log('Dashboard result:', result);
             
             if (result.success) {
                 const data = result.data;
@@ -212,6 +223,13 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                             minute: '2-digit',
                             hour12: true
                         });
+                        // Determine if session is joinable (confirmed and within join window)
+                        const now = new Date();
+                        const startTime = sessionDate;
+                        // Allow join 10 minutes before start
+                        const joinOpenTime = new Date(startTime.getTime() - 10 * 60000);
+                        const canJoin = session.status === 'confirmed' && now >= joinOpenTime;
+                        const joinUrl = `${window.BASE_PATH}/learner/learner-session-execution.php?booking_id=${encodeURIComponent(session.id)}`;
                         
                         return `
                             <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition">
@@ -233,11 +251,20 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                                     </div>
                                     <div class="flex space-x-2">
                                         <span class="px-3 py-1 ${session.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'} text-sm rounded">${escapeHtml(session.status)}</span>
+                                        ${session.status === 'confirmed' ? `<button ${canJoin ? '' : 'disabled'} data-join-url="${joinUrl}" data-booking-id="${session.id}" class="join-session-btn px-3 py-1 text-sm rounded bg-primary text-white hover:bg-secondary disabled:opacity-50 disabled:cursor-not-allowed">${canJoin ? 'Join' : 'Join Soon'}</button>` : ''}
                                     </div>
                                 </div>
                             </div>
                         `;
                     }).join('');
+                    // Attach event listeners for join buttons
+                    document.querySelectorAll('.join-session-btn').forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            const url = e.currentTarget.getAttribute('data-join-url');
+                            if (!url || e.currentTarget.disabled) return;
+                            window.location.href = url;
+                        });
+                    });
                 }
                 
                 // Render recent activity
@@ -333,4 +360,4 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
     }
 </script>
 
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>

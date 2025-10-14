@@ -11,9 +11,11 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 
     try {
+        console.log('Loading expert profile from:', BASE_PATH + `/admin-panel/apis/learner/expert-profile.php?expert_id=${expertId}`);
         const response = await fetch(BASE_PATH + `/admin-panel/apis/learner/expert-profile.php?expert_id=${expertId}`);
         
-        console.log('Response status:', response.status);
+        console.log('Expert Profile response status:', response.status);
+        console.log('Expert Profile response ok:', response.ok);
         
         if (!response.ok) {
             throw new Error('Failed to fetch expert profile');
@@ -76,7 +78,7 @@ function resolveImagePath(imagePath) {
 function renderExpertProfile(expert) {
     document.getElementById('expert-name').textContent = expert.name || 'Expert';
     document.getElementById('expert-title').textContent = expert.professional_title || 'Expert';
-    document.getElementById('expert-location').textContent = expert.location || 'Available worldwide';
+    document.getElementById('expert-location').textContent = expert.location || 'Chicago, IL';
     
     const rating = Math.max(0, Math.min(5, Math.floor(Number(expert.avg_rating) || 0)));
     const ratingStars = '★'.repeat(rating) + '☆'.repeat(5 - rating);
@@ -86,9 +88,10 @@ function renderExpertProfile(expert) {
     
     const skills = Array.isArray(expert.skills) ? expert.skills : (typeof expert.skills === 'string' ? expert.skills.split(',').map(s => s.trim()) : []);
     const skillsContainer = document.getElementById('expert-skills');
+    // Light theme soft pills
     skillsContainer.innerHTML = skills.length > 0 
-        ? skills.map(skill => `<span class="px-4 py-2 bg-white/20 backdrop-blur-sm text-white text-sm rounded-full border border-white/30">${escapeHtml(skill)}</span>`).join('')
-        : '<span class="text-white/60 text-sm">No skills listed</span>';
+        ? skills.map(skill => `<span class="px-4 py-2 bg-gray-100 text-gray-800 text-sm rounded-full ring-1 ring-gray-200">${escapeHtml(skill)}</span>`).join('')
+        : '<span class="text-gray-500 text-sm">No skills listed</span>';
     
     document.getElementById('expert-hourly-rate').textContent = `₹${Number(expert.hourly_rate) || 0}`;
     
@@ -96,7 +99,10 @@ function renderExpertProfile(expert) {
     bioElement.textContent = expert.bio || 'No bio available.';
     
     document.getElementById('expert-total-sessions').textContent = Number(expert.total_sessions) || 0;
-    document.getElementById('expert-experience-years').textContent = Number(expert.experience_years) || 0;
+    const years = Number(expert.experience_years) || 0;
+    document.getElementById('expert-experience-years').textContent = years;
+    const expHeaderEl = document.getElementById('expert-experience-header');
+    if (expHeaderEl) expHeaderEl.textContent = `${years} years`;
     document.getElementById('expert-total-reviews').textContent = Number(expert.review_count) || 0;
     
     const photoContainer = document.getElementById('expert-photo');
@@ -107,6 +113,7 @@ function renderExpertProfile(expert) {
     photoContainer.innerHTML = '';
     photoContainer.appendChild(img);
     
+    const BASE_PATH = window.BASE_PATH || '';
     if (expert.id) {
         document.getElementById('book-session-btn').href = `${BASE_PATH}/index.php?panel=learner&page=booking&expert_id=${expert.id}`;
         const sidebarBookBtn = document.getElementById('sidebar-book-btn');

@@ -1,8 +1,7 @@
 <?php
 header('Content-Type: application/json');
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php';
 require_once __DIR__ . '/../connection/pdo.php';
-
-session_start();
 
 $method = $_SERVER['REQUEST_METHOD'];
 

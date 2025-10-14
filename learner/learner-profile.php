@@ -1,9 +1,9 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+require_once dirname(__DIR__) . '/includes/session-config.php';
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
+// For backward compatibility keep a local variable used in the markup
+// but ensure it always points to application root (not current directory)
+$BASE_PATH = BASE_PATH; // e.g. /nexpert
 
 // Check if user is logged in as learner
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
@@ -15,8 +15,8 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
 
 $page_title = "Profile - Nexpert.ai";
 $panel_type = "learner";
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 ?>
     <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Header -->
@@ -115,8 +115,24 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
     // Load profile data
     async function loadProfile() {
         try {
-            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/profile.php`);
+            console.log('Loading profile from:', `${window.BASE_PATH}/admin-panel/apis/learner/profile.php`);
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/profile.php`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache'
+                },
+                credentials: 'include'
+            });
+            console.log('Profile response status:', response.status);
+            console.log('Profile response ok:', response.ok);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const result = await response.json();
+            console.log('Profile result:', result);
             
             if (result.success) {
                 profileData = result.profile;
@@ -147,12 +163,25 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
         const file = e.target.files[0];
         if (!file) return;
         
+        // Validate file size
+        if (file.size > 10 * 1024 * 1024) { // 10MB
+            alert('File size must be less than 10MB');
+            return;
+        }
+        
+        // Validate file type
+        if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
+            alert('Only JPG and PNG files are allowed');
+            return;
+        }
+        
         const formData = new FormData();
         formData.append('profile_photo', file);
         
         try {
             const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/profile.php`, {
                 method: 'POST',
+                credentials: 'include',
                 body: formData
             });
             
@@ -171,6 +200,12 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
     });
 
     // Handle form submission
+    // Initialize profile loading
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded, loading profile...');
+        loadProfile();
+    });
+
     document.getElementById('profile-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         
@@ -185,8 +220,11 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
             const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/profile.php`, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'Cache-Control': 'no-cache'
                 },
+                credentials: 'include',
                 body: JSON.stringify(formData)
             });
             
@@ -208,4 +246,4 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
     loadProfile();
 </script>
 
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>

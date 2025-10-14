@@ -6,14 +6,20 @@ require_once __DIR__ . '/../../../includes/session-config.php';
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
+    error_log("Auth API - Request Method: " . $method);
+    error_log("Auth API - POST data: " . file_get_contents('php://input'));
+    
     if ($method === 'POST') {
         // Login
         $input = json_decode(file_get_contents('php://input'), true);
+        
+        error_log("Auth API - Parsed input: " . print_r($input, true));
         
         $email = $input['email'] ?? '';
         $password = $input['password'] ?? '';
         
         if (empty($email) || empty($password)) {
+            error_log("Auth API - Missing email or password");
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Email and password are required']);
             exit;
@@ -26,7 +32,10 @@ try {
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
         
+        error_log("Auth API - User found: " . ($user ? "Yes" : "No"));
+        
         if (!$user || !password_verify($password, $user['password_hash'])) {
+            error_log("Auth API - Invalid credentials");
             http_response_code(401);
             echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
             exit;
@@ -44,6 +53,9 @@ try {
         $_SESSION['role'] = $user['role'];
         $_SESSION['email'] = $user['email'];
         $_SESSION['full_name'] = $user['full_name'];
+        
+        error_log("Auth API - Session created for user ID: " . $user['id']);
+        error_log("Auth API - Session data: " . print_r($_SESSION, true));
         
         // Update last login
         $updateStmt = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE id = ?");

@@ -30,8 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Include necessary files
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
@@ -72,7 +72,7 @@ try {
     }
 
     // Create uploads directory if it doesn't exist
-    $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/nexpert/uploads/profiles/';
+    $uploadDir = $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/uploads/profiles/';
     if (!is_dir($uploadDir)) {
         if (!mkdir($uploadDir, 0755, true)) {
             error_log('Failed to create upload directory');
@@ -117,7 +117,7 @@ try {
     }
 
     // Return full path for immediate use
-    $fullPath = '/nexpert/uploads/profiles/' . $filename;
+    $fullPath = BASE_PATH . '/uploads/profiles/' . $filename;
     error_log('Returned photo URL: ' . $fullPath);
 
     // Return success response

@@ -2,12 +2,12 @@
 (function() {
     'use strict';
 
-    // Ensure BASE_PATH is defined
-    const BASE_PATH = window.BASE_PATH || '';
+    // Use relative paths for online deployment
+    const BASE_PATH = '';
     console.log('Expert Settings JS: BASE_PATH =', BASE_PATH);
 
     // Default profile photo
-    const DEFAULT_PROFILE_PHOTO = `${BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+    const DEFAULT_PROFILE_PHOTO = `attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
 
     // Utility function to show toast notifications
     function showToast(message, type = 'success') {
@@ -106,7 +106,7 @@
             const profilePhotoImg = profilePhotoPreview ? profilePhotoPreview.querySelector('img') : null;
 
             console.log('Fetching profile data...');
-            const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/profile-data.php`, {
+            const response = await fetch(`admin-panel/apis/expert/profile-data.php`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
@@ -207,7 +207,7 @@
         const formData = new FormData();
         formData.append('profile_photo', file);
 
-        fetch(`${BASE_PATH}/admin-panel/apis/expert/upload-photo.php`, {
+        fetch(`admin-panel/apis/expert/upload-photo.php`, {
             method: 'POST',
             body: formData
         })
@@ -307,46 +307,89 @@
     // Profile form submission
     const profileForm = document.getElementById('profileForm');
     if (profileForm) {
-        profileForm.addEventListener('submit', async function(e) {
+        // Prevent default form submission
+        profileForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            
-            const formData = {
-                section: 'profile',
-                full_name: this.querySelector('input[name="full_name"]')?.value || '',
-                tagline: this.querySelector('input[name="tagline"]')?.value || '',
-                bio_full: this.querySelector('textarea[name="bio_full"]')?.value || '',
-                timezone: this.querySelector('input[name="timezone"]')?.value || 'UTC',
-                experience_years: this.querySelector('select[name="experience_years"]')?.value || null
-            };
-
-            console.log('Profile Form Submission Data:', formData);
-
-            try {
-                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/settings.php`, {
-                    method: 'PUT',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    body: JSON.stringify(formData)
-                });
-
-                console.log('Response status:', response.status);
-                console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-
-                const result = await response.json();
-                console.log('Response result:', result);
-                
-                if (result.success) {
-                    showToast(result.message);
-                } else {
-                    showToast(result.message, 'error');
-                }
-            } catch (error) {
-                console.error('Profile update error:', error);
-                showToast('Failed to update profile', 'error');
-            }
+            e.stopPropagation();
+            return false;
         });
+
+        // Add click event to submit button
+        const submitButton = profileForm.querySelector('button[type="submit"]');
+        if (submitButton) {
+            submitButton.addEventListener('click', async function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Detailed logging of form elements
+                console.group('Profile Form Submission');
+                console.log('Form Elements:', {
+                    full_name: profileForm.querySelector('input[name="full_name"]'),
+                    tagline: profileForm.querySelector('input[name="tagline"]'),
+                    bio_full: profileForm.querySelector('textarea[name="bio_full"]'),
+                    timezone: profileForm.querySelector('input[name="timezone"]'),
+                    experience_years: profileForm.querySelector('select[name="experience_years"]'),
+                    email: profileForm.querySelector('input[name="email"]'),
+                    phone: profileForm.querySelector('input[name="phone"]')
+                });
+                
+                // Prevent default form submission
+                const formData = {
+                    section: 'profile',
+                    full_name: profileForm.querySelector('input[name="full_name"]')?.value || '',
+                    tagline: profileForm.querySelector('input[name="tagline"]')?.value || '',
+                    bio_full: profileForm.querySelector('textarea[name="bio_full"]')?.value || '',
+                    timezone: profileForm.querySelector('input[name="timezone"]')?.value || 'UTC',
+                    experience_years: profileForm.querySelector('select[name="experience_years"]')?.value || null,
+                    email: profileForm.querySelector('input[name="email"]')?.value || '',
+                    phone: profileForm.querySelector('input[name="phone"]')?.value || ''
+                };
+
+                console.log('Prepared Form Data:', formData);
+
+                try {
+                    console.log('Sending request to:', `admin-panel/apis/expert/settings.php`);
+                    const response = await fetch(`admin-panel/apis/expert/settings.php`, {
+                        method: 'PUT',
+                        headers: { 
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify(formData)
+                    });
+
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+                    // Log raw response text before parsing
+                    const responseText = await response.text();
+                    console.log('Raw Response Text:', responseText);
+
+                    let result;
+                    try {
+                        result = JSON.parse(responseText);
+                    } catch (parseError) {
+                        console.error('JSON Parsing Error:', parseError);
+                        throw new Error('Invalid server response: ' + responseText);
+                    }
+
+                    console.log('Parsed Response result:', result);
+                    
+                    if (result.success) {
+                        showToast(result.message);
+                        // Redirect to index page after successful submission
+                        window.location.href = `${BASE_PATH}/index.php?panel=expert`;
+                    } else {
+                        showToast(result.message || 'Profile update failed', 'error');
+                    }
+                } catch (error) {
+                    console.error('Profile update error:', error);
+                    showToast('Failed to update profile: ' + error.message, 'error');
+                } finally {
+                    console.groupEnd();
+                }
+            });
+        }
     }
 
     // Bank Form Submission
@@ -356,7 +399,7 @@
             e.preventDefault();
             try {
                 const formData = new FormData(this);
-                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/update-bank.php`, {
+                const response = await fetch(`admin-panel/apis/expert/update-bank.php`, {
                     method: 'POST',
                     body: formData
                 });
@@ -364,6 +407,8 @@
                 const result = await response.json();
                 if (result.success) {
                     showToast('Bank details updated successfully');
+                    // Redirect to index page after successful submission
+                    window.location.href = `${BASE_PATH}/index.php?panel=expert`;
                 } else {
                     showToast(result.message || 'Bank details update failed', 'error');
                 }
@@ -409,7 +454,7 @@
                     console.log(`${key}: ${value}`);
                 }
                 
-                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/update-availability.php`, {
+                const response = await fetch(`admin-panel/apis/expert/update-availability.php`, {
                     method: 'POST',
                     body: formData
                 });
@@ -428,11 +473,13 @@
 
                 if (result.success) {
                     showToast('Availability updated successfully');
+                    // Redirect to index page after successful submission
+                    window.location.href = `${BASE_PATH}/index.php?panel=expert`;
                     this.reset(); // Clear form
                     
                     // Optional: Reload availability data or update UI
                     try {
-                        const availabilityResponse = await fetch(`${BASE_PATH}/admin-panel/apis/expert/get-availability.php`);
+                        const availabilityResponse = await fetch(`admin-panel/apis/expert/get-availability.php`);
                         const availabilityData = await availabilityResponse.json();
                         
                         if (availabilityData.success) {
@@ -532,7 +579,7 @@
                     formData.append(checkbox.id, checkbox.checked ? '1' : '0');
                 });
 
-                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/update-notifications.php`, {
+                const response = await fetch(`admin-panel/apis/expert/update-notifications.php`, {
                     method: 'POST',
                     body: formData
                 });
@@ -540,6 +587,8 @@
                 const result = await response.json();
                 if (result.success) {
                     showToast('Notification preferences updated');
+                    // Redirect to index page after successful submission
+                    window.location.href = `${BASE_PATH}/index.php?panel=expert`;
                 } else {
                     showToast(result.message || 'Failed to update preferences', 'error');
                 }
@@ -561,7 +610,7 @@
                     formData.append(checkbox.id, checkbox.checked ? '1' : '0');
                 });
 
-                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/update-privacy.php`, {
+                const response = await fetch(`admin-panel/apis/expert/update-privacy.php`, {
                     method: 'POST',
                     body: formData
                 });
@@ -569,6 +618,8 @@
                 const result = await response.json();
                 if (result.success) {
                     showToast('Privacy settings updated');
+                    // Redirect to index page after successful submission
+                    window.location.href = `${BASE_PATH}/index.php?panel=expert`;
                 } else {
                     showToast(result.message || 'Failed to update privacy settings', 'error');
                 }
@@ -586,7 +637,7 @@
             e.preventDefault();
             try {
                 const formData = new FormData(this);
-                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/change-password.php`, {
+                const response = await fetch(`admin-panel/apis/expert/change-password.php`, {
                     method: 'POST',
                     body: formData
                 });
@@ -595,6 +646,8 @@
                 if (result.success) {
                     showToast('Password updated successfully');
                     this.reset(); // Clear form
+                    // Redirect to index page after successful submission
+                    window.location.href = `${BASE_PATH}/index.php?panel=expert`;
                 } else {
                     showToast(result.message || 'Password update failed', 'error');
                 }
@@ -621,7 +674,7 @@
                 });
 
                 if (result.isConfirmed) {
-                    const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/deactivate-account.php`, {
+                    const response = await fetch(`admin-panel/apis/expert/deactivate-account.php`, {
                         method: 'POST'
                     });
 

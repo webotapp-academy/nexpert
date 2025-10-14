@@ -1,9 +1,7 @@
 <?php
 header('Content-Type: application/json');
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php';
 require_once __DIR__ . '/../connection/pdo.php';
-
-// Start session to get learner_id
-session_start();
 
 // Check if learner is logged in
 if (!isset($_SESSION['learner_id'])) {

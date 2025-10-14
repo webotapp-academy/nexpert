@@ -3,12 +3,12 @@
 $BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
 $BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/admin-auth-check.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/admin-auth-check.php';
 
 $page_title = "KYC Verification - Admin Panel - Nexpert.ai";
 $panel_type = "admin";
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/admin-sidebar.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/admin-sidebar.php';
 ?>
 
 <div class="flex-1 p-8">
@@ -422,4 +422,4 @@ function filterKYC(status) {
 loadKYC();
 </script>
 
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>

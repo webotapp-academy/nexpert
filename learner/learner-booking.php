@@ -2,9 +2,8 @@
 $page_title = "Book Session - Nexpert.ai";
 $panel_type = "learner";
 
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// For online deployment, set BASE_PATH to empty for root directory
+$BASE_PATH = '';
 
 require_once 'includes/header.php';
 require_once 'includes/navigation.php';
@@ -170,6 +169,7 @@ require_once 'includes/navigation.php';
 <script>
     // Set BASE_PATH globally
     window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    console.log('Booking BASE_PATH detected as:', window.BASE_PATH);
 
     (function() {
         'use strict';
@@ -215,8 +215,17 @@ require_once 'includes/navigation.php';
         // Load expert and availability data
         async function loadExpertData() {
             try {
+                console.log('Loading booking data from:', `${window.BASE_PATH}/admin-panel/apis/learner/booking.php?expert_id=${expertId}`);
                 const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/booking.php?expert_id=${expertId}`);
+                console.log('Booking response status:', response.status);
+                console.log('Booking response ok:', response.ok);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
+                console.log('Booking result:', result);
 
                 if (!result.success) {
                     alert(result.message || 'Failed to load expert data');

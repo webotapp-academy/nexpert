@@ -19,8 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Include necessary files
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/admin-panel/apis/connection/pdo.php';
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
 
 // Default profile data structure
 $defaultProfileData = [
@@ -119,15 +119,15 @@ try {
         $photo = preg_replace('/^(uploads\/profiles\/|nexpert\/uploads\/profiles\/)/', '', $photo);
         
         // Check if the file exists
-        $full_path = $_SERVER['DOCUMENT_ROOT'] . '/nexpert/uploads/profiles/' . $photo;
+        $full_path = $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/uploads/profiles/' . $photo;
         
         error_log('Normalized Photo Path: ' . $photo);
         error_log('Full Filesystem Path: ' . $full_path);
         error_log('File Exists: ' . (file_exists($full_path) ? 'Yes' : 'No'));
 
         if (file_exists($full_path)) {
-            // Always use /nexpert/uploads/profiles/ prefix
-            $profileData['profile_photo'] = '/nexpert/uploads/profiles/' . $photo;
+            // Always use uploads/profiles/ prefix with dynamic BASE_PATH
+            $profileData['profile_photo'] = BASE_PATH . '/uploads/profiles/' . $photo;
             error_log('Final Resolved Photo Path: ' . $profileData['profile_photo']);
         } else {
             // If file doesn't exist, set to null

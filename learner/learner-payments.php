@@ -1,9 +1,8 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// For online deployment, set BASE_PATH to empty for root directory
+$BASE_PATH = '';
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
+require_once dirname(__DIR__) . '/includes/session-config.php';
 
 // Check if user is logged in as learner
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
@@ -15,8 +14,8 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
 
 $page_title = "Payment - Nexpert.ai";
 $panel_type = "learner";
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 ?>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <!-- Progress Steps -->
@@ -54,7 +53,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                     <!-- Payment Method Selection -->
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment Method</h3>
-                        <div class="space-y-3">
+                        <div class="space-y-3" id="payment-methods">
                             <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg hover:border-primary cursor-pointer transition duration-200">
                                 <input type="radio" name="payment_method" value="cash_test" checked class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
                                 <div class="ml-3 flex items-center">
@@ -63,19 +62,19 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                                     </svg>
                                     <div>
                                         <span class="font-medium">Cash (Test Mode)</span>
-                                        <p class="text-xs text-gray-500 mt-1">Use this option for testing. No real payment required.</p>
+                                        <p class="text-xs text-gray-500 mt-1">Simulate payment without real charge.</p>
                                     </div>
                                 </div>
                             </label>
-                            <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg hover:border-primary cursor-pointer transition duration-200 opacity-50 cursor-not-allowed">
-                                <input type="radio" name="payment_method" value="card" disabled class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                            <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg hover:border-primary cursor-pointer transition duration-200" id="card-option">
+                                <input type="radio" name="payment_method" value="card" class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
                                 <div class="ml-3 flex items-center">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                                     </svg>
                                     <div>
-                                        <span class="font-medium">Credit/Debit Card</span>
-                                        <p class="text-xs text-gray-500 mt-1">Coming soon via Razorpay</p>
+                                        <span class="font-medium">Credit / Debit Card</span>
+                                        <p class="text-xs text-gray-500 mt-1">Secure payment via Razorpay.</p>
                                     </div>
                                 </div>
                             </label>
@@ -186,6 +185,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 <script>
     // Set BASE_PATH globally
     window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    console.log('Payment BASE_PATH detected as:', window.BASE_PATH);
 
     (function() {
         'use strict';
@@ -232,8 +232,17 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
         // Load expert data and populate summary
         async function loadExpertData() {
             try {
+                console.log('Loading payment expert data from:', `${window.BASE_PATH}/admin-panel/apis/learner/booking.php?expert_id=${expertId}`);
                 const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/booking.php?expert_id=${expertId}`);
+                console.log('Payment expert response status:', response.status);
+                console.log('Payment expert response ok:', response.ok);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
                 const result = await response.json();
+                console.log('Payment expert result:', result);
 
                 if (result.success) {
                     const expert = result.data;
@@ -258,71 +267,144 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
         document.getElementById('summary-amount').textContent = `₹${amount}`;
         document.getElementById('summary-total').textContent = `₹${amount}`;
 
+    // Razorpay Integration Notes:
+    // - Do NOT expose your live secret key in frontend. Only publishable key (key_id) is exposed automatically by order API response.
+    // - Ensure environment variables RAZORPAY_KEY_ID & RAZORPAY_KEY_SECRET are set server-side.
+    // - This page dynamically loads checkout.js and opens the Razorpay modal for card payments.
+        
+    // Inject Razorpay script
+        const rzScript = document.createElement('script');
+        rzScript.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        document.head.appendChild(rzScript);
+
+        async function createOrder(paymentMethod) {
+            console.log('Creating payment order with method:', paymentMethod);
+            console.log('Request URL:', `${window.BASE_PATH}/admin-panel/apis/learner/payment.php`);
+            console.log('Request data:', {
+                action: 'create_order',
+                expert_id: expertId,
+                session_datetime: sessionDatetime,
+                amount: amount,
+                duration: 60,
+                payment_method: paymentMethod
+            });
+            
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/payment.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // Include cookies for session
+                body: JSON.stringify({
+                    action: 'create_order',
+                    expert_id: expertId,
+                    session_datetime: sessionDatetime,
+                    amount: amount,
+                    duration: 60,
+                    payment_method: paymentMethod
+                })
+            });
+            
+            console.log('Payment order response status:', response.status);
+            console.log('Payment order response ok:', response.ok);
+            console.log('Payment order response headers:', response.headers);
+            
+            // Get response text first
+            const responseText = await response.text();
+            console.log('Payment order raw response:', responseText);
+            
+            if (!response.ok) {
+                console.error('Payment order error response:', responseText);
+                throw new Error(`HTTP error! status: ${response.status}, response: ${responseText}`);
+            }
+            
+            // Parse JSON from text
+            let result;
+            try {
+                result = JSON.parse(responseText);
+            } catch (e) {
+                console.error('JSON parse error:', e);
+                console.error('Response was not valid JSON:', responseText);
+                throw new Error('Invalid JSON response from server');
+            }
+            console.log('Payment order result:', result);
+            return result;
+        }
+
+        async function verifyPayment(payload) {
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/payment.php`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include', // Include cookies for session
+                body: JSON.stringify({ action: 'verify_payment', ...payload })
+            });
+            return response.json();
+        }
+
+        function openRazorpay(orderData, paymentId) {
+            return new Promise((resolve, reject) => {
+                const options = {
+                    key: orderData.razorpay_key,
+                    amount: orderData.order.amount,
+                    currency: orderData.order.currency,
+                    name: 'Nexpert.ai',
+                    description: 'Expert Session Booking',
+                    order_id: orderData.order.id,
+                    theme: { color: '#3B82F6' },
+                    handler: async function (response) {
+                        try {
+                            const verify = await verifyPayment({
+                                payment_id: paymentId,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature
+                            });
+                            if (verify.success) {
+                                resolve();
+                            } else {
+                                reject(new Error(verify.message || 'Verification failed'));
+                            }
+                        } catch (err) {
+                            reject(err);
+                        }
+                    },
+                    modal: {
+                        ondismiss: function() {
+                            reject(new Error('Payment cancelled'));
+                        }
+                    }
+                };
+                const rzp = new window.Razorpay(options);
+                rzp.open();
+            });
+        }
+
         // Handle form submission
         document.getElementById('payment-form').addEventListener('submit', async function(e) {
             e.preventDefault();
-
             const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
             const submitBtn = document.getElementById('submit-payment-btn');
-            
             submitBtn.disabled = true;
             submitBtn.textContent = 'Processing...';
 
             try {
-                const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/payment.php`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        expert_id: expertId,
-                        session_datetime: sessionDatetime,
-                        amount: amount,
-                        duration: 60,
-                        payment_method: paymentMethod
-                    })
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    await Swal.fire({
-                        icon: 'success',
-                        title: 'Payment Successful!',
-                        text: 'Your session has been booked.',
-                        confirmButtonColor: '#3B82F6',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                    window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=dashboard`;
-                } else {
-                    if (response.status === 401) {
-                        await Swal.fire({
-                            icon: 'warning',
-                            title: 'Login Required',
-                            text: 'Please login to complete payment',
-                            confirmButtonColor: '#3B82F6'
-                        });
-                        window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=auth`;
-                    } else {
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Payment Failed',
-                            text: result.message || 'Payment could not be processed',
-                            confirmButtonColor: '#3B82F6'
-                        });
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Complete Payment';
+                if (paymentMethod === 'cash_test') {
+                    const result = await createOrder('cash_test');
+                    if (result.success) {
+                        await Swal.fire({ icon: 'success', title: 'Payment Successful!', text: 'Your session has been booked.', timer: 1800, showConfirmButton: false });
+                        window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=dashboard`;
+                        return;
                     }
+                    throw new Error(result.message || 'Cash test payment failed');
+                } else if (paymentMethod === 'card') {
+                    const orderResult = await createOrder('card');
+                    if (!orderResult.success) throw new Error(orderResult.message || 'Order creation failed');
+                    await openRazorpay(orderResult.data, orderResult.data.payment_id);
+                    await Swal.fire({ icon: 'success', title: 'Payment Successful!', text: 'Your session has been booked.', timer: 1800, showConfirmButton: false });
+                    window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=dashboard`;
+                    return;
                 }
             } catch (error) {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'Payment processing failed. Please try again.',
-                    confirmButtonColor: '#3B82F6'
-                });
+                console.error('Payment error:', error);
+                Swal.fire({ icon: 'error', title: 'Payment Failed', text: error.message || 'Could not process payment', confirmButtonColor: '#3B82F6' });
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Complete Payment';
             }
@@ -332,4 +414,4 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
         loadExpertData();
     })();
 </script>
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
+<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>

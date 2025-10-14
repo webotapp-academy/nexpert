@@ -1,15 +1,45 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+require_once dirname(__DIR__) . '/includes/session-config.php';
 
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/session-config.php';
+// For backward compatibility keep a local variable used in the markup
+// but ensure it always points to application root (not current directory)
+$BASE_PATH = BASE_PATH; // e.g. /nexpert
+
+// If user is already logged in as learner, redirect to dashboard
+if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'learner') {
+    header('Location: ' . BASE_PATH . '/index.php?panel=learner&page=dashboard');
+    exit;
+}
 
 $page_title = "Learner Auth - Nexpert.ai";
 $panel_type = "learner";
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
+require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 ?>
+
+<script>
+    // Set BASE_PATH (application root) globally for JS
+    window.BASE_PATH = '<?php echo BASE_PATH; ?>';
+
+    // Utility function to resolve image paths
+    function resolveImagePath(imagePath) {
+        // If it's a full URL or a data URI, return as-is
+        if (/^(https?:\/\/|data:)/.test(imagePath)) {
+            return imagePath;
+        }
+        
+        // If no image path, use a default
+        if (!imagePath) {
+            return `${window.BASE_PATH}/attached_assets/stock_images/diverse_professional_1d96e39f.jpg`;
+        }
+        
+        // Remove leading slashes
+        const normalizedPath = imagePath.replace(/^\/+/, '');
+        
+        // Construct full path
+        return `${window.BASE_PATH}/${normalizedPath}`;
+    }
+</script>
 
     <div class="min-h-screen flex">
         <!-- Left Side - Image/Branding -->
@@ -208,6 +238,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
 
     // Set BASE_PATH globally
     window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    console.log('BASE_PATH detected as:', window.BASE_PATH);
 
     // Sign In Form Handler
     document.getElementById('signInForm').addEventListener('submit', async function(e) {
@@ -227,18 +258,30 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
         }
         
         try {
-            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/auth.php`, {
+            // Use BASE_PATH for consistent path resolution
+            const apiUrl = `${window.BASE_PATH}/admin-panel/apis/learner/auth.php`;
+            console.log('Making login request to:', apiUrl);
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: 'include', // Include cookies for session
                 body: JSON.stringify({
                     email: email,
                     password: password
                 })
             });
             
+            console.log('Login response status:', response.status);
+            console.log('Login response ok:', response.ok);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const result = await response.json();
+            console.log('Login result:', result);
             
             if (result.success) {
                 await Swal.fire({
@@ -249,9 +292,8 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                     timer: 1500,
                     showConfirmButton: false
                 });
-                // Check if there's a redirect URL, otherwise go to dashboard
-                const redirectUrl = result.redirect_url || `${window.BASE_PATH}/index.php?panel=learner&page=dashboard`;
-                window.location.href = redirectUrl;
+                // Always redirect to dashboard after successful login
+                window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=dashboard`;
             } else {
                 Swal.fire({
                     icon: 'error',
@@ -323,11 +365,15 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
         spinner.classList.remove('hidden');
         
         try {
-            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/learner/register.php`, {
+            // Use relative path for online deployment
+            const apiUrl = '../admin-panel/apis/learner/register.php';
+            console.log('Making registration request to:', apiUrl);
+            const response = await fetch(apiUrl, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
+                credentials: 'include', // Include cookies for session
                 body: JSON.stringify({
                     name: name,
                     mobile: fullMobile,
@@ -336,7 +382,15 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                 })
             });
             
+            console.log('Registration response status:', response.status);
+            console.log('Registration response ok:', response.ok);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
             const result = await response.json();
+            console.log('Registration result:', result);
             
             if (result.success) {
                 await Swal.fire({
@@ -347,7 +401,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
                     timer: 2000
                 });
                 // Check if there's a redirect URL, otherwise go to dashboard
-                const redirectUrl = result.redirect_url || `${window.BASE_PATH}/index.php?panel=learner&page=dashboard`;
+                const redirectUrl = result.redirect_url || '../index.php?panel=learner&page=dashboard';
                 window.location.href = redirectUrl;
             } else {
                 Swal.fire({
@@ -453,4 +507,4 @@ require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/navigation.php';
     }
     </script>
 
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . '/nexpert/includes/footer.php'; ?>
+<?php require_once dirname(__DIR__) . '/includes/footer.php'; ?>
