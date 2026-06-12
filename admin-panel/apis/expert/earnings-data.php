@@ -16,17 +16,8 @@ $period = $_GET['period'] ?? 'month';
 $view = $_GET['view'] ?? 'monthly';
 
 try {
-    // Get expert profile ID
-    $stmt = $pdo->prepare("SELECT id FROM expert_profiles WHERE user_id = ?");
-    $stmt->execute([$userId]);
-    $profile = $stmt->fetch(PDO::FETCH_ASSOC);
-    
-    if (!$profile) {
-        echo json_encode(['success' => false, 'message' => 'Expert profile not found']);
-        exit;
-    }
-    
-    $expertId = $profile['id'];
+    // Note: bookings.expert_id stores user_id, not expert_profile.id
+    // So we use $userId directly for querying bookings
     
     // Build date filter based on period
     $dateFilter = '';
@@ -65,18 +56,18 @@ try {
             break;
     }
     
-    // Fetch earnings data grouped by the specified period
+    // Fetch earnings data grouped by the specified period - use userId for bookings.expert_id
     $stmt = $pdo->prepare("
         SELECT 
             $dateFormat as label,
             COALESCE(SUM(p.amount), 0) as total
         FROM payments p
         JOIN bookings b ON p.booking_id = b.id
-        WHERE b.expert_id = ? AND p.status = 'completed' $dateFilter
+        WHERE b.expert_id = ? AND p.status = 'success' $dateFilter
         GROUP BY $groupBy
         ORDER BY p.created_at ASC
     ");
-    $stmt->execute([$expertId]);
+    $stmt->execute([$userId]);
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     $labels = [];

@@ -48,84 +48,115 @@ try {
 
     $userId = $_SESSION['user_id'];
 
-    // Validate input
+    // Validate day of week
     $dayOfWeek = filter_input(INPUT_POST, 'day_of_week', FILTER_VALIDATE_INT, [
         'options' => [
             'min_range' => 0, 
             'max_range' => 6
         ]
     ]);
-    $startTime = filter_input(INPUT_POST, 'start_time', FILTER_SANITIZE_STRING);
-    $endTime = filter_input(INPUT_POST, 'end_time', FILTER_SANITIZE_STRING);
 
-    // Validate inputs
+    // Validate day of week
     if ($dayOfWeek === false || $dayOfWeek === null) {
         throw new Exception('Invalid day of week');
     }
-    if (empty($startTime) || empty($endTime)) {
+
+    // Get time arrays (support both single values and arrays)
+    $startTimes = isset($_POST['start_time']) ? (is_array($_POST['start_time']) ? $_POST['start_time'] : [$_POST['start_time']]) : [];
+    $endTimes = isset($_POST['end_time']) ? (is_array($_POST['end_time']) ? $_POST['end_time'] : [$_POST['end_time']]) : [];
+
+    // Validate that we have time slots
+    if (empty($startTimes) || empty($endTimes)) {
         throw new Exception('Start and end times are required');
     }
 
-    // Validate time format (HH:MM)
-    if (!preg_match('/^\d{2}:\d{2}$/', $startTime) || !preg_match('/^\d{2}:\d{2}$/', $endTime)) {
-        throw new Exception('Invalid time format. Use HH:MM');
+    // Validate that start and end times have same count
+    if (count($startTimes) !== count($endTimes)) {
+        throw new Exception('Start and end times count mismatch');
     }
 
     // Start database transaction
     $pdo->beginTransaction();
 
-    // Check for existing slot on the same day
-    $checkStmt = $pdo->prepare("
-        SELECT id FROM expert_availability 
-        WHERE expert_id = :expert_id 
-        AND day_of_week = :day_of_week 
-        AND start_time = :start_time 
-        AND end_time = :end_time
-    ");
-    $checkStmt->execute([
-        ':expert_id' => $userId,
-        ':day_of_week' => $dayOfWeek,
-        ':start_time' => $startTime,
-        ':end_time' => $endTime
-    ]);
+    $insertedSlots = 0;
+    $skippedSlots = 0;
 
-    // If slot already exists, return success without inserting
-    if ($checkStmt->rowCount() > 0) {
-        $pdo->commit();
-        echo json_encode([
-            'success' => true, 
-            'message' => 'Availability slot already exists'
+    // Loop through each time slot
+    for ($i = 0; $i < count($startTimes); $i++) {
+        $startTime = trim($startTimes[$i]);
+        $endTime = trim($endTimes[$i]);
+
+        // Validate time format (HH:MM)
+        if (!preg_match('/^\d{2}:\d{2}$/', $startTime) || !preg_match('/^\d{2}:\d{2}$/', $endTime)) {
+            throw new Exception('Invalid time format. Use HH:MM');
+        }
+
+        // Check for existing slot
+        $checkStmt = $pdo->prepare("
+            SELECT id FROM expert_availability 
+            WHERE expert_id = :expert_id 
+            AND day_of_week = :day_of_week 
+            AND start_time = :start_time 
+            AND end_time = :end_time
+        ");
+        $checkStmt->execute([
+            ':expert_id' => $userId,
+            ':day_of_week' => $dayOfWeek,
+            ':start_time' => $startTime,
+            ':end_time' => $endTime
         ]);
-        exit;
-    }
 
-    // Insert new availability slot
-    $stmt = $pdo->prepare("
-        INSERT INTO expert_availability 
-        (expert_id, day_of_week, start_time, end_time, is_active) 
-        VALUES (:expert_id, :day_of_week, :start_time, :end_time, 1)
-    ");
-    $result = $stmt->execute([
-        ':expert_id' => $userId,
-        ':day_of_week' => $dayOfWeek,
-        ':start_time' => $startTime,
-        ':end_time' => $endTime
-    ]);
+        // If slot already exists, skip it
+        if ($checkStmt->rowCount() > 0) {
+            $skippedSlots++;
+            continue;
+        }
+
+        // Insert new availability slot
+        $stmt = $pdo->prepare("
+            INSERT INTO expert_availability 
+            (expert_id, day_of_week, start_time, end_time, is_active) 
+            VALUES (:expert_id, :day_of_week, :start_time, :end_time, 1)
+        ");
+        $stmt->execute([
+            ':expert_id' => $userId,
+            ':day_of_week' => $dayOfWeek,
+            ':start_time' => $startTime,
+            ':end_time' => $endTime
+        ]);
+
+        $insertedSlots++;
+
+        // Log successful insertion
+        error_log("Slot $i added: Day $dayOfWeek, $startTime - $endTime");
+    }
 
     // Commit transaction
     $pdo->commit();
 
-    // Log successful insertion
-    error_log('Availability slot added successfully');
-    error_log('Expert ID: ' . $userId);
-    error_log('Day of Week: ' . $dayOfWeek);
-    error_log('Start Time: ' . $startTime);
-    error_log('End Time: ' . $endTime);
+    // Log summary
+    error_log("Availability update summary:");
+    error_log("Expert ID: $userId");
+    error_log("Day of Week: $dayOfWeek");
+    error_log("Inserted slots: $insertedSlots");
+    error_log("Skipped slots: $skippedSlots");
+
+    // Create success message
+    $message = "Availability updated successfully";
+    if ($insertedSlots > 0 && $skippedSlots > 0) {
+        $message = "$insertedSlots slot(s) added, $skippedSlots already existed";
+    } elseif ($insertedSlots > 0) {
+        $message = "$insertedSlots slot(s) added successfully";
+    } elseif ($skippedSlots > 0) {
+        $message = "All slots already exist";
+    }
 
     // Return success response
     echo json_encode([
         'success' => true, 
-        'message' => 'Availability updated successfully'
+        'message' => $message,
+        'inserted' => $insertedSlots,
+        'skipped' => $skippedSlots
     ]);
 
 } catch (Exception $e) {

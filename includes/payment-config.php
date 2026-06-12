@@ -7,10 +7,10 @@
 //   RAZORPAY_KEY_SECRET: aRbOPceozHCL9DXz307zZwXG
 
 if (!defined('RAZORPAY_KEY_ID')) {
-    define('RAZORPAY_KEY_ID', 'rzp_live_0mfcCl30ISENa5');
+    define('RAZORPAY_KEY_ID', 'rzp_live_DZSsfk0KRLAzdp');
 }
 if (!defined('RAZORPAY_KEY_SECRET')) {
-    define('RAZORPAY_KEY_SECRET', 'aRbOPceozHCL9DXz307zZwXG');
+    define('RAZORPAY_KEY_SECRET', 'yox5RM84cihAtNYyXvMuYYgG');
 }
 if (!defined('PLATFORM_CURRENCY')) {
     define('PLATFORM_CURRENCY', 'INR');

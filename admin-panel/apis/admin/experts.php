@@ -6,6 +6,7 @@ header('Content-Type: application/json');
 validateCSRF();
 
 require_once '../connection/pdo.php';
+require_once '../connection/trust-helper.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -128,6 +129,14 @@ if ($method === 'PUT' && isset($_GET['action']) && $_GET['action'] === 'verify')
             WHERE user_id = ?
         ");
         $stmt->execute([$verification_status, $verified_at, $admin_notes, $expert_id]);
+        
+        // Log trust event
+        if ($verification_status === 'verified') {
+            TrustHelper::logEvent($pdo, 'kyc_verified', $expert_id, null, [
+                'admin_notes' => $admin_notes,
+                'verified_at' => $verified_at
+            ]);
+        }
         
         echo json_encode(['success' => true, 'message' => 'Verification status updated successfully']);
     } catch (PDOException $e) {

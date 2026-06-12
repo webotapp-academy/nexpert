@@ -91,10 +91,13 @@ try {
                 JOIN users u ON u.id = ep.user_id
                 SET 
                     ep.full_name = :full_name, 
-                    ep.tagline = :tagline, 
+                    ep.tagline = :tagline,
+                    ep.category = :category,
                     ep.bio_full = :bio_full, 
-                    ep.timezone = :timezone, 
+                    ep.tags = :tags, 
                     ep.experience_years = :experience_years,
+                    ep.strengths = :strengths,
+                    ep.expected_outcomes = :expected_outcomes,
                     u.email = :email,
                     u.phone = :phone
                 WHERE ep.user_id = :user_id
@@ -102,9 +105,12 @@ try {
             $result = $stmt->execute([
                 ':full_name' => $putData['full_name'] ?? '',
                 ':tagline' => $putData['tagline'] ?? '',
+                ':category' => $putData['category'] ?? null,
                 ':bio_full' => $putData['bio_full'] ?? '',
-                ':timezone' => $putData['timezone'] ?? 'UTC',
+                ':tags' => $putData['tags'] ?? '',
                 ':experience_years' => $putData['experience_years'] ?? null,
+                ':strengths' => $putData['strengths'] ?? '[]',
+                ':expected_outcomes' => $putData['expected_outcomes'] ?? '[]',
                 ':email' => $putData['email'] ?? '',
                 ':phone' => $putData['phone'] ?? '',
                 ':user_id' => $userId

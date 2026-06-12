@@ -13,9 +13,32 @@ $userId = $_SESSION['user_id'];
 
 try {
     // Get learner profile
-    $stmt = $pdo->prepare("SELECT full_name FROM learner_profiles WHERE user_id = ?");
+    $stmt = $pdo->prepare("SELECT full_name, goals, challenges, education, profession FROM learner_profiles WHERE user_id = ?");
     $stmt->execute([$userId]);
     $profile = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // Check for pending reviews (sessions with summary but no review)
+    $stmt = $pdo->prepare("
+        SELECT 
+            b.id as booking_id,
+            b.session_datetime,
+            b.expert_id,
+            ep.full_name as expert_name,
+            ep.profile_photo as expert_photo
+        FROM bookings b
+        INNER JOIN expert_profiles ep ON b.expert_id = ep.user_id
+        LEFT JOIN reviews r ON b.id = r.booking_id AND r.learner_id = ?
+        WHERE b.learner_id = ?
+        AND b.status = 'completed'
+        AND b.session_summary IS NOT NULL
+        AND b.session_summary != ''
+        AND b.review_pending = 1
+        AND r.id IS NULL
+        ORDER BY b.updated_at DESC
+        LIMIT 1
+    ");
+    $stmt->execute([$userId, $userId]);
+    $pendingReview = $stmt->fetch(PDO::FETCH_ASSOC);
     
     // Get statistics
     $stmt = $pdo->prepare("
@@ -93,11 +116,34 @@ try {
     $stmt->execute([$userId]);
     $recentActivity = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
+    // Get all sessions for my-sessions page
+    $stmt = $pdo->prepare("
+        SELECT 
+            b.id,
+            b.expert_id,
+            b.session_datetime,
+            b.duration_minutes,
+            b.status,
+            ep.full_name as expert_name,
+            ep.profile_photo,
+            ep.tagline
+        FROM bookings b
+        INNER JOIN expert_profiles ep ON b.expert_id = ep.user_id
+        WHERE b.learner_id = ?
+        ORDER BY b.session_datetime DESC
+    ");
+    $stmt->execute([$userId]);
+    $allSessions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
     echo json_encode([
         'success' => true,
         'data' => [
             'profile' => [
-                'full_name' => $profile['full_name'] ?? 'Learner'
+                'full_name' => $profile['full_name'] ?? 'Learner',
+                'goals' => $profile['goals'] ?? '',
+                'challenges' => $profile['challenges'] ?? '',
+                'education' => $profile['education'] ?? '',
+                'profession' => $profile['profession'] ?? ''
             ],
             'stats' => [
                 'total_sessions' => (int)$stats['total_sessions'],
@@ -107,7 +153,9 @@ try {
             ],
             'upcoming_sessions' => $upcomingSessions,
             'recent_sessions' => $recentSessions,
-            'recent_activity' => $recentActivity
+            'all_sessions' => $allSessions,
+            'recent_activity' => $recentActivity,
+            'pending_review' => $pendingReview // New field for review popup
         ]
     ]);
     

@@ -47,8 +47,50 @@ try {
     }
 
     $userId = $_SESSION['user_id'];
+    
+    // Check if a specific pricing_id is requested
+    $pricingId = $_GET['pricing_id'] ?? null;
 
-    // Fetch pricing data
+    if ($pricingId) {
+        // Fetch single pricing tier
+        $stmt = $pdo->prepare("
+            SELECT 
+                id, 
+                pricing_type as session_type,
+                amount as price,
+                currency, 
+                duration_minutes, 
+                sessions_count, 
+                description,
+                is_active,
+                created_at,
+                updated_at
+            FROM expert_pricing 
+            WHERE id = :pricing_id AND expert_id = :expert_id
+        ");
+        $stmt->execute([
+            ':pricing_id' => $pricingId,
+            ':expert_id' => $userId
+        ]);
+        $pricingData = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$pricingData) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'Pricing not found',
+                'data' => null
+            ]);
+            exit;
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'data' => $pricingData
+        ]);
+        exit;
+    }
+
+    // Fetch all pricing data
     $stmt = $pdo->prepare("
         SELECT 
             id, 

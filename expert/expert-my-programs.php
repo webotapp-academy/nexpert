@@ -1,14 +1,13 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
 
 require_once dirname(__DIR__) . '/includes/session-config.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    header('Location: ' . BASE_PATH . '/index.php?panel=expert&page=auth');
     exit;
 }
 
@@ -25,17 +24,25 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
             <h1 class="text-3xl font-bold text-gray-900 mb-2">My Programs</h1>
             <p class="text-gray-600">Create and manage structured learning programs for your learners</p>
         </div>
-        <button id="create-program-btn" class="mt-4 md:mt-0 bg-accent text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition flex items-center gap-2 w-full md:w-auto justify-center">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-            </svg>
-            Create New Program
-        </button>
+        <div class="flex flex-col md:flex-row gap-3 mt-4 md:mt-0">
+            <button id="create-program-btn" class="bg-accent text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition flex items-center gap-2 w-full md:w-auto justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Create New Program
+            </button>
+            <button id="create-program-ai-btn" class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition flex items-center gap-2 w-full md:w-auto justify-center">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+                Create with AI
+            </button>
+        </div>
     </div>
 
     <!-- Stats Overview -->
     <div class="grid md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white rounded-lg shadow-lg p-6">
+        <div class="bg-white rounded-lg shadow-lg p-6 cursor-pointer hover:shadow-xl transition-shadow" onclick="scrollToProgramsList()">
             <div class="flex items-center justify-between">
                 <div>
                     <p id="stats-total-programs" class="text-2xl font-bold text-gray-900">0</p>
@@ -253,6 +260,17 @@ const closeModalBtn = document.getElementById('close-modal-btn');
 const cancelModalBtn = document.getElementById('cancel-modal-btn');
 const createTriggers = document.querySelectorAll('.create-program-trigger');
 
+// Scroll to programs list function
+function scrollToProgramsList() {
+    const programsSection = document.querySelector('.bg-white.rounded-lg.shadow-lg.p-6:has(#programs-grid)');
+    if (programsSection) {
+        programsSection.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'start' 
+        });
+    }
+}
+
 // Open modal
 createProgramBtn?.addEventListener('click', () => {
     modal.classList.remove('hidden');
@@ -377,7 +395,7 @@ document.getElementById('add-resource-btn')?.addEventListener('click', () => {
 
 <script>
     // Set BASE_PATH globally
-    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    window.BASE_PATH = '<?php echo BASE_PATH; ?>';
 
     // Utility function to resolve image paths
     function resolveImagePath(imagePath) {
@@ -401,6 +419,56 @@ document.getElementById('add-resource-btn')?.addEventListener('click', () => {
     // Rest of the existing script remains the same
 </script>
 
-<script src="<?php echo $BASE_PATH; ?>/admin-panel/js/expert-programs.js"></script>
+<!-- AI Program Idea Modal -->
+<div id="ai-idea-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-lg max-w-2xl w-full">
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-4 rounded-t-lg">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    <h2 class="text-xl font-bold">Create Program with AI</h2>
+                </div>
+                <button id="close-ai-modal-btn" class="text-white hover:text-gray-200 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="p-6">
+            <p class="text-gray-600 mb-4">Describe your program idea and AI will help create a comprehensive program outline for you.</p>
+            
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Your Program Idea</label>
+                <textarea 
+                    id="ai-program-idea" 
+                    rows="6" 
+                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none" 
+                    placeholder="Example: I want to create a comprehensive web development course covering HTML, CSS, JavaScript, and React. The program should be suitable for beginners with no prior coding experience and take them from basics to building real-world projects."
+                ></textarea>
+                <p class="text-sm text-gray-500 mt-2">Be as detailed as possible about your program goals, target audience, and key topics.</p>
+            </div>
+
+            <div class="flex gap-3">
+                <button id="generate-ai-program-btn" class="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-blue-700 transition flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                    </svg>
+                    Generate Program with AI
+                </button>
+                <button id="cancel-ai-modal-btn" class="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="<?php echo BASE_PATH; ?>/admin-panel/js/expert-programs.js"></script>
 
 <?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>

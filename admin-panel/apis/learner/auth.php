@@ -17,6 +17,7 @@ try {
         
         $email = $input['email'] ?? '';
         $password = $input['password'] ?? '';
+        $redirectAfterLogin = $input['redirect_after_login'] ?? null;
         
         if (empty($email) || empty($password)) {
             error_log("Auth API - Missing email or password");
@@ -45,6 +46,12 @@ try {
             http_response_code(403);
             echo json_encode(['success' => false, 'message' => 'Your account is ' . $user['status']]);
             exit;
+        }
+        
+        // Save redirect URL to session if provided
+        if ($redirectAfterLogin) {
+            $_SESSION['redirect_after_login'] = $redirectAfterLogin;
+            error_log("Auth API - Saved redirect URL to session: " . $redirectAfterLogin);
         }
         
         // Create session

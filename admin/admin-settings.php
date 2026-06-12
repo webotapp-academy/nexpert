@@ -1,10 +1,13 @@
 <?php
-require_once 'includes/admin-auth-check.php';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
+
+require_once dirname(__DIR__) . '/includes/admin-auth-check.php';
 
 $page_title = "Settings - Admin";
 $panel_type = "admin";
-require_once 'includes/header.php';
-require_once 'includes/admin-sidebar.php';
+require_once dirname(__DIR__) . '/includes/header.php';
+require_once dirname(__DIR__) . '/includes/admin-sidebar.php';
 ?>
 
     <!-- Page Header -->

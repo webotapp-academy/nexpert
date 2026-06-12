@@ -1,10 +1,13 @@
 <?php
-require_once 'includes/admin-auth-check.php';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
+
+require_once dirname(__DIR__) . '/includes/admin-auth-check.php';
 
 $page_title = "Bookings Management - Admin";
 $panel_type = "admin";
-require_once 'includes/header.php';
-require_once 'includes/admin-sidebar.php';
+require_once dirname(__DIR__) . '/includes/header.php';
+require_once dirname(__DIR__) . '/includes/admin-sidebar.php';
 ?>
 
     <!-- Page Header -->
@@ -58,10 +61,10 @@ async function loadBookings() {
     const status = document.getElementById('status-filter').value;
     
     try {
-        let url = '/admin-panel/apis/admin/bookings.php?';
+        let url = `${BASE_PATH}/admin-panel/apis/admin/bookings.php?`;
         if (status) url += `status=${status}`;
         
-        const response = await fetch(url);
+        const response = await window.AdminAPI.fetch(url);
         const data = await response.json();
         
         if (data.success) {
@@ -87,7 +90,7 @@ async function loadBookings() {
                         ${new Date(booking.session_datetime).toLocaleString()}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${booking.duration_minutes} min</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${booking.amount || '0'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹${booking.amount || '0'}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 py-1 text-xs rounded-full ${
                             booking.status === 'confirmed' ? 'bg-blue-100 text-blue-800' :
@@ -103,14 +106,55 @@ async function loadBookings() {
                     </td>
                 </tr>
             `).join('');
+        } else {
+            document.getElementById('bookings-table-body').innerHTML = 
+                '<tr><td colspan="8" class="px-6 py-4 text-center text-red-500">Error: ' + (data.message || 'Failed to load bookings') + '</td></tr>';
         }
     } catch (error) {
         console.error('Error loading bookings:', error);
+        document.getElementById('bookings-table-body').innerHTML = 
+            '<tr><td colspan="8" class="px-6 py-4 text-center text-red-500">Error loading bookings. Please check console for details.</td></tr>';
     }
 }
 
-function viewBooking(id) {
-    alert('Viewing booking #' + id + ' - Full details page to be implemented');
+async function viewBooking(id) {
+    try {
+        const response = await window.AdminAPI.fetch(`${BASE_PATH}/admin-panel/apis/admin/bookings.php?booking_id=${id}`);
+        const data = await response.json();
+        
+        if (data.success && data.bookings && data.bookings.length > 0) {
+            const booking = data.bookings[0];
+            Swal.fire({
+                title: `Booking #${booking.id}`,
+                html: `
+                    <div class="text-left space-y-2">
+                        <p><strong>Learner:</strong> ${booking.learner_name || 'N/A'} (${booking.learner_email || 'N/A'})</p>
+                        <p><strong>Expert:</strong> ${booking.expert_name || 'N/A'} (${booking.expert_email || 'N/A'})</p>
+                        <p><strong>Session Date:</strong> ${new Date(booking.session_datetime).toLocaleString()}</p>
+                        <p><strong>Duration:</strong> ${booking.duration_minutes} minutes</p>
+                        <p><strong>Amount:</strong> ₹${booking.amount || '0'}</p>
+                        <p><strong>Status:</strong> <span class="font-semibold">${booking.status}</span></p>
+                        <p><strong>Payment Status:</strong> ${booking.payment_status || 'N/A'}</p>
+                    </div>
+                `,
+                confirmButtonText: 'Close',
+                width: '600px'
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Booking details not found'
+            });
+        }
+    } catch (error) {
+        console.error('Error viewing booking:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to load booking details'
+        });
+    }
 }
 
 // Load bookings on page load

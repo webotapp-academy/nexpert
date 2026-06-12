@@ -26,6 +26,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connecti
 $defaultProfileData = [
     'full_name' => '',
     'tagline' => '',
+    'category' => null,
     'bio_full' => '',
     'timezone' => 'UTC',
     'experience_years' => null,
@@ -73,7 +74,8 @@ try {
     $stmt = $pdo->prepare("
         SELECT 
             ep.full_name, 
-            ep.tagline, 
+            ep.tagline,
+            ep.category,
             ep.bio_full, 
             ep.timezone, 
             ep.experience_years, 
@@ -130,9 +132,22 @@ try {
             $profileData['profile_photo'] = BASE_PATH . '/uploads/profiles/' . $photo;
             error_log('Final Resolved Photo Path: ' . $profileData['profile_photo']);
         } else {
-            // If file doesn't exist, set to null
-            $profileData['profile_photo'] = null;
-            error_log('Profile photo file not found, setting to null');
+            // Try to find any profile file matching the pattern "profile_{$userId}_*"
+            $profile_dir = $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/uploads/profiles/';
+            $matches = glob($profile_dir . 'profile_' . $userId . '_*');
+            if (empty($matches)) {
+                $matches = glob($profile_dir . 'profile_' . $userId . '.*');
+            }
+            
+            if (!empty($matches)) {
+                $found_photo = basename($matches[0]);
+                $profileData['profile_photo'] = BASE_PATH . '/uploads/profiles/' . $found_photo;
+                error_log('Final Resolved Photo Path via fallback: ' . $profileData['profile_photo']);
+            } else {
+                // If file doesn't exist, set to null
+                $profileData['profile_photo'] = null;
+                error_log('Profile photo file not found, setting to null');
+            }
         }
     } else {
         $profileData['profile_photo'] = null;

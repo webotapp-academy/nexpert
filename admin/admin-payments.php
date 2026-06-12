@@ -1,10 +1,13 @@
 <?php
-require_once 'includes/admin-auth-check.php';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
+
+require_once dirname(__DIR__) . '/includes/admin-auth-check.php';
 
 $page_title = "Payments Management - Admin";
 $panel_type = "admin";
-require_once 'includes/header.php';
-require_once 'includes/admin-sidebar.php';
+require_once dirname(__DIR__) . '/includes/header.php';
+require_once dirname(__DIR__) . '/includes/admin-sidebar.php';
 ?>
 
     <!-- Page Header -->
@@ -18,19 +21,19 @@ require_once 'includes/admin-sidebar.php';
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
             <div class="bg-white rounded-lg shadow p-6">
                 <p class="text-gray-600 text-sm">Total Revenue</p>
-                <p class="text-3xl font-bold text-gray-900" id="total-revenue">$0</p>
+                <p class="text-3xl font-bold text-gray-900" id="total-revenue">₹0</p>
             </div>
             <div class="bg-white rounded-lg shadow p-6">
                 <p class="text-gray-600 text-sm">Platform Commission</p>
-                <p class="text-3xl font-bold text-gray-900" id="total-commission">$0</p>
+                <p class="text-3xl font-bold text-gray-900" id="total-commission">₹0</p>
             </div>
             <div class="bg-white rounded-lg shadow p-6">
                 <p class="text-gray-600 text-sm">Pending Payments</p>
-                <p class="text-3xl font-bold text-gray-900" id="pending-amount">$0</p>
+                <p class="text-3xl font-bold text-gray-900" id="pending-amount">₹0</p>
             </div>
             <div class="bg-white rounded-lg shadow p-6">
                 <p class="text-gray-600 text-sm">Total Refunds</p>
-                <p class="text-3xl font-bold text-gray-900" id="total-refunds">$0</p>
+                <p class="text-3xl font-bold text-gray-900" id="total-refunds">₹0</p>
             </div>
         </div>
 
@@ -78,19 +81,19 @@ async function loadPayments() {
     const status = document.getElementById('status-filter').value;
     
     try {
-        let url = '/admin-panel/apis/admin/payments.php?';
+        let url = `${BASE_PATH}/admin-panel/apis/admin/payments.php?`;
         if (status) url += `status=${status}`;
         
-        const response = await fetch(url);
+        const response = await window.AdminAPI.fetch(url);
         const data = await response.json();
         
         if (data.success) {
             // Update stats
             if (data.stats) {
-                document.getElementById('total-revenue').textContent = '$' + (parseFloat(data.stats.total_revenue) || 0).toFixed(2);
-                document.getElementById('total-commission').textContent = '$' + (parseFloat(data.stats.total_commission) || 0).toFixed(2);
-                document.getElementById('pending-amount').textContent = '$' + (parseFloat(data.stats.pending_amount) || 0).toFixed(2);
-                document.getElementById('total-refunds').textContent = '$' + (parseFloat(data.stats.total_refunds) || 0).toFixed(2);
+                document.getElementById('total-revenue').textContent = '₹' + (parseFloat(data.stats.total_revenue) || 0).toFixed(2);
+                document.getElementById('total-commission').textContent = '₹' + (parseFloat(data.stats.total_commission) || 0).toFixed(2);
+                document.getElementById('pending-amount').textContent = '₹' + (parseFloat(data.stats.pending_amount) || 0).toFixed(2);
+                document.getElementById('total-refunds').textContent = '₹' + (parseFloat(data.stats.total_refunds) || 0).toFixed(2);
             }
             
             const tbody = document.getElementById('payments-table-body');
@@ -111,8 +114,8 @@ async function loadPayments() {
                         <div class="text-sm font-medium text-gray-900">${payment.expert_name || 'N/A'}</div>
                         <div class="text-sm text-gray-500">${payment.expert_email || ''}</div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${parseFloat(payment.amount).toFixed(2)}</td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">$${parseFloat(payment.commission_amount || 0).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹${parseFloat(payment.amount).toFixed(2)}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₹${parseFloat(payment.commission_amount || 0).toFixed(2)}</td>
                     <td class="px-6 py-4 whitespace-nowrap">
                         <span class="px-2 py-1 text-xs rounded-full ${
                             payment.status === 'success' ? 'bg-green-100 text-green-800' :
@@ -131,14 +134,57 @@ async function loadPayments() {
                     </td>
                 </tr>
             `).join('');
+        } else {
+            document.getElementById('payments-table-body').innerHTML = 
+                '<tr><td colspan="8" class="px-6 py-4 text-center text-red-500">Error: ' + (data.message || 'Failed to load payments') + '</td></tr>';
         }
     } catch (error) {
         console.error('Error loading payments:', error);
+        document.getElementById('payments-table-body').innerHTML = 
+            '<tr><td colspan="8" class="px-6 py-4 text-center text-red-500">Error loading payments. Please check console for details.</td></tr>';
     }
 }
 
-function viewPayment(id) {
-    alert('Viewing payment #' + id + ' - Full details page to be implemented');
+async function viewPayment(id) {
+    try {
+        const response = await window.AdminAPI.fetch(`${BASE_PATH}/admin-panel/apis/admin/payments.php?payment_id=${id}`);
+        const data = await response.json();
+        
+        if (data.success && data.payments && data.payments.length > 0) {
+            const payment = data.payments[0];
+            Swal.fire({
+                title: `Payment #${payment.id}`,
+                html: `
+                    <div class="text-left space-y-2">
+                        <p><strong>Learner:</strong> ${payment.learner_name || 'N/A'} (${payment.learner_email || 'N/A'})</p>
+                        <p><strong>Expert:</strong> ${payment.expert_name || 'N/A'} (${payment.expert_email || 'N/A'})</p>
+                        <p><strong>Amount:</strong> ₹${parseFloat(payment.amount).toFixed(2)}</p>
+                        <p><strong>Commission:</strong> ₹${parseFloat(payment.commission_amount || 0).toFixed(2)}</p>
+                        <p><strong>Expert Earning:</strong> ₹${(parseFloat(payment.amount) - parseFloat(payment.commission_amount || 0)).toFixed(2)}</p>
+                        <p><strong>Status:</strong> <span class="font-semibold">${payment.status}</span></p>
+                        <p><strong>Payment Method:</strong> ${payment.payment_method || 'N/A'}</p>
+                        <p><strong>Transaction ID:</strong> ${payment.transaction_id || 'N/A'}</p>
+                        <p><strong>Date:</strong> ${new Date(payment.created_at).toLocaleString()}</p>
+                    </div>
+                `,
+                confirmButtonText: 'Close',
+                width: '600px'
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Payment details not found'
+            });
+        }
+    } catch (error) {
+        console.error('Error viewing payment:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to load payment details'
+        });
+    }
 }
 
 // Load payments on page load

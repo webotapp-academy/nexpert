@@ -1,12 +1,11 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    header('Location: ' . BASE_PATH . '/index.php?panel=expert&page=auth');
     exit;
 }
 
@@ -542,9 +541,8 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                 currentStep++;
                 showStep(currentStep);
             } else {
-                // Save profile (placeholder)
-                alert('Profile setup complete! Redirecting to dashboard...');
-                window.location.href = `${window.BASE_PATH}/index.php?panel=expert&page=dashboard`;
+                // Save complete profile
+                saveCompleteProfile();
             }
         });
 
@@ -597,6 +595,81 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
             if (index > -1) {
                 expertiseTags.splice(index, 1);
                 updateExpertiseTags();
+            }
+        }
+
+        // Save Complete Profile Function
+        async function saveCompleteProfile() {
+            const nextBtn = document.getElementById('nextBtn');
+            nextBtn.disabled = true;
+            nextBtn.textContent = 'Saving...';
+
+            // Collect Step 1 data
+            const fullName = document.getElementById('fullName').value;
+            const tagline = document.getElementById('tagline').value;
+            const bioText = document.getElementById('bioText').value;
+            const category = document.getElementById('category').value;
+            const experience = document.getElementById('experience').value;
+
+            // Validate required fields
+            if (!fullName || !tagline || !bioText || !category || !experience) {
+                alert('Please fill all required fields in Profile Information');
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Complete Profile';
+                return;
+            }
+
+            if (bioText.length < 100) {
+                alert('Bio must be at least 100 characters long');
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Complete Profile';
+                return;
+            }
+
+            if (expertiseTags.length === 0) {
+                alert('Please add at least one expertise tag');
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Complete Profile';
+                return;
+            }
+
+            // Prepare profile data
+            const profileData = {
+                user_id: <?php echo $_SESSION['user_id']; ?>,
+                full_name: fullName,
+                tagline: tagline,
+                bio_short: bioText.substring(0, 200),
+                bio_full: bioText,
+                expertise_verticals: expertiseTags,
+                category: category,
+                experience_years: parseInt(experience),
+                timezone: document.getElementById('timezone').value
+            };
+
+            try {
+                const response = await fetch(`${BASE_PATH}/admin-panel/apis/expert/profile.php`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(profileData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    alert('Profile setup complete! Redirecting to dashboard...');
+                    window.location.href = `${BASE_PATH}/index.php?panel=expert&page=dashboard`;
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to save profile'));
+                    nextBtn.disabled = false;
+                    nextBtn.textContent = 'Complete Profile';
+                }
+            } catch (error) {
+                console.error('Save profile error:', error);
+                alert('Error saving profile. Please try again.');
+                nextBtn.disabled = false;
+                nextBtn.textContent = 'Complete Profile';
             }
         }
 

@@ -1,10 +1,13 @@
 <?php
-require_once 'includes/admin-auth-check.php';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
+
+require_once dirname(__DIR__) . '/includes/admin-auth-check.php';
 
 $page_title = "User Management - Admin";
 $panel_type = "admin";
-require_once 'includes/header.php';
-require_once 'includes/admin-sidebar.php';
+require_once dirname(__DIR__) . '/includes/header.php';
+require_once dirname(__DIR__) . '/includes/admin-sidebar.php';
 ?>
 
     <!-- Page Header -->
@@ -77,7 +80,7 @@ async function loadUsers() {
     const role = document.getElementById('role-filter').value;
     const status = document.getElementById('status-filter').value;
     
-    let url = '/admin-panel/apis/admin/users.php?';
+    let url = `${BASE_PATH}/admin-panel/apis/admin/users.php?`;
     if (role) url += `role=${role}&`;
     if (status) url += `status=${status}`;
     
@@ -117,9 +120,12 @@ async function loadUsers() {
             `).join('');
             
             document.getElementById('users-table').innerHTML = tableHtml || '<tr><td colspan="5" class="px-6 py-8 text-center text-gray-500">No users found</td></tr>';
+        } else {
+            document.getElementById('users-table').innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">Error: ' + (data.message || 'Failed to load users') + '</td></tr>';
         }
     } catch (error) {
         console.error('Error loading users:', error);
+        document.getElementById('users-table').innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">Error loading users. Please check console for details.</td></tr>';
     }
 }
 
@@ -127,7 +133,7 @@ async function updateUserStatus(userId, status) {
     if (!status) return;
     
     try {
-        const response = await window.AdminAPI.fetch('/admin-panel/apis/admin/users.php', {
+        const response = await window.AdminAPI.fetch(`${BASE_PATH}/admin-panel/apis/admin/users.php`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: userId, status: status })
@@ -135,14 +141,28 @@ async function updateUserStatus(userId, status) {
         
         const data = await response.json();
         if (data.success) {
-            alert('User status updated successfully');
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'User status updated successfully',
+                timer: 2000,
+                showConfirmButton: false
+            });
             loadUsers();
         } else {
-            alert('Error: ' + (data.message || 'Unknown error'));
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Unknown error occurred'
+            });
         }
     } catch (error) {
         console.error('Error updating user status:', error);
-        alert('Error updating user status. Please try again.');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error updating user status. Please try again.'
+        });
     }
 }
 

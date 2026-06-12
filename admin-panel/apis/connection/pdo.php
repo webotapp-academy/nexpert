@@ -3,10 +3,10 @@
 // Set default timezone to IST
 date_default_timezone_set('Asia/Kolkata');
 
-$host = 'srv1368.hstgr.io:3306';
-$dbname = 'u621169360_replit';
-$username = 'u621169360_replit';
-$password = 'JAIhanuman89@@@';
+$host = 'srv1983.hstgr.io';
+$dbname = 'u181502964_MakeNew';
+$username = 'u181502964_MakeNew';
+$password = '!YcXSZlt@cI5';
 
 $dsn = "mysql:host=$host;dbname=$dbname;charset=utf8mb4";
 
@@ -23,5 +23,3 @@ try {
 } catch (PDOException $e) {
     die("Database connection failed: " . $e->getMessage());
 }
-
-?>

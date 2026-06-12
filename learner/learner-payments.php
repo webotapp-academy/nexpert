@@ -1,6 +1,6 @@
 <?php
-// For online deployment, set BASE_PATH to empty for root directory
-$BASE_PATH = '';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
 
 require_once dirname(__DIR__) . '/includes/session-config.php';
 
@@ -8,7 +8,7 @@ require_once dirname(__DIR__) . '/includes/session-config.php';
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
     // Save the current URL to redirect back after login
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header('Location: ' . $BASE_PATH . '/index.php?panel=learner&page=auth');
+    header('Location: ' . BASE_PATH . '/index.php?panel=learner&page=auth');
     exit;
 }
 
@@ -17,26 +17,29 @@ $panel_type = "learner";
 require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 ?>
+    <script>
+        document.body.className = "bg-[#080B10] min-h-screen text-white";
+    </script>
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
         <!-- Progress Steps -->
         <div class="mb-8">
             <div class="flex items-center justify-center">
                 <div class="flex items-center">
-                    <div class="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div class="w-8 h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center text-sm font-semibold">
                         ✓
                     </div>
-                    <span class="ml-2 text-sm text-green-600 font-medium">Session Details</span>
+                    <span class="ml-2 text-sm text-emerald-400 font-medium">Session Details</span>
                 </div>
-                <div class="w-16 h-0.5 bg-green-500 mx-4"></div>
+                <div class="w-16 h-0.5 bg-emerald-500 mx-4"></div>
                 <div class="flex items-center">
-                    <div class="w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div class="w-8 h-8 bg-[#00D4AA] text-[#080B10] rounded-full flex items-center justify-center text-sm font-bold">
                         2
                     </div>
-                    <span class="ml-2 text-sm text-primary font-medium">Payment</span>
+                    <span class="ml-2 text-sm text-[#00D4AA] font-bold">Payment</span>
                 </div>
-                <div class="w-16 h-0.5 bg-gray-300 mx-4"></div>
+                <div class="w-16 h-0.5 bg-gray-800 mx-4"></div>
                 <div class="flex items-center">
-                    <div class="w-8 h-8 bg-gray-300 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div class="w-8 h-8 bg-gray-800 text-gray-500 rounded-full flex items-center justify-center text-sm font-semibold">
                         3
                     </div>
                     <span class="ml-2 text-sm text-gray-500">Confirmation</span>
@@ -46,99 +49,73 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
         <div class="grid lg:grid-cols-3 gap-6 lg:gap-8">
             <!-- Payment Form -->
-            <div class="lg:col-span-2 bg-white rounded-lg shadow-lg p-6">
-                <h1 class="text-2xl font-bold text-gray-900 mb-6">Payment Details</h1>
+            <div class="lg:col-span-2 bg-[#131b2e] border border-gray-800 rounded-xl shadow-lg p-6">
+                <h1 class="text-2xl font-bold text-white mb-6">Payment Details</h1>
                 
                 <form id="payment-form" class="space-y-6">
                     <!-- Payment Method Selection -->
                     <div>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment Method</h3>
+                        <h3 class="text-lg font-semibold text-white mb-4">Payment Method</h3>
                         <div class="space-y-3" id="payment-methods">
-                            <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg hover:border-primary cursor-pointer transition duration-200">
-                                <input type="radio" name="payment_method" value="cash_test" checked class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                            <label class="flex items-center p-4 border border-[#00D4AA] rounded-lg cursor-pointer transition duration-200 bg-[#0d131f]" id="card-option">
+                                <input type="radio" name="payment_method" value="card" checked class="h-4 w-4 text-[#00D4AA] focus:ring-[#00D4AA] border-gray-800 bg-[#080B10]">
                                 <div class="ml-3 flex items-center">
-                                    <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                                    </svg>
-                                    <div>
-                                        <span class="font-medium">Cash (Test Mode)</span>
-                                        <p class="text-xs text-gray-500 mt-1">Simulate payment without real charge.</p>
-                                    </div>
-                                </div>
-                            </label>
-                            <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg hover:border-primary cursor-pointer transition duration-200" id="card-option">
-                                <input type="radio" name="payment_method" value="card" class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
-                                <div class="ml-3 flex items-center">
-                                    <svg class="w-6 h-6 mr-2 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg class="w-6 h-6 mr-2 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
                                     </svg>
                                     <div>
-                                        <span class="font-medium">Credit / Debit Card</span>
-                                        <p class="text-xs text-gray-500 mt-1">Secure payment via Razorpay.</p>
+                                        <span class="font-semibold text-white">Online Payment</span>
+                                        <p class="text-xs text-gray-400 mt-1">Secure payment via Razorpay (UPI, Card, Wallet)</p>
                                     </div>
                                 </div>
                             </label>
-                            <label class="flex items-center p-4 border-2 border-gray-300 rounded-lg hover:border-primary cursor-pointer transition duration-200 opacity-50 cursor-not-allowed">
-                                <input type="radio" name="payment_method" value="upi" disabled class="h-4 w-4 text-primary focus:ring-primary border-gray-300">
+                            
+                            <label class="flex items-center p-4 border border-gray-800 rounded-lg hover:border-[#00D4AA] cursor-pointer transition duration-200 bg-[#0d131f]" id="cod-option">
+                                <input type="radio" name="payment_method" value="cod" class="h-4 w-4 text-[#00D4AA] focus:ring-[#00D4AA] border-gray-800 bg-[#080B10]">
                                 <div class="ml-3 flex items-center">
-                                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                    <svg class="w-6 h-6 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                                     </svg>
                                     <div>
-                                        <span class="font-medium">UPI</span>
-                                        <p class="text-xs text-gray-500 mt-1">Coming soon</p>
+                                        <span class="font-semibold text-white">Cash on Delivery</span>
+                                        <p class="text-xs text-gray-400 mt-1">Pay in cash after session completion</p>
                                     </div>
                                 </div>
                             </label>
-                        </div>
-                    </div>
-
-                    <!-- Test Mode Notice -->
-                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <div class="flex items-start">
-                            <svg class="w-5 h-5 text-green-600 mt-0.5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                            <div>
-                                <h4 class="text-sm font-semibold text-green-800 mb-1">Test Mode Active</h4>
-                                <p class="text-sm text-green-700">
-                                    Cash payment option is for testing purposes only. Click "Complete Payment" to simulate a successful payment.
-                                </p>
-                            </div>
                         </div>
                     </div>
 
                     <!-- Terms -->
                     <div class="flex items-start">
-                        <input type="checkbox" id="terms-checkbox" required class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded mt-0.5">
+                        <input type="checkbox" id="terms-checkbox" required class="h-4 w-4 text-[#00D4AA] focus:ring-[#00D4AA] border-gray-800 rounded bg-[#080B10] mt-0.5">
                         <div class="ml-3 text-sm">
-                            <p class="text-gray-700">
-                                I agree to the <a href="#" class="text-primary hover:text-secondary">Terms of Service</a> and 
-                                <a href="#" class="text-primary hover:text-secondary">Privacy Policy</a>
+                            <p class="text-gray-300">
+                                I agree to the <a href="#" class="text-[#00D4AA] hover:text-white transition">Terms of Service</a> and 
+                                <a href="#" class="text-[#00D4AA] hover:text-white transition">Privacy Policy</a>
                             </p>
                         </div>
                     </div>
 
                     <!-- Submit Button -->
-                    <button type="submit" id="submit-payment-btn" class="w-full bg-primary text-white px-6 py-3 rounded-lg hover:bg-secondary transition duration-200 font-semibold text-lg shadow-md hover:shadow-lg">
+                    <button type="submit" id="submit-payment-btn" class="w-full bg-[#00D4AA] text-[#080B10] px-6 py-3 rounded-lg hover:bg-[#00bda0] transition duration-200 font-bold text-lg shadow-md hover:shadow-lg">
                         Complete Payment
                     </button>
                 </form>
             </div>
 
             <!-- Order Summary -->
-            <div class="bg-white rounded-lg shadow-lg p-6 h-fit">
-                <h2 class="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+            <div class="bg-[#131b2e] border border-gray-800 rounded-xl shadow-lg p-6 h-fit">
+                <h2 class="text-xl font-bold text-white mb-6">Order Summary</h2>
                 
                 <!-- Expert Info -->
-                <div class="mb-6 pb-6 border-b">
+                <div class="mb-6 pb-6 border-b border-gray-800">
                     <div class="flex items-center mb-3">
-                        <div id="summary-expert-photo" class="w-12 h-12 rounded-full bg-gray-200 mr-3 overflow-hidden flex items-center justify-center">
-                            <span class="text-xl text-gray-400">👤</span>
+                        <div id="summary-expert-photo" class="w-12 h-12 rounded-full bg-[#0d131f] border border-gray-800 mr-3 overflow-hidden flex items-center justify-center">
+                            <span class="text-xl text-gray-500">👤</span>
                         </div>
                         <div>
-                            <h3 id="summary-expert-name" class="font-semibold text-gray-900">Loading...</h3>
-                            <p id="summary-expert-title" class="text-sm text-gray-600">Loading...</p>
+                            <h3 id="summary-expert-name" class="font-semibold text-white">Loading...</h3>
+                            <p id="summary-expert-title" class="text-sm text-gray-400">Loading...</p>
                         </div>
                     </div>
                 </div>
@@ -146,36 +123,36 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                 <!-- Session Details -->
                 <div class="space-y-3 mb-6 text-sm">
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Session Date:</span>
-                        <span id="summary-date" class="text-gray-900 font-medium">-</span>
+                        <span class="text-gray-400">Session Date:</span>
+                        <span id="summary-date" class="text-white font-medium">-</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Session Time:</span>
-                        <span id="summary-time" class="text-gray-900 font-medium">-</span>
+                        <span class="text-gray-400">Session Time:</span>
+                        <span id="summary-time" class="text-white font-medium">-</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Duration:</span>
-                        <span class="text-gray-900 font-medium">60 minutes</span>
+                        <span class="text-gray-400">Duration:</span>
+                        <span class="text-white font-medium">60 minutes</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Type:</span>
-                        <span class="text-gray-900 font-medium">1-on-1 Video Call</span>
+                        <span class="text-gray-400">Type:</span>
+                        <span class="text-white font-medium">1-on-1 Video Call</span>
                     </div>
                 </div>
 
                 <!-- Price Breakdown -->
-                <div class="border-t pt-4 space-y-2 text-sm">
+                <div class="border-t border-gray-800 pt-4 space-y-2 text-sm">
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Session Fee:</span>
-                        <span id="summary-amount" class="text-gray-900">₹0</span>
+                        <span class="text-gray-400">Session Fee:</span>
+                        <span id="summary-amount" class="text-white">₹0</span>
                     </div>
                     <div class="flex justify-between">
-                        <span class="text-gray-600">Platform Fee:</span>
-                        <span class="text-gray-900">₹0</span>
+                        <span class="text-gray-400">Platform Fee:</span>
+                        <span class="text-white">₹0</span>
                     </div>
-                    <div class="flex justify-between text-base font-semibold pt-2 border-t">
-                        <span class="text-gray-900">Total:</span>
-                        <span id="summary-total" class="text-primary">₹0</span>
+                    <div class="flex justify-between text-base font-semibold pt-2 border-t border-gray-800">
+                        <span class="text-white">Total:</span>
+                        <span id="summary-total" class="text-[#00D4AA]">₹0</span>
                     </div>
                 </div>
             </div>
@@ -184,7 +161,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
 <script>
     // Set BASE_PATH globally
-    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    window.BASE_PATH = '<?php echo BASE_PATH; ?>';
     console.log('Payment BASE_PATH detected as:', window.BASE_PATH);
 
     (function() {
@@ -266,6 +243,30 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
         document.getElementById('summary-time').textContent = formattedTime;
         document.getElementById('summary-amount').textContent = `₹${amount}`;
         document.getElementById('summary-total').textContent = `₹${amount}`;
+
+        // Payment method change handler - update button text and styling
+        const paymentMethodRadios = document.querySelectorAll('input[name="payment_method"]');
+        const submitBtn = document.getElementById('submit-payment-btn');
+        const cardOption = document.getElementById('card-option');
+        const codOption = document.getElementById('cod-option');
+        
+        paymentMethodRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                if (this.value === 'cod') {
+                    submitBtn.textContent = 'Confirm Booking (Pay Later)';
+                    codOption.classList.add('border-[#00D4AA]');
+                    codOption.classList.remove('border-gray-800');
+                    cardOption.classList.remove('border-[#00D4AA]');
+                    cardOption.classList.add('border-gray-800');
+                } else {
+                    submitBtn.textContent = 'Complete Payment';
+                    cardOption.classList.add('border-[#00D4AA]');
+                    cardOption.classList.remove('border-gray-800');
+                    codOption.classList.remove('border-[#00D4AA]');
+                    codOption.classList.add('border-gray-800');
+                }
+            });
+        });
 
     // Razorpay Integration Notes:
     // - Do NOT expose your live secret key in frontend. Only publishable key (key_id) is exposed automatically by order API response.
@@ -386,7 +387,21 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
             submitBtn.textContent = 'Processing...';
 
             try {
-                if (paymentMethod === 'cash_test') {
+                if (paymentMethod === 'cod') {
+                    // Handle Cash on Delivery
+                    const result = await createOrder('cod');
+                    if (result.success) {
+                        await Swal.fire({ 
+                            icon: 'success', 
+                            title: 'Booking Confirmed!', 
+                            html: '<p>Your session has been booked successfully.</p><p class="text-sm text-gray-600 mt-2">Please pay in cash after session completion.</p>',
+                            confirmButtonColor: '#10B981'
+                        });
+                        window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=dashboard`;
+                        return;
+                    }
+                    throw new Error(result.message || 'COD booking failed');
+                } else if (paymentMethod === 'cash_test') {
                     const result = await createOrder('cash_test');
                     if (result.success) {
                         await Swal.fire({ icon: 'success', title: 'Payment Successful!', text: 'Your session has been booked.', timer: 1800, showConfirmButton: false });
@@ -406,7 +421,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                 console.error('Payment error:', error);
                 Swal.fire({ icon: 'error', title: 'Payment Failed', text: error.message || 'Could not process payment', confirmButtonColor: '#3B82F6' });
                 submitBtn.disabled = false;
-                submitBtn.textContent = 'Complete Payment';
+                submitBtn.textContent = paymentMethod === 'cod' ? 'Confirm Booking (Pay Later)' : 'Complete Payment';
             }
         });
 

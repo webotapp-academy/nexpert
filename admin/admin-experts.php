@@ -1,7 +1,6 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
 
 require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/admin-auth-check.php';
 
@@ -102,7 +101,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/admin-sidebar.ph
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 // Set BASE_PATH globally
-window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+window.BASE_PATH = '<?php echo BASE_PATH; ?>';
 
 function escapeHtml(text) {
     const div = document.createElement('div');
@@ -395,6 +394,25 @@ async function editExpert(expertId) {
             const editForm = `
                 <div class="space-y-4">
                     <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Profile Photo</label>
+                        <div class="flex items-center space-x-4">
+                            <div class="relative">
+                                <img id="edit-profile-preview" src="${escapeHtml(expert.profile_photo || '/assets/default-avatar.png')}" 
+                                     alt="Profile Preview" 
+                                     class="w-24 h-24 rounded-full object-cover border-2 border-gray-300">
+                            </div>
+                            <div>
+                                <input type="file" id="edit-profile-photo" accept="image/*" class="hidden">
+                                <button type="button" onclick="document.getElementById('edit-profile-photo').click()" 
+                                        class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                                    Choose Photo
+                                </button>
+                                <p class="text-xs text-gray-500 mt-2">JPG, PNG or GIF. Max 5MB</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                         <input type="text" id="edit-full-name" value="${escapeHtml(expert.full_name || '')}" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
                     </div>
@@ -439,6 +457,33 @@ async function editExpert(expertId) {
             
             document.getElementById('edit-modal-content').innerHTML = editForm;
             document.getElementById('edit-modal').classList.remove('hidden');
+            
+            // Add image preview functionality
+            document.getElementById('edit-profile-photo').addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Validate file size (5MB max)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('File size must be less than 5MB');
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    // Validate file type
+                    if (!file.type.match('image.*')) {
+                        alert('Please select an image file');
+                        e.target.value = '';
+                        return;
+                    }
+                    
+                    // Preview image
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        document.getElementById('edit-profile-preview').src = event.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
         } else {
             console.error('API Error:', data.message);
             alert('Error: ' + (data.message || 'Failed to load expert data'));
@@ -460,6 +505,7 @@ async function saveExpertProfile() {
     const yearsExperience = document.getElementById('edit-years-experience').value;
     const linkedinUrl = document.getElementById('edit-linkedin').value.trim();
     const websiteUrl = document.getElementById('edit-website').value.trim();
+    const profilePhotoFile = document.getElementById('edit-profile-photo').files[0];
     
     const expertiseVerticals = expertiseRaw.split(',').map(v => v.trim()).filter(v => v);
     
@@ -469,35 +515,58 @@ async function saveExpertProfile() {
     }
     
     try {
-        const response = await window.AdminAPI.fetch(`${window.BASE_PATH}/admin-panel/apis/admin/kyc.php`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                expert_id: currentExpertId,
-                update_profile: true,
-                full_name: fullName,
-                bio_short: bioShort,
-                bio_full: bioFull,
-                expertise_verticals: expertiseVerticals,
-                credentials: credentials,
-                years_of_experience: yearsExperience || null,
-                linkedin_url: linkedinUrl,
-                website_url: websiteUrl
-            })
+        // Create FormData for file upload
+        const formData = new FormData();
+        formData.append('expert_id', currentExpertId);
+        formData.append('update_profile', 'true');
+        formData.append('full_name', fullName);
+        formData.append('bio_short', bioShort);
+        formData.append('bio_full', bioFull);
+        formData.append('expertise_verticals', JSON.stringify(expertiseVerticals));
+        formData.append('credentials', credentials);
+        formData.append('years_of_experience', yearsExperience || '');
+        formData.append('linkedin_url', linkedinUrl);
+        formData.append('website_url', websiteUrl);
+        
+        // Add profile photo if selected
+        if (profilePhotoFile) {
+            formData.append('profile_photo', profilePhotoFile);
+        }
+        
+        // Use POST method for file uploads
+        const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/admin/kyc.php`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
         });
         
         const data = await response.json();
         
         if (data.success) {
-            alert('Expert profile updated successfully!');
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: 'Expert profile updated successfully!',
+                confirmButtonColor: '#3B82F6'
+            });
             closeEditModal();
             loadExperts();
         } else {
-            alert('Error: ' + (data.message || 'Unknown error'));
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Failed to update profile',
+                confirmButtonColor: '#3B82F6'
+            });
         }
     } catch (error) {
         console.error('Error saving expert profile:', error);
-        alert('Error saving expert profile');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error saving expert profile',
+            confirmButtonColor: '#3B82F6'
+        });
     }
 }
 

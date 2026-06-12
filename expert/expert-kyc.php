@@ -1,13 +1,12 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
     // Save the current URL to redirect back after login
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    header('Location: ' . BASE_PATH . '/index.php?panel=expert&page=auth');
     exit;
 }
 
@@ -171,7 +170,24 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                                 <p class="mt-2 text-sm text-gray-600">Click to upload or drag and drop</p>
                                 <p class="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
                             </label>
-                            <div id="idFrontPreview" class="mt-3 text-sm text-green-600 hidden"></div>
+                        </div>
+                        <!-- Preview Area -->
+                        <div id="idFrontPreviewArea" class="mt-4 hidden">
+                            <div class="relative border-2 border-gray-200 rounded-lg p-4">
+                                <img id="idFrontPreviewImage" class="max-w-full h-auto rounded-lg mx-auto" style="max-height: 300px;" />
+                                <div id="idFrontPdfPreview" class="hidden p-4 bg-gray-50 rounded-lg text-center">
+                                    <svg class="mx-auto h-16 w-16 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path>
+                                    </svg>
+                                    <p class="mt-2 text-sm font-medium text-gray-700" id="idFrontFileName"></p>
+                                    <p class="text-xs text-gray-500">PDF Document</p>
+                                </div>
+                                <button type="button" onclick="clearPreview('idFront')" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -187,7 +203,24 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                                 <p class="mt-2 text-sm text-gray-600">Click to upload or drag and drop</p>
                                 <p class="text-xs text-gray-500">PNG, JPG, PDF up to 10MB</p>
                             </label>
-                            <div id="idBackPreview" class="mt-3 text-sm text-green-600 hidden"></div>
+                        </div>
+                        <!-- Preview Area -->
+                        <div id="idBackPreviewArea" class="mt-4 hidden">
+                            <div class="relative border-2 border-gray-200 rounded-lg p-4">
+                                <img id="idBackPreviewImage" class="max-w-full h-auto rounded-lg mx-auto" style="max-height: 300px;" />
+                                <div id="idBackPdfPreview" class="hidden p-4 bg-gray-50 rounded-lg text-center">
+                                    <svg class="mx-auto h-16 w-16 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z"></path>
+                                    </svg>
+                                    <p class="mt-2 text-sm font-medium text-gray-700" id="idBackFileName"></p>
+                                    <p class="text-xs text-gray-500">PDF Document</p>
+                                </div>
+                                <button type="button" onclick="clearPreview('idBack')" class="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -288,7 +321,66 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
 <script>
     // Set BASE_PATH globally
-    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    window.BASE_PATH = '<?php echo BASE_PATH; ?>';
+
+    // File preview functionality
+    function setupFilePreview(inputId, previewAreaId, previewImageId, pdfPreviewId, fileNameId) {
+        const input = document.getElementById(inputId);
+        const previewArea = document.getElementById(previewAreaId);
+        const previewImage = document.getElementById(previewImageId);
+        const pdfPreview = document.getElementById(pdfPreviewId);
+        const fileName = document.getElementById(fileNameId);
+
+        input.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Validate file size (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                alert('File size must be less than 10MB');
+                input.value = '';
+                return;
+            }
+
+            // Show preview area
+            previewArea.classList.remove('hidden');
+
+            // Check if it's PDF or image
+            if (file.type === 'application/pdf') {
+                // Show PDF preview
+                previewImage.classList.add('hidden');
+                pdfPreview.classList.remove('hidden');
+                fileName.textContent = file.name;
+            } else if (file.type.startsWith('image/')) {
+                // Show image preview
+                pdfPreview.classList.add('hidden');
+                previewImage.classList.remove('hidden');
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    previewImage.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Clear preview function
+    function clearPreview(type) {
+        if (type === 'idFront') {
+            document.getElementById('idDocumentFront').value = '';
+            document.getElementById('idFrontPreviewArea').classList.add('hidden');
+            document.getElementById('idFrontPreviewImage').src = '';
+        } else if (type === 'idBack') {
+            document.getElementById('idDocumentBack').value = '';
+            document.getElementById('idBackPreviewArea').classList.add('hidden');
+            document.getElementById('idBackPreviewImage').src = '';
+        }
+    }
+
+    // Setup previews for both upload fields
+    setupFilePreview('idDocumentFront', 'idFrontPreviewArea', 'idFrontPreviewImage', 'idFrontPdfPreview', 'idFrontFileName');
+    setupFilePreview('idDocumentBack', 'idBackPreviewArea', 'idBackPreviewImage', 'idBackPdfPreview', 'idBackFileName');
 
     // Utility function to resolve image paths
     function resolveImagePath(imagePath) {

@@ -83,8 +83,8 @@ if ($method === 'POST') {
         
         // Insert program (workflow)
         $stmt = $pdo->prepare("
-            INSERT INTO workflows (expert_id, title, description, duration_weeks, goal_outcome, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+            INSERT INTO workflows (expert_id, title, description, duration_weeks, price_inr, goal_outcome, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
         ");
         $goal_outcome = "Complete structured program: " . $title;
         
@@ -93,6 +93,7 @@ if ($method === 'POST') {
             $title,
             $description,
             $duration_weeks,
+            $price,
             $goal_outcome
         ]);
         
@@ -119,23 +120,26 @@ if ($method === 'POST') {
             }
         }
         
-        // Insert assignments
+        // Store assignment templates as workflow steps (actual assignments created when learner enrolls)
         if (!empty($assignments)) {
             $stmt = $pdo->prepare("
-                INSERT INTO assignments (workflow_id, expert_id, title, description, assignment_type, due_date, created_at)
-                VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL ? DAY), NOW())
+                INSERT INTO workflow_steps (workflow_id, step_order, step_type, title, description, resources)
+                VALUES (?, ?, 'assignment', ?, ?, ?)
             ");
             
+            $assignment_order = count($milestones) + 1;
             foreach ($assignments as $index => $assignment) {
-                $due_days = ($index + 1) * 7; // Each assignment due 1 week apart
+                $assignment_details = json_encode([
+                    'type' => $assignment['type'] ?? 'project',
+                    'due_days' => ($index + 1) * 7
+                ]);
                 
                 $stmt->execute([
                     $program_id,
-                    $expert_id,
+                    $assignment_order++,
                     $assignment['title'] ?? '',
                     $assignment['description'] ?? '',
-                    $assignment['type'] ?? 'project',
-                    $due_days
+                    $assignment_details
                 ]);
             }
         }
@@ -147,7 +151,7 @@ if ($method === 'POST') {
                 VALUES (?, ?, 'resource', ?, '', ?)
             ");
             
-            $order = count($milestones) + 1;
+            $resource_order = count($milestones) + count($assignments) + 1;
             foreach ($resources as $resource) {
                 $resource_json = json_encode([
                     'type' => $resource['type'] ?? 'document',
@@ -156,7 +160,7 @@ if ($method === 'POST') {
                 
                 $stmt->execute([
                     $program_id,
-                    $order++,
+                    $resource_order++,
                     $resource['title'] ?? 'Resource',
                     $resource_json
                 ]);

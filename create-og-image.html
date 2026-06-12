@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { margin: 0; padding: 0; }
+        #canvas-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f3f4f6; }
+    </style>
+</head>
+<body>
+    <div id="canvas-container">
+        <canvas id="ogCanvas" width="1200" height="630"></canvas>
+    </div>
+    <script>
+        const canvas = document.getElementById('ogCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Background gradient
+        const gradient = ctx.createLinearGradient(0, 0, 1200, 630);
+        gradient.addColorStop(0, '#3B82F6');
+        gradient.addColorStop(1, '#1E40AF');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 1200, 630);
+        
+        // Add pattern overlay
+        ctx.globalAlpha = 0.1;
+        for (let i = 0; i < 20; i++) {
+            ctx.beginPath();
+            ctx.arc(Math.random() * 1200, Math.random() * 630, Math.random() * 100 + 50, 0, Math.PI * 2);
+            ctx.fillStyle = 'white';
+            ctx.fill();
+        }
+        ctx.globalAlpha = 1.0;
+        
+        // Logo/Brand Text
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 80px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Nexpert.ai', 600, 250);
+        
+        // Tagline
+        ctx.font = '40px Arial';
+        ctx.fillText('Global Expert Learning Platform', 600, 320);
+        
+        // Subtext
+        ctx.font = '32px Arial';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.fillText('Connect with Coaches, Mentors & Consultants', 600, 400);
+        
+        // Icon/Symbol (graduation cap)
+        ctx.beginPath();
+        ctx.moveTo(600, 480);
+        ctx.lineTo(550, 500);
+        ctx.lineTo(550, 520);
+        ctx.lineTo(600, 540);
+        ctx.lineTo(650, 520);
+        ctx.lineTo(650, 500);
+        ctx.closePath();
+        ctx.fillStyle = 'white';
+        ctx.fill();
+        
+        // Download button
+        setTimeout(() => {
+            const link = document.createElement('a');
+            link.download = 'og-image.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+            document.body.innerHTML = '<div style="text-align:center; padding: 50px; font-family: Arial;"><h1>✅ Image Downloaded!</h1><p>Move og-image.jpg to /attached_assets/</p></div>';
+        }, 100);
+    </script>
+</body>
+</html>

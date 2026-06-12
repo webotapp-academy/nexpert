@@ -1,11 +1,12 @@
 <?php
 // Admin authentication check - include this in all protected admin pages
 require_once __DIR__ . '/session-config.php';
+require_once __DIR__ . '/config.php';
 
 // Check if user is logged in and has admin role
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
     // Not logged in or not an admin, redirect to auth page
-    header('Location: ?panel=admin&page=auth');
+    header('Location: ' . BASE_PATH . '/admin/admin-auth.php');
     exit;
 }
 
@@ -15,7 +16,7 @@ if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity']) >
     // Session expired
     session_unset();
     session_destroy();
-    header('Location: ?panel=admin&page=auth&timeout=1');
+    header('Location: ' . BASE_PATH . '/admin/admin-auth.php?timeout=1');
     exit;
 }
 

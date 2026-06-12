@@ -1,12 +1,11 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    header('Location: ' . BASE_PATH . '/index.php?panel=expert&page=auth');
     exit;
 }
 
@@ -323,7 +322,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
 <script>
     // Set BASE_PATH globally
-    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    window.BASE_PATH = '<?php echo BASE_PATH; ?>';
 
     // Utility function to resolve image paths
     function resolveImagePath(imagePath) {

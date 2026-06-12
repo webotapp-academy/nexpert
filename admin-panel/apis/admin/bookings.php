@@ -14,6 +14,7 @@ if ($method === 'GET') {
     $status = $_GET['status'] ?? null;
     $expert_id = $_GET['expert_id'] ?? null;
     $learner_id = $_GET['learner_id'] ?? null;
+    $booking_id = $_GET['booking_id'] ?? null;
     
     try {
         $sql = "
@@ -33,6 +34,11 @@ if ($method === 'GET') {
         ";
         
         $params = [];
+        
+        if ($booking_id) {
+            $sql .= " AND b.id = ?";
+            $params[] = $booking_id;
+        }
         
         if ($status) {
             $sql .= " AND b.status = ?";

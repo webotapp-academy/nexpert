@@ -1,105 +1,122 @@
 <?php
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
+
+require_once dirname(__DIR__) . '/includes/session-config.php';
+
+// Check if user is logged in as learner
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
+    // Save the current URL to redirect back after login
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    header('Location: ' . BASE_PATH . '/index.php?panel=learner&page=auth');
+    exit;
+}
+
 $page_title = "Book Session - Nexpert.ai";
 $panel_type = "learner";
 
-// For online deployment, set BASE_PATH to empty for root directory
-$BASE_PATH = '';
-
-require_once 'includes/header.php';
-require_once 'includes/navigation.php';
+require_once dirname(__DIR__) . '/includes/header.php';
+require_once dirname(__DIR__) . '/includes/navigation.php';
 ?>
-<div class="bg-gradient-to-br from-blue-50 via-white to-purple-50 min-h-screen py-8">
+    <script>
+        document.body.className = "bg-[#080B10] min-h-screen text-white";
+    </script>
+<div class="min-h-screen py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Enhanced Header -->
         <div class="mb-8">
             <div class="flex items-center gap-3 mb-3">
-                <a href="?panel=learner&page=browse-experts" class="text-gray-600 hover:text-primary transition-colors">
+                <a href="?panel=learner&page=browse-experts" class="text-gray-400 hover:text-[#00D4AA] transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
                     </svg>
                 </a>
-                <h1 class="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                <h1 class="text-3xl md:text-4xl font-extrabold text-white">
                     Book a Session
                 </h1>
             </div>
-            <p class="text-gray-600 ml-9">Schedule a personalized session with your expert</p>
+            <p class="text-gray-400 ml-9">Schedule a personalized session with your expert</p>
         </div>
 
         <div class="grid lg:grid-cols-3 gap-8">
             <!-- Expert Info Card - Enhanced -->
-            <div class="bg-white rounded-2xl shadow-2xl p-8 h-fit border border-gray-100 transform hover:scale-105 transition-transform duration-300">
+            <div class="bg-[#131b2e] border border-gray-800 rounded-2xl shadow-2xl p-8 h-fit transition-transform duration-300">
                 <!-- Expert Profile Section -->
-                <div class="flex items-start gap-4 mb-6 pb-6 border-b border-gray-200">
+                <div class="flex items-start gap-4 mb-6 pb-6 border-b border-gray-800">
                     <div class="relative group">
-                        <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full opacity-75 group-hover:opacity-100 blur transition duration-300"></div>
-                        <div id="expert-photo" class="relative w-24 h-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 overflow-hidden flex items-center justify-center ring-4 ring-white shadow-lg">
+                        <div class="absolute -inset-1 bg-gradient-to-r from-[#00D4AA] to-blue-600 rounded-full opacity-75 group-hover:opacity-100 blur transition duration-300"></div>
+                        <div id="expert-photo" class="relative w-24 h-24 rounded-full bg-[#0d131f] overflow-hidden flex items-center justify-center ring-4 ring-[#131b2e] shadow-lg">
                             <div class="animate-pulse">
-                                <svg class="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                                <svg class="w-12 h-12 text-gray-700" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
                                 </svg>
                             </div>
                         </div>
                     </div>
                     <div class="flex-1">
-                        <h3 id="expert-name" class="text-xl font-bold text-gray-900 mb-1">
-                            <span class="inline-block animate-pulse bg-gray-200 rounded px-3 py-1">Loading...</span>
+                        <h3 id="expert-name" class="text-xl font-bold text-white mb-1">
+                            <span class="inline-block animate-pulse bg-gray-800 rounded px-3 py-1 text-gray-500">Loading...</span>
                         </h3>
-                        <p id="expert-title" class="text-gray-600 text-sm mb-2">
-                            <span class="inline-block animate-pulse bg-gray-100 rounded px-2 py-0.5">Loading...</span>
+                        <p id="expert-title" class="text-gray-400 text-sm mb-2">
+                            <span class="inline-block animate-pulse bg-gray-800 rounded px-2 py-0.5 text-gray-600">Loading...</span>
                         </p>
                         <div class="flex items-center gap-2">
                             <div id="expert-rating-stars" class="flex text-yellow-400 text-lg">
                                 ☆☆☆☆☆
                             </div>
-                            <span id="expert-rating-value" class="text-gray-700 text-sm font-semibold">(0.0)</span>
+                            <span id="expert-rating-value" class="text-gray-300 text-sm font-semibold">(0.0)</span>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Session Details Card -->
-                <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 mb-6">
-                    <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-[#0d131f] border border-gray-800/80 rounded-xl p-5 mb-6">
+                    <h4 class="font-bold text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         Session Details
                     </h4>
                     <div class="space-y-3">
                         <div class="flex justify-between items-center">
-                            <span class="text-gray-600 text-sm">Duration:</span>
-                            <span class="text-gray-900 font-semibold bg-white px-3 py-1 rounded-lg">60 minutes</span>
+                            <span class="text-gray-400 text-sm">Duration:</span>
+                            <span class="text-white font-semibold bg-[#131b2e] border border-gray-800 px-3 py-1 rounded-lg">60 minutes</span>
                         </div>
                         <div class="flex justify-between items-center">
-                            <span class="text-gray-600 text-sm">Format:</span>
-                            <span class="text-gray-900 font-semibold bg-white px-3 py-1 rounded-lg flex items-center gap-1">
-                                <svg class="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <span class="text-gray-400 text-sm">Format:</span>
+                            <span class="text-white font-semibold bg-[#131b2e] border border-gray-800 px-3 py-1 rounded-lg flex items-center gap-1">
+                                <svg class="w-4 h-4 text-[#00D4AA]" fill="currentColor" viewBox="0 0 20 20">
                                     <path d="M2 6a2 2 0 012-2h6a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V6zM14.553 7.106A1 1 0 0014 8v4a1 1 0 00.553.894l2 1A1 1 0 0018 13V7a1 1 0 00-1.447-.894l-2 1z"></path>
                                 </svg>
                                 Video Call
                             </span>
                         </div>
-                        <div class="flex justify-between items-center pt-3 border-t border-blue-200">
-                            <span class="text-gray-600 text-sm">Session Fee:</span>
-                            <span id="session-price" class="text-2xl font-bold text-primary">₹0</span>
+                        <div class="pt-3 border-t border-gray-800">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-gray-400 text-sm">Session Fee:</span>
+                                <div class="text-right">
+                                    <span id="session-price" class="text-2xl font-bold text-[#00D4AA]">₹0</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Selected Time Display -->
-                <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-5 mb-6 border-2 border-green-200">
-                    <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="bg-emerald-950/20 border border-emerald-800/40 rounded-xl p-5 mb-6">
+                    <h4 class="font-bold text-white mb-3 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
                         Selected Time
                     </h4>
-                    <div id="selected-datetime" class="text-gray-600 text-sm">
+                    <div id="selected-datetime" class="text-gray-300 text-sm">
                         Please select a date and time
                     </div>
                 </div>
                 
                 <!-- Confirm Button -->
-                <button id="confirm-booking-btn" disabled class="group relative w-full bg-gradient-to-r from-primary to-blue-600 text-white px-6 py-4 rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-2xl disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed disabled:transform-none transform hover:-translate-y-1">
+                <button id="confirm-booking-btn" disabled class="group relative w-full bg-[#00D4AA] text-[#080B10] px-6 py-4 rounded-xl hover:bg-[#00bda0] transition-all duration-300 font-bold text-lg shadow-lg hover:shadow-2xl disabled:bg-gray-800 disabled:text-gray-600 disabled:cursor-not-allowed disabled:transform-none">
                     <span class="flex items-center justify-center gap-2">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
@@ -110,53 +127,53 @@ require_once 'includes/navigation.php';
             </div>
 
             <!-- Booking Calendar - Enhanced -->
-            <div class="lg:col-span-2 bg-white rounded-2xl shadow-2xl p-8 border border-gray-100">
+            <div class="lg:col-span-2 bg-[#131b2e] border border-gray-800 rounded-2xl shadow-2xl p-8">
                 <div class="flex items-center gap-3 mb-8">
-                    <div class="w-1 h-8 bg-gradient-to-b from-primary to-blue-600 rounded-full"></div>
-                    <h3 class="text-2xl font-bold text-gray-900">Select Date & Time</h3>
+                    <div class="w-1 h-8 bg-[#00D4AA] rounded-full"></div>
+                    <h3 class="text-2xl font-bold text-white">Select Date & Time</h3>
                 </div>
                 
                 <!-- Date Selection -->
                 <div class="mb-10">
-                    <label class="block text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <label class="block text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
                         Choose a Date
                     </label>
                     <input type="date" id="session-date" 
-                           class="w-full px-5 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-100 focus:border-primary text-lg transition-all duration-200">
+                           class="w-full px-5 py-4 bg-[#0d131f] border border-gray-800 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00D4AA] text-lg transition-all duration-200">
                 </div>
 
                 <!-- Time Slots -->
                 <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <label class="block text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         Available Time Slots
                     </label>
                     <div id="time-slots-container" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
                         <div class="col-span-full text-center py-12">
-                            <svg class="w-16 h-16 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-16 h-16 text-gray-700 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                            <p class="text-gray-500">Please select a date first</p>
+                            <p class="text-gray-400">Please select a date first</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Availability Info -->
-                <div id="availability-info" class="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6">
-                    <h4 class="text-sm font-bold text-blue-900 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <div id="availability-info" class="bg-[#0d131f] border border-gray-800 rounded-xl p-6">
+                    <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-[#00D4AA]" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
                         </svg>
                         Weekly Availability
                     </h4>
-                    <div id="availability-schedule" class="text-sm text-blue-800">
+                    <div id="availability-schedule" class="text-sm text-gray-300">
                         <div class="flex items-center gap-2">
-                            <div class="animate-spin rounded-full h-4 w-4 border-2 border-blue-600 border-t-transparent"></div>
+                            <div class="animate-spin rounded-full h-4 w-4 border-2 border-[#00D4AA] border-t-transparent"></div>
                             Loading availability...
                         </div>
                     </div>
@@ -168,7 +185,7 @@ require_once 'includes/navigation.php';
 
 <script>
     // Set BASE_PATH globally
-    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    window.BASE_PATH = '<?php echo BASE_PATH; ?>';
     console.log('Booking BASE_PATH detected as:', window.BASE_PATH);
 
     (function() {
@@ -253,6 +270,9 @@ require_once 'includes/navigation.php';
             const hourlyRate = Number(expertData.hourly_rate) || 0;
             document.getElementById('session-price').textContent = `₹${hourlyRate}`;
             
+            // Price increase tracking happens in background (no UI warning shown to user)
+            // Dynamic pricing calculations continue server-side
+            
             const photoContainer = document.getElementById('expert-photo');
             photoContainer.innerHTML = `<img src="${resolveImagePath(expertData.profile_photo)}" alt="${expertData.name}" class="w-full h-full object-cover">`;
         }
@@ -298,10 +318,28 @@ require_once 'includes/navigation.php';
                 const [startHour, startMin] = slot.start_time.split(':').map(Number);
                 const [endHour, endMin] = slot.end_time.split(':').map(Number);
                 
+                // Generate only 1-hour slots (every hour, not half-hour)
                 for (let hour = startHour; hour < endHour; hour++) {
-                    timeSlots.push(`${String(hour).padStart(2, '0')}:00`);
-                    if (hour + 0.5 < endHour || (hour + 1 === endHour && endMin >= 30)) {
-                        timeSlots.push(`${String(hour).padStart(2, '0')}:30`);
+                    const timeSlot = `${String(hour).padStart(2, '0')}:00`;
+                    
+                    // Check if this slot is already booked or overlaps with a booking
+                    const slotDateTime = new Date(`${date} ${timeSlot}`);
+                    const slotEndTime = new Date(slotDateTime.getTime() + 60 * 60 * 1000); // Add 1 hour
+                    
+                    let isBooked = false;
+                    if (expertData.booked_slots) {
+                        isBooked = expertData.booked_slots.some(booking => {
+                            const bookingStart = new Date(booking.session_datetime);
+                            const bookingEnd = new Date(bookingStart.getTime() + booking.duration_minutes * 60 * 1000);
+                            
+                            // Check if times overlap
+                            return (slotDateTime < bookingEnd && slotEndTime > bookingStart);
+                        });
+                    }
+                    
+                    // Only add slot if not booked
+                    if (!isBooked) {
+                        timeSlots.push(timeSlot);
                     }
                 }
             });
@@ -338,7 +376,7 @@ require_once 'includes/navigation.php';
             }
 
             container.innerHTML = slots.map(time => `
-                <button class="time-slot-btn group px-4 py-3 border-2 border-gray-200 rounded-xl hover:border-primary hover:bg-blue-50 transition-all duration-200 text-sm font-semibold text-gray-700 hover:text-primary hover:shadow-md transform hover:-translate-y-0.5"
+                <button class="time-slot-btn group px-4 py-3 border border-gray-800 bg-[#0d131f] rounded-xl hover:border-[#00D4AA] hover:bg-[#131b2e] transition duration-200 text-sm font-semibold text-gray-300 hover:text-white hover:shadow-md transform hover:-translate-y-0.5"
                         data-time="${time}">
                     <div class="flex items-center justify-center gap-1">
                         <svg class="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -352,11 +390,11 @@ require_once 'includes/navigation.php';
             document.querySelectorAll('.time-slot-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
                     document.querySelectorAll('.time-slot-btn').forEach(b => {
-                        b.classList.remove('border-primary', 'bg-blue-100', 'text-primary', 'ring-4', 'ring-blue-100');
-                        b.classList.add('border-gray-200', 'text-gray-700');
+                        b.classList.remove('border-[#00D4AA]', 'bg-[#00D4AA]/10', 'text-[#00D4AA]');
+                        b.classList.add('border-gray-800', 'text-gray-300');
                     });
-                    this.classList.remove('border-gray-200', 'text-gray-700');
-                    this.classList.add('border-primary', 'bg-blue-100', 'text-primary', 'ring-4', 'ring-blue-100');
+                    this.classList.remove('border-gray-800', 'text-gray-300');
+                    this.classList.add('border-[#00D4AA]', 'bg-[#00D4AA]/10', 'text-[#00D4AA]');
                     
                     selectedTime = this.dataset.time;
                     updateSelectedDateTime();
@@ -373,18 +411,18 @@ require_once 'includes/navigation.php';
                 const formattedDate = date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
                 container.innerHTML = `
                     <div class="flex items-center gap-2 mb-2">
-                        <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                        <svg class="w-5 h-5 text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
                         </svg>
-                        <span class="font-bold text-green-800">Time Selected</span>
+                        <span class="font-bold text-emerald-400">Time Selected</span>
                     </div>
-                    <div class="font-semibold text-gray-900 text-lg">${formattedDate}</div>
-                    <div class="text-primary font-bold text-xl mt-1">${selectedTime}</div>
+                    <div class="font-semibold text-white text-lg">${formattedDate}</div>
+                    <div class="text-[#00D4AA] font-bold text-xl mt-1">${selectedTime}</div>
                 `;
                 confirmBtn.disabled = false;
             } else {
                 container.innerHTML = `
-                    <div class="flex items-center gap-2 text-gray-500">
+                    <div class="flex items-center gap-2 text-gray-400">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>

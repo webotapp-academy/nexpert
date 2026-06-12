@@ -1,4 +1,7 @@
 <?php
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
+
 // Include session configuration and path setup
 require_once dirname(__DIR__) . '/includes/session-config.php';
 
@@ -57,6 +60,11 @@ if ($expertProfileId && $userId) {
     $stmt->execute([$userId]);
     $confirmedCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
     
+    // Get cancelled count
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM bookings WHERE expert_id = ? AND status = 'cancelled'");
+    $stmt->execute([$userId]);
+    $cancelledCount = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+    
     $stmt = $pdo->prepare("
         SELECT COUNT(*) as count FROM bookings 
         WHERE expert_id = ? 
@@ -82,15 +90,35 @@ if ($expertProfileId && $userId) {
     $stmt->execute([$userId]);
     $totalBookings = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
     
+    // Get reschedule requests
+    $rescheduleRequests = [];
+    $stmt = $pdo->prepare("
+        SELECT b.*, 
+               lp.full_name as learner_name, u.email as learner_email, 
+               lp.profile_photo as learner_photo,
+               b.reschedule_new_datetime,
+               b.reschedule_reason,
+               b.reschedule_requested_at
+        FROM bookings b
+        LEFT JOIN users u ON b.learner_id = u.id
+        LEFT JOIN learner_profiles lp ON u.id = lp.user_id
+        WHERE b.expert_id = ? AND b.reschedule_requested = 1
+        ORDER BY b.reschedule_requested_at DESC
+    ");
+    $stmt->execute([$userId]);
+    $rescheduleRequests = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $rescheduleCount = count($rescheduleRequests);
+    
     // Get bookings with learner info (only confirmed bookings)
     $stmt = $pdo->prepare("
         SELECT b.*, 
                lp.full_name as learner_name, u.email as learner_email, 
                lp.id as learner_profile_id, lp.profile_photo as learner_photo,
-               p.amount, p.status as payment_status
+               p.amount, p.status as payment_status,
+               COALESCE(b.accept_booking, 'no') as accept_booking
         FROM bookings b
-        LEFT JOIN learner_profiles lp ON b.learner_id = lp.id
-        LEFT JOIN users u ON lp.user_id = u.id
+        LEFT JOIN users u ON b.learner_id = u.id
+        LEFT JOIN learner_profiles lp ON u.id = lp.user_id
         LEFT JOIN payments p ON b.id = p.booking_id
         WHERE b.expert_id = ? AND b.status = 'confirmed'
         ORDER BY b.session_datetime DESC
@@ -98,6 +126,24 @@ if ($expertProfileId && $userId) {
     ");
     $stmt->execute([$userId, $limit, $offset]);
     $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get cancelled bookings
+    $stmt = $pdo->prepare("
+        SELECT b.*, 
+               lp.full_name as learner_name, u.email as learner_email, 
+               lp.id as learner_profile_id, lp.profile_photo as learner_photo,
+               p.amount, p.status as payment_status,
+               b.cancellation_reason, b.cancelled_by, b.cancelled_at
+        FROM bookings b
+        LEFT JOIN users u ON b.learner_id = u.id
+        LEFT JOIN learner_profiles lp ON u.id = lp.user_id
+        LEFT JOIN payments p ON b.id = p.booking_id
+        WHERE b.expert_id = ? AND b.status = 'cancelled'
+        ORDER BY b.cancelled_at DESC
+        LIMIT 10
+    ");
+    $stmt->execute([$userId]);
+    $cancelledBookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // DEBUG: Let's see how many bookings we found
     echo "<!-- DEBUG: Found " . count($bookings) . " bookings for user ID " . $userId . " -->";
@@ -118,7 +164,7 @@ $totalPages = ceil($totalBookings / $limit);
                 <button id="exportBookings" class="bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-50 transition text-sm">
                     Export Data
                 </button>
-                <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=settings#availability" class="bg-accent text-white px-4 py-3 rounded-lg hover:bg-yellow-600 transition text-sm inline-block text-center">
+                <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=settings#availability" class="bg-accent text-white px-4 py-3 rounded-lg hover:bg-yellow-600 transition text-sm inline-block text-center">
                     Manage Availability
                 </a>
             </div>
@@ -157,6 +203,19 @@ $totalPages = ceil($totalBookings / $limit);
             </div>
             <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
                 <div class="flex items-center">
+                    <div class="p-2 sm:p-3 bg-red-500 rounded-full">
+                        <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                    <div class="ml-3 sm:ml-4">
+                        <p class="text-xl sm:text-2xl font-semibold text-gray-900"><?php echo $cancelledCount; ?></p>
+                        <p class="text-gray-600 text-xs sm:text-sm">Cancelled Sessions</p>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6">
+                <div class="flex items-center">
                     <div class="p-2 sm:p-3 bg-blue-500 rounded-full">
                         <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -182,6 +241,157 @@ $totalPages = ceil($totalBookings / $limit);
                 </div>
             </div>
         </div>
+
+        <!-- Reschedule Requests Section -->
+        <?php if (!empty($rescheduleRequests)): ?>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="p-2 bg-yellow-500 rounded-full mr-3">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Reschedule Requests <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full ml-2"><?php echo $rescheduleCount; ?></span></h2>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <?php foreach ($rescheduleRequests as $request): 
+                    $originalDate = new DateTime($request['session_datetime']);
+                    $newDate = new DateTime($request['reschedule_new_datetime']);
+                    $requestedAt = new DateTime($request['reschedule_requested_at']);
+                ?>
+                <div class="bg-white rounded-lg p-4 border border-yellow-200">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <?php 
+                            $learnerPhotoPath = $request['learner_photo'] ?? '';
+                            if ($learnerPhotoPath && file_exists($_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/' . $learnerPhotoPath)) {
+                                $learnerImageSrc = BASE_PATH . '/' . $learnerPhotoPath;
+                            } else {
+                                $learnerImageSrc = '';
+                            }
+                            ?>
+                            <?php if ($learnerImageSrc): ?>
+                                <img src="<?php echo htmlspecialchars($learnerImageSrc); ?>" 
+                                     alt="<?php echo htmlspecialchars($request['learner_name'] ?? 'Learner'); ?>" 
+                                     class="w-12 h-12 rounded-full object-cover">
+                            <?php else: ?>
+                                <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <span class="text-gray-600 font-semibold text-lg"><?php echo strtoupper(substr($request['learner_name'] ?? 'U', 0, 1)); ?></span>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <div>
+                                <h3 class="font-semibold text-gray-900"><?php echo htmlspecialchars($request['learner_name'] ?? 'Unknown Learner'); ?></h3>
+                                <p class="text-sm text-gray-600">Requested <?php echo $requestedAt->format('M j, Y \a\t g:i A'); ?></p>
+                                
+                                <div class="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm">
+                                    <div class="flex items-center text-red-600">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                        <span class="line-through"><?php echo $originalDate->format('M j, Y g:i A'); ?></span>
+                                    </div>
+                                    <div class="flex items-center text-green-600">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                        <span class="font-medium"><?php echo $newDate->format('M j, Y g:i A'); ?></span>
+                                    </div>
+                                </div>
+                                
+                                <?php if (!empty($request['reschedule_reason'])): ?>
+                                <p class="mt-2 text-sm text-gray-500 italic">"<?php echo htmlspecialchars($request['reschedule_reason']); ?>"</p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="flex gap-2 sm:flex-col">
+                            <button onclick="handleReschedule(<?php echo $request['id']; ?>, 'accept')" 
+                                    class="flex-1 sm:flex-none px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition text-sm font-medium">
+                                Accept
+                            </button>
+                            <button onclick="handleReschedule(<?php echo $request['id']; ?>, 'decline')" 
+                                    class="flex-1 sm:flex-none px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium">
+                                Decline
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
+
+        <!-- Cancelled Sessions Section -->
+        <?php if (!empty($cancelledBookings)): ?>
+        <div class="bg-red-50 border border-red-200 rounded-lg shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
+            <div class="flex items-center justify-between mb-4">
+                <div class="flex items-center">
+                    <div class="p-2 bg-red-500 rounded-full mr-3">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Cancelled Sessions <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2"><?php echo $cancelledCount; ?></span></h2>
+                </div>
+            </div>
+            
+            <div class="space-y-4">
+                <?php foreach ($cancelledBookings as $cancelled): 
+                    $sessionDate = new DateTime($cancelled['session_datetime']);
+                    $cancelledAt = $cancelled['cancelled_at'] ? new DateTime($cancelled['cancelled_at']) : null;
+                ?>
+                <div class="bg-white rounded-lg p-4 border border-red-200">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <?php 
+                            $learnerPhotoPath = $cancelled['learner_photo'] ?? '';
+                            if ($learnerPhotoPath && file_exists($_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/' . $learnerPhotoPath)) {
+                                $learnerImageSrc = BASE_PATH . '/' . $learnerPhotoPath;
+                            } else {
+                                $learnerImageSrc = '';
+                            }
+                            ?>
+                            <?php if ($learnerImageSrc): ?>
+                                <img src="<?php echo htmlspecialchars($learnerImageSrc); ?>" 
+                                     alt="<?php echo htmlspecialchars($cancelled['learner_name'] ?? 'Learner'); ?>" 
+                                     class="w-12 h-12 rounded-full object-cover">
+                            <?php else: ?>
+                                <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                                    <span class="text-gray-600 font-semibold text-lg"><?php echo strtoupper(substr($cancelled['learner_name'] ?? 'U', 0, 1)); ?></span>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <div>
+                                <h3 class="font-semibold text-gray-900"><?php echo htmlspecialchars($cancelled['learner_name'] ?? 'Unknown Learner'); ?></h3>
+                                <p class="text-sm text-gray-600">
+                                    Session was scheduled for: <span class="font-medium"><?php echo $sessionDate->format('M j, Y \a\t g:i A'); ?></span>
+                                </p>
+                                <?php if ($cancelledAt): ?>
+                                <p class="text-sm text-red-600">
+                                    Cancelled <?php echo $cancelledAt->format('M j, Y \a\t g:i A'); ?> 
+                                    by <?php echo ucfirst($cancelled['cancelled_by'] ?? 'unknown'); ?>
+                                </p>
+                                <?php endif; ?>
+                                
+                                <?php if (!empty($cancelled['cancellation_reason'])): ?>
+                                <p class="mt-2 text-sm text-gray-500 italic">"<?php echo htmlspecialchars($cancelled['cancellation_reason']); ?>"</p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center">
+                            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">Cancelled</span>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+            </div>
+        </div>
+        <?php endif; ?>
 
         <!-- Filters and Search -->
         <div class="bg-white rounded-lg shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
@@ -247,13 +457,14 @@ $totalPages = ceil($totalBookings / $limit);
                             <th class="text-left py-3 px-6 font-medium text-gray-700">Date & Time</th>
                             <th class="text-left py-3 px-6 font-medium text-gray-700">Amount</th>
                             <th class="text-left py-3 px-6 font-medium text-gray-700">Status</th>
+                            <th class="text-left py-3 px-6 font-medium text-gray-700">Is Accepted</th>
                             <th class="text-left py-3 px-6 font-medium text-gray-700">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($bookings)): ?>
                             <tr>
-                                <td colspan="6" class="py-12 text-center">
+                                <td colspan="7" class="py-12 text-center">
                                     <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                     </svg>
@@ -317,13 +528,26 @@ $totalPages = ceil($totalBookings / $limit);
                                     <span class="px-2 py-1 <?php echo $statusClass; ?> text-sm rounded-full"><?php echo ucfirst($booking['status']); ?></span>
                                 </td>
                                 <td class="py-4 px-6">
+                                    <?php 
+                                    $isAccepted = ($booking['accept_booking'] ?? 'no') === 'yes';
+                                    ?>
+                                    <span class="px-3 py-1 <?php echo $isAccepted ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'; ?> text-sm rounded-full font-medium">
+                                        <?php echo $isAccepted ? 'Yes' : 'No'; ?>
+                                    </span>
+                                </td>
+                                <td class="py-4 px-6">
                                     <div class="flex flex-wrap gap-2">
                                         <?php if ($booking['status'] === 'confirmed'): ?>
-                                            <button class="bg-primary text-white px-4 py-3 rounded text-sm hover:bg-secondary transition">Join Session</button>
+                                            <?php if ($isAccepted): ?>
+                                                <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=booking-details&booking_id=<?php echo $booking['id']; ?>" class="bg-primary text-white px-4 py-2 rounded text-sm hover:bg-secondary transition inline-block">View Details</a>
+                                            <?php else: ?>
+                                                <button onclick="handleBookingAction(<?php echo $booking['id']; ?>, 'accept')" class="bg-green-500 text-white px-4 py-2 rounded text-sm hover:bg-green-600 transition">Accept</button>
+                                                <button onclick="handleBookingAction(<?php echo $booking['id']; ?>, 'reject')" class="bg-red-500 text-white px-4 py-2 rounded text-sm hover:bg-red-600 transition">Reject</button>
+                                            <?php endif; ?>
                                         <?php elseif ($booking['status'] === 'completed'): ?>
-                                            <button class="bg-gray-500 text-white px-4 py-3 rounded text-sm">View Details</button>
+                                            <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=booking-details&booking_id=<?php echo $booking['id']; ?>" class="bg-gray-500 text-white px-4 py-2 rounded text-sm hover:bg-gray-600 transition inline-block">View Details</a>
                                         <?php else: ?>
-                                            <button class="bg-gray-400 text-white px-4 py-3 rounded text-sm cursor-not-allowed" disabled>No Action</button>
+                                            <button class="bg-gray-400 text-white px-4 py-2 rounded text-sm cursor-not-allowed" disabled>No Action</button>
                                         <?php endif; ?>
                                     </div>
                                 </td>
@@ -343,7 +567,7 @@ $totalPages = ceil($totalBookings / $limit);
                     </span>
                     <div class="flex flex-wrap gap-2">
                         <?php if ($page > 1): ?>
-                            <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=booking-management&booking_page=<?php echo $page - 1; ?>" class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Previous</a>
+                            <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=booking-management&booking_page=<?php echo $page - 1; ?>" class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Previous</a>
                         <?php else: ?>
                             <button class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg disabled:opacity-50 cursor-not-allowed text-sm" disabled>Previous</button>
                         <?php endif; ?>
@@ -352,12 +576,12 @@ $totalPages = ceil($totalBookings / $limit);
                             <?php if ($i == $page): ?>
                                 <button class="px-4 py-3 text-white bg-accent border border-accent rounded-lg text-sm min-w-[44px]"><?php echo $i; ?></button>
                             <?php else: ?>
-                                <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=booking-management&booking_page=<?php echo $i; ?>" class="px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm min-w-[44px] text-center"><?php echo $i; ?></a>
+                                <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=booking-management&booking_page=<?php echo $i; ?>" class="px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm min-w-[44px] text-center"><?php echo $i; ?></a>
                             <?php endif; ?>
                         <?php endfor; ?>
                         
                         <?php if ($page < $totalPages): ?>
-                            <a href="<?php echo $BASE_PATH; ?>/index.php?panel=expert&page=booking-management&booking_page=<?php echo $page + 1; ?>" class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Next</a>
+                            <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=booking-management&booking_page=<?php echo $page + 1; ?>" class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 text-sm">Next</a>
                         <?php else: ?>
                             <button class="px-4 py-3 text-gray-500 bg-white border border-gray-300 rounded-lg disabled:opacity-50 cursor-not-allowed text-sm" disabled>Next</button>
                         <?php endif; ?>
@@ -371,7 +595,7 @@ $totalPages = ceil($totalBookings / $limit);
 
 <script>
     // Set BASE_PATH globally
-    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    window.BASE_PATH = '<?php echo BASE_PATH; ?>';
 
     // Escape HTML to prevent XSS
     function escapeHtml(text) {
@@ -399,6 +623,120 @@ $totalPages = ceil($totalBookings / $limit);
         return `${window.BASE_PATH}/${normalizedPath}`;
     }
 
+    // Show loading popup
+    function showLoadingPopup(message) {
+        const popup = document.createElement('div');
+        popup.id = 'loadingPopup';
+        popup.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+        popup.innerHTML = `
+            <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
+                <div class="flex justify-center mb-4">
+                    <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-accent"></div>
+                </div>
+                <p class="text-lg font-semibold text-gray-800 mb-2">Processing...</p>
+                <p class="text-sm text-gray-600">${message}</p>
+            </div>
+        `;
+        document.body.appendChild(popup);
+    }
+
+    // Hide loading popup
+    function hideLoadingPopup() {
+        const popup = document.getElementById('loadingPopup');
+        if (popup) {
+            popup.remove();
+        }
+    }
+
+    // Handle booking accept/reject actions
+    async function handleBookingAction(bookingId, action) {
+        const actionText = action === 'accept' ? 'accept' : 'reject';
+        
+        if (!confirm(`Are you sure you want to ${actionText} this booking?`)) {
+            return;
+        }
+        
+        try {
+            // Show loading popup for accept action (which creates Zoom meeting and sends emails)
+            if (action === 'accept') {
+                showLoadingPopup('Creating Zoom meeting and sending emails...');
+            }
+            
+            const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/expert/booking-action.php`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    booking_id: bookingId,
+                    action: action
+                })
+            });
+            
+            const result = await response.json();
+            
+            // Hide loading popup
+            hideLoadingPopup();
+            
+            if (result.success) {
+                alert(result.message);
+                location.reload();
+            } else {
+                // Show detailed error information
+                let errorMessage = 'Error: ' + result.error;
+                if (result.details) {
+                    errorMessage += '\n\nDetails: ' + result.details;
+                }
+                if (result.zoom_error) {
+                    errorMessage += '\n\nZoom Error: ' + result.zoom_error;
+                }
+                alert(errorMessage);
+            }
+        } catch (error) {
+            // Hide loading popup on error
+            hideLoadingPopup();
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
+    
+    // Handle reschedule request (accept/decline)
+    async function handleReschedule(bookingId, action) {
+        const actionText = action === 'accept' ? 'accept' : 'decline';
+        if (!confirm(`Are you sure you want to ${actionText} this reschedule request?`)) {
+            return;
+        }
+        
+        showLoadingPopup();
+        
+        try {
+            const response = await fetch('<?php echo BASE_PATH; ?>/admin-panel/apis/expert/reschedule.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    booking_id: bookingId,
+                    action: action
+                })
+            });
+            
+            const result = await response.json();
+            hideLoadingPopup();
+            
+            if (result.success) {
+                alert(result.message);
+                location.reload();
+            } else {
+                alert('Error: ' + (result.message || 'Failed to process request'));
+            }
+        } catch (error) {
+            hideLoadingPopup();
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        }
+    }
+    
     // Add any page-specific JavaScript here
     document.getElementById('exportBookings').addEventListener('click', function() {
         // Implement export functionality

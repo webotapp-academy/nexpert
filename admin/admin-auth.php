@@ -1,14 +1,13 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
 
 // Include session configuration
 require_once dirname(__DIR__) . '/includes/session-config.php';
 
 // Check if already logged in as admin
 if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'admin') {
-    header('Location: ' . $BASE_PATH . '/index.php?panel=admin&page=dashboard');
+    header('Location: ' . BASE_PATH . '/index.php?panel=admin&page=dashboard');
     exit;
 }
 ?>
@@ -87,7 +86,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
 
                 <!-- Back to Home -->
                 <div class="mt-6 text-center">
-                    <a href="<?php echo $BASE_PATH; ?>/index.php" class="text-sm text-primary hover:text-secondary">← Back to Homepage</a>
+                    <a href="<?php echo BASE_PATH; ?>/index.php" class="text-sm text-primary hover:text-secondary">← Back to Homepage</a>
                 </div>
             </div>
 
@@ -100,7 +99,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role']
 
     <script>
     // Set BASE_PATH globally
-    window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+    window.BASE_PATH = '<?php echo BASE_PATH; ?>';
 
     document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
         e.preventDefault();

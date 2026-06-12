@@ -1,4 +1,7 @@
 <?php
+// Load domain path configuration
+$base_path = require_once __DIR__ . '/../connection/domain-path.php';
+
 require_once __DIR__ . '/../../../includes/session-config.php';
 header('Content-Type: application/json');
 require_once __DIR__ . '/../connection/pdo.php';
@@ -26,6 +29,11 @@ try {
             if ($expert) {
                 $expert['expertise_verticals'] = $expert['expertise_verticals'] ? json_decode($expert['expertise_verticals'], true) : [];
                 $expert['certification_urls'] = $expert['certification_urls'] ? json_decode($expert['certification_urls'], true) : [];
+                
+                // Map database column names to form field names for frontend
+                $expert['bio_full'] = $expert['bio_short'] ?? '';
+                $expert['years_of_experience'] = $expert['experience_years'] ?? '';
+                $expert['website_url'] = $expert['portfolio_url'] ?? '';
             }
             
             echo json_encode([
@@ -65,73 +73,252 @@ try {
             ]);
         }
         
-    } elseif ($method === 'PUT') {
-        // Update expert verification status or profile
-        $data = json_decode(file_get_contents('php://input'), true);
+    } elseif ($method === 'POST') {
+        // Handle profile update with file upload (POST method for FormData)
+        $expertId = $_POST['expert_id'] ?? null;
         
-        if (!$data || !isset($data['expert_id'])) {
+        if (!$expertId) {
             throw new Exception('Expert ID is required');
         }
         
-        // Check if this is a verification status update
-        if (isset($data['status'])) {
-            if (!in_array($data['status'], ['approved', 'rejected', 'pending'])) {
-                throw new Exception('Invalid status. Must be approved, rejected, or pending');
+        $profilePhotoPath = null;
+        
+        // Handle profile photo upload
+        if (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] === UPLOAD_ERR_OK) {
+            // Use relative path from document root
+            $uploadDir = __DIR__ . '/../../../uploads/profiles/';
+            
+            // Create directory if it doesn't exist
+            if (!file_exists($uploadDir)) {
+                if (!mkdir($uploadDir, 0777, true)) {
+                    throw new Exception('Failed to create upload directory');
+                }
+                // Set permissions explicitly
+                chmod($uploadDir, 0777);
             }
             
-            $verified_at = $data['status'] === 'approved' ? date('Y-m-d H:i:s') : null;
+            // Try to make directory writable if it's not
+            if (!is_writable($uploadDir)) {
+                chmod($uploadDir, 0777);
+                // Check again after chmod
+                if (!is_writable($uploadDir)) {
+                    throw new Exception('Upload directory is not writable. Please check folder permissions.');
+                }
+            }
             
-            $stmt = $pdo->prepare("
-                UPDATE expert_profiles SET
-                    verification_status = ?,
-                    verified_at = ?
-                WHERE user_id = ?
-            ");
+            $fileExtension = strtolower(pathinfo($_FILES['profile_photo']['name'], PATHINFO_EXTENSION));
+            $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
             
-            $stmt->execute([
-                $data['status'],
-                $verified_at,
-                $data['expert_id']
-            ]);
+            if (!in_array($fileExtension, $allowedExtensions)) {
+                throw new Exception('Invalid file type. Only JPG, PNG, and GIF are allowed.');
+            }
             
-            echo json_encode([
-                'success' => true,
-                'message' => 'Verification status updated successfully'
-            ]);
+            if ($_FILES['profile_photo']['size'] > 5 * 1024 * 1024) {
+                throw new Exception('File size must be less than 5MB');
+            }
+            
+            $fileName = 'expert_' . $expertId . '_' . time() . '.' . $fileExtension;
+            $filePath = $uploadDir . $fileName;
+            
+            if (move_uploaded_file($_FILES['profile_photo']['tmp_name'], $filePath)) {
+                // Set file permissions
+                chmod($filePath, 0644);
+                // Store only filename in database (API will construct full path)
+                $profilePhotoPath = $fileName;
+            } else {
+                $uploadError = error_get_last();
+                throw new Exception('Failed to upload profile photo: ' . ($uploadError['message'] ?? 'Unknown error'));
+            }
+        } elseif (isset($_FILES['profile_photo']) && $_FILES['profile_photo']['error'] !== UPLOAD_ERR_NO_FILE) {
+            // Handle upload errors
+            $errorMessages = [
+                UPLOAD_ERR_INI_SIZE => 'File exceeds upload_max_filesize',
+                UPLOAD_ERR_FORM_SIZE => 'File exceeds MAX_FILE_SIZE',
+                UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                UPLOAD_ERR_EXTENSION => 'File upload stopped by extension'
+            ];
+            $errorCode = $_FILES['profile_photo']['error'];
+            throw new Exception($errorMessages[$errorCode] ?? 'Unknown upload error');
         }
-        // Check if this is a profile update
-        elseif (isset($data['update_profile'])) {
-            $stmt = $pdo->prepare("
-                UPDATE expert_profiles SET
-                    full_name = ?,
-                    bio_short = ?,
-                    bio_full = ?,
-                    expertise_verticals = ?,
-                    credentials = ?,
-                    years_of_experience = ?,
-                    linkedin_url = ?,
-                    website_url = ?
-                WHERE user_id = ?
-            ");
+        
+        // Parse expertise_verticals from JSON string
+        $expertiseVerticals = isset($_POST['expertise_verticals']) ? 
+            json_decode($_POST['expertise_verticals'], true) : [];
+        
+        // Build update query - only update fields that exist in expert_profiles table
+        $updateFields = [
+            'full_name = ?',
+            'bio_short = ?',
+            'expertise_verticals = ?',
+            'experience_years = ?'
+        ];
+        
+        $params = [
+            $_POST['full_name'] ?? null,
+            $_POST['bio_short'] ?? null,
+            json_encode($expertiseVerticals),
+            $_POST['years_of_experience'] ?? null
+        ];
+        
+        if ($profilePhotoPath) {
+            $updateFields[] = 'profile_photo = ?';
+            $params[] = $profilePhotoPath;
+        }
+        
+        $params[] = $expertId;
+        
+        $sql = "UPDATE expert_profiles SET " . implode(', ', $updateFields) . " WHERE user_id = ?";
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute($params);
+        
+        // Update social links if provided
+        try {
+            $linkedinUrl = $_POST['linkedin_url'] ?? null;
+            $websiteUrl = $_POST['website_url'] ?? null;
             
-            $stmt->execute([
-                $data['full_name'] ?? null,
-                $data['bio_short'] ?? null,
-                $data['bio_full'] ?? null,
-                json_encode($data['expertise_verticals'] ?? []),
-                $data['credentials'] ?? null,
-                $data['years_of_experience'] ?? null,
-                $data['linkedin_url'] ?? null,
-                $data['website_url'] ?? null,
-                $data['expert_id']
-            ]);
-            
-            echo json_encode([
-                'success' => true,
-                'message' => 'Expert profile updated successfully'
-            ]);
+            if ($linkedinUrl || $websiteUrl) {
+                $socialUpdateFields = [];
+                $socialParams = [];
+                
+                if ($linkedinUrl) {
+                    $socialUpdateFields[] = 'linkedin_url = ?';
+                    $socialParams[] = $linkedinUrl;
+                }
+                
+                if ($websiteUrl) {
+                    $socialUpdateFields[] = 'portfolio_url = ?';  // Maps to portfolio_url
+                    $socialParams[] = $websiteUrl;
+                }
+                
+                if (count($socialUpdateFields) > 0) {
+                    $socialParams[] = $expertId;
+                    $socialSql = "UPDATE expert_profiles SET " . implode(', ', $socialUpdateFields) . " WHERE user_id = ?";
+                    $socialStmt = $pdo->prepare($socialSql);
+                    $socialStmt->execute($socialParams);
+                }
+            }
+        } catch (PDOException $e) {
+            // Log but don't fail the main update
+            error_log("Social links update error: " . $e->getMessage());
+        }
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Expert profile updated successfully',
+            'profile_photo' => $profilePhotoPath
+        ]);
+        
+    } elseif ($method === 'PUT') {
+        // Update expert verification status or profile
+        
+        // Check if this is a multipart/form-data request (with file upload)
+        if (!empty($_FILES)) {
+            // This shouldn't happen now as we're using POST for file uploads
+            throw new Exception('Use POST method for file uploads');
         } else {
-            throw new Exception('No valid update data provided');
+            // Handle JSON request
+            $data = json_decode(file_get_contents('php://input'), true);
+            
+            if (!$data || !isset($data['expert_id'])) {
+                throw new Exception('Expert ID is required');
+            }
+            
+            // Check if this is a verification status update
+            if (isset($data['status'])) {
+                if (!in_array($data['status'], ['approved', 'rejected', 'pending'])) {
+                    throw new Exception('Invalid status. Must be approved, rejected, or pending');
+                }
+                
+                $verified_at = $data['status'] === 'approved' ? date('Y-m-d H:i:s') : null;
+                
+                $stmt = $pdo->prepare("
+                    UPDATE expert_profiles SET
+                        verification_status = ?,
+                        verified_at = ?
+                    WHERE user_id = ?
+                ");
+                
+                $stmt->execute([
+                    $data['status'],
+                    $verified_at,
+                    $data['expert_id']
+                ]);
+
+                // Log Trust Event if approved
+                if ($data['status'] === 'approved') {
+                    try {
+                        require_once __DIR__ . '/../connection/trust-helper.php';
+                        TrustHelper::logEvent($data['expert_id'], 'kyc_verified', [
+                            'verified_at' => $verified_at,
+                            'admin_notes' => $data['notes'] ?? ''
+                        ]);
+                    } catch (Exception $e) {
+                        error_log("Failed to log kyc_verified event: " . $e->getMessage());
+                    }
+                }
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Verification status updated successfully'
+                ]);
+            }
+            // Check if this is a profile update
+            elseif (isset($data['update_profile'])) {
+                $stmt = $pdo->prepare("
+                    UPDATE expert_profiles SET
+                        full_name = ?,
+                        bio_short = ?,
+                        bio_detailed = ?,
+                        expertise_verticals = ?,
+                        industry_experience_years = ?
+                    WHERE user_id = ?
+                ");
+                
+                $stmt->execute([
+                    $data['full_name'] ?? null,
+                    $data['bio_short'] ?? null,
+                    $data['bio_full'] ?? null,  // Maps to bio_detailed
+                    json_encode($data['expertise_verticals'] ?? []),
+                    $data['years_of_experience'] ?? null,  // Maps to industry_experience_years
+                    $data['expert_id']
+                ]);
+                
+                // Try to update social links if provided
+                try {
+                    if (isset($data['linkedin_url']) || isset($data['website_url'])) {
+                        $socialFields = [];
+                        $socialParams = [];
+                        
+                        if (isset($data['linkedin_url'])) {
+                            $socialFields[] = 'linkedin_url = ?';
+                            $socialParams[] = $data['linkedin_url'];
+                        }
+                        
+                        if (isset($data['website_url'])) {
+                            $socialFields[] = 'portfolio_url = ?';  // Maps to portfolio_url
+                            $socialParams[] = $data['website_url'];
+                        }
+                        
+                        if (count($socialFields) > 0) {
+                            $socialParams[] = $data['expert_id'];
+                            $socialSql = "UPDATE expert_profiles SET " . implode(', ', $socialFields) . " WHERE user_id = ?";
+                            $socialStmt = $pdo->prepare($socialSql);
+                            $socialStmt->execute($socialParams);
+                        }
+                    }
+                } catch (PDOException $e) {
+                    error_log("Social links update error: " . $e->getMessage());
+                }
+                
+                echo json_encode([
+                    'success' => true,
+                    'message' => 'Expert profile updated successfully'
+                ]);
+            } else {
+                throw new Exception('No valid update data provided');
+            }
         }
         
     } else {

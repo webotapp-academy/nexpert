@@ -1,10 +1,13 @@
 <?php
-require_once 'includes/admin-auth-check.php';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
+
+require_once dirname(__DIR__) . '/includes/admin-auth-check.php';
 
 $page_title = "Admin Dashboard - Nexpert.ai";
 $panel_type = "admin";
-require_once 'includes/header.php';
-require_once 'includes/admin-sidebar.php';
+require_once dirname(__DIR__) . '/includes/header.php';
+require_once dirname(__DIR__) . '/includes/admin-sidebar.php';
 ?>
 
     <!-- Page Header -->
@@ -57,7 +60,7 @@ require_once 'includes/admin-sidebar.php';
                 <div class="flex items-center justify-between">
                     <div>
                         <p class="text-gray-600 text-sm">Total Revenue</p>
-                        <p class="text-3xl font-bold text-gray-900" id="total-revenue">$0</p>
+                        <p class="text-3xl font-bold text-gray-900" id="total-revenue">₹0</p>
                     </div>
                     <div class="bg-green-100 p-3 rounded-lg">
                         <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -66,7 +69,7 @@ require_once 'includes/admin-sidebar.php';
                     </div>
                 </div>
                 <p class="text-sm text-gray-600 mt-2">
-                    <span class="text-green-600" id="monthly-revenue">$0</span> This Month
+                    <span class="text-green-600" id="monthly-revenue">₹0</span> This Month
                 </p>
             </div>
 
@@ -124,7 +127,7 @@ require_once 'includes/admin-sidebar.php';
 // Load admin dashboard data
 async function loadAdminDashboard() {
     try {
-        const response = await fetch('/admin-panel/apis/admin/dashboard.php');
+        const response = await window.AdminAPI.fetch(`${BASE_PATH}/admin-panel/apis/admin/dashboard.php`);
         const data = await response.json();
         
         if (data.success) {
@@ -133,8 +136,8 @@ async function loadAdminDashboard() {
             document.getElementById('active-users').textContent = data.users.active_users || 0;
             document.getElementById('total-experts').textContent = data.users.total_experts || 0;
             document.getElementById('pending-verification').textContent = data.verification.pending || 0;
-            document.getElementById('total-revenue').textContent = '$' + (data.revenue.total_revenue || 0).toLocaleString();
-            document.getElementById('monthly-revenue').textContent = '$' + (data.monthly.monthly_revenue || 0).toLocaleString();
+            document.getElementById('total-revenue').textContent = '₹' + (data.revenue.total_revenue || 0).toLocaleString();
+            document.getElementById('monthly-revenue').textContent = '₹' + (data.monthly.monthly_revenue || 0).toLocaleString();
             document.getElementById('pending-payout-amount').textContent = '$' + (data.pending_payouts.total || 0).toLocaleString();
             document.getElementById('pending-payout-count').textContent = data.pending_payouts.count || 0;
             
@@ -153,16 +156,21 @@ async function loadAdminDashboard() {
                 </div>
             `).join('');
             document.getElementById('recent-bookings').innerHTML = bookingsHtml || '<p class="text-gray-500 text-center">No recent bookings</p>';
+        } else {
+            // Handle error case
+            document.getElementById('recent-bookings').innerHTML = '<p class="text-red-500 text-center">Error loading dashboard data</p>';
         }
     } catch (error) {
         console.error('Error loading dashboard:', error);
+        document.getElementById('total-users').textContent = 'Error';
+        document.getElementById('recent-bookings').innerHTML = '<p class="text-red-500 text-center">Error loading data. Please refresh.</p>';
     }
 }
 
 // Load pending verifications
 async function loadPendingVerifications() {
     try {
-        const response = await fetch('/admin-panel/apis/admin/experts.php?verification_status=pending');
+        const response = await window.AdminAPI.fetch(`${BASE_PATH}/admin-panel/apis/admin/experts.php?verification_status=pending`);
         const data = await response.json();
         
         if (data.success && data.experts.length > 0) {
@@ -184,6 +192,7 @@ async function loadPendingVerifications() {
         }
     } catch (error) {
         console.error('Error loading verifications:', error);
+        document.getElementById('verification-queue').innerHTML = '<p class="text-red-500 text-center">Error loading data</p>';
     }
 }
 

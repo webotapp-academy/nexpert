@@ -1,7 +1,6 @@
 <?php
-// Define BASE_PATH
-$BASE_PATH = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'])), '/');
-$BASE_PATH = $BASE_PATH ? $BASE_PATH : '/';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
 
 require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/admin-auth-check.php';
 
@@ -86,10 +85,10 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/admin-sidebar.ph
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="<?php echo $BASE_PATH; ?>/admin-panel/js/admin-api.js"></script>
+<script src="<?php echo BASE_PATH; ?>/admin-panel/js/admin-api.js"></script>
 <script>
 // Set BASE_PATH globally
-window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
+window.BASE_PATH = '<?php echo BASE_PATH; ?>';
 
 let currentKYCId = null;
 let currentFilter = 'all';

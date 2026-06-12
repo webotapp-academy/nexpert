@@ -4,6 +4,7 @@ require_once __DIR__ . '/../../../includes/session-config.php';
 header('Content-Type: application/json');
 require_once __DIR__ . '/../connection/pdo.php';
 require_once __DIR__ . '/../../../includes/payment-config.php';
+require_once __DIR__ . '/../connection/trust-helper.php';
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -41,7 +42,24 @@ try {
                         echo json_encode(['success' => false, 'message' => 'Unauthorized. Please login as learner.']);
                         exit;
                     }
+                    
                     $learnerId = $_SESSION['user_id'];
+                    
+                    // Verify learner exists in users table
+                    $verifyStmt = $pdo->prepare("SELECT id FROM users WHERE id = ? AND role = 'learner'");
+                    $verifyStmt->execute([$learnerId]);
+                    if (!$verifyStmt->fetch()) {
+                        error_log("Payment Error: Learner ID {$learnerId} not found in users table");
+                        error_log("Session data: " . print_r($_SESSION, true));
+                        http_response_code(400);
+                        echo json_encode([
+                            'success' => false, 
+                            'message' => 'Your account session is invalid. Please logout and login again to fix this issue.',
+                            'error_code' => 'INVALID_SESSION'
+                        ]);
+                        exit;
+                    }
+                    
                     $expertId = $data['expert_id'] ?? null;
                     $sessionDatetime = $data['session_datetime'] ?? null;
                     $amount = $data['amount'] ?? 0; // major units
@@ -71,12 +89,54 @@ try {
                             $stmt->execute([$bookingId, $learnerId, $expertId, $gatewayId, $amount, PLATFORM_CURRENCY, $paymentMethod]);
                             $paymentId = $pdo->lastInsertId();
                             $pdo->prepare("UPDATE bookings SET status='confirmed', updated_at=NOW() WHERE id=?")->execute([$bookingId]);
+                            
+                            // Note: Removed global booking count increment
+                            // Pricing is now per-learner, not global
+                            
                             $pdo->commit();
+                            
+                            // Log trust event
+                            TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
+                                'booking_id' => $bookingId,
+                                'amount' => $amount,
+                                'payment_method' => $paymentMethod
+                            ]);
+
                             echo json_encode(['success' => true, 'mode' => 'test', 'data' => [
                                 'payment_id' => $paymentId,
                                 'booking_id' => $bookingId,
                                 'amount' => $amount,
                                 'status' => 'success'
+                            ]]);
+                            exit;
+                        } elseif ($paymentMethod === 'cod') {
+                            // Cash on Delivery - Create booking with success payment status
+                            $gatewayId = 'COD_' . time() . '_' . rand(1000, 9999);
+                            $stmt = $pdo->prepare("
+                                INSERT INTO payments (booking_id, learner_id, expert_id, payment_gateway_id, amount, currency, payment_type, payment_method, status, payment_date, created_at, updated_at)
+                                VALUES (?, ?, ?, ?, ?, ?, 'one_time', 'cod', 'success', NOW(), NOW(), NOW())
+                            ");
+                            $stmt->execute([$bookingId, $learnerId, $expertId, $gatewayId, $amount, PLATFORM_CURRENCY]);
+                            $paymentId = $pdo->lastInsertId();
+                            
+                            // Booking is confirmed with successful COD payment
+                            $pdo->prepare("UPDATE bookings SET status='confirmed', updated_at=NOW() WHERE id=?")->execute([$bookingId]);
+                            
+                            $pdo->commit();
+                            
+                            // Log trust event
+                            TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
+                                'booking_id' => $bookingId,
+                                'amount' => $amount,
+                                'payment_method' => 'cod'
+                            ]);
+
+                            echo json_encode(['success' => true, 'mode' => 'cod', 'data' => [
+                                'payment_id' => $paymentId,
+                                'booking_id' => $bookingId,
+                                'amount' => $amount,
+                                'status' => 'success',
+                                'message' => 'Booking confirmed. Pay in cash after session.'
                             ]]);
                             exit;
                         }
@@ -160,7 +220,7 @@ try {
                     }
                     $pdo->beginTransaction();
                     try {
-                        $stmt = $pdo->prepare("SELECT booking_id FROM payments WHERE id=? AND payment_gateway_id=? FOR UPDATE");
+                        $stmt = $pdo->prepare("SELECT booking_id, expert_id FROM payments WHERE id=? AND payment_gateway_id=? FOR UPDATE");
                         $stmt->execute([$paymentId, $razorpayOrderId]);
                         $row = $stmt->fetch(PDO::FETCH_ASSOC);
                         if (!$row) {
@@ -170,9 +230,22 @@ try {
                             exit;
                         }
                         $bookingId = $row['booking_id'];
+                        $expertId = $row['expert_id'];
                         $pdo->prepare("UPDATE payments SET status='success', payment_date=NOW(), updated_at=NOW() WHERE id=?")->execute([$paymentId]);
                         $pdo->prepare("UPDATE bookings SET status='confirmed', updated_at=NOW() WHERE id=?")->execute([$bookingId]);
+                        
+                        // Note: Removed global booking count increment
+                        // Pricing is now per-learner, not global
+                        
                         $pdo->commit();
+                        
+                        // Log trust event
+                        TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
+                            'booking_id' => $bookingId,
+                            'payment_id' => $paymentId,
+                            'razorpay_payment_id' => $razorpayPaymentId
+                        ]);
+
                         echo json_encode(['success' => true, 'action' => 'verify_payment', 'message' => 'Payment verified', 'data' => [
                             'payment_id' => $paymentId,
                             'booking_id' => $bookingId,
@@ -208,7 +281,7 @@ try {
                     $stmt->execute([$expertId, $learnerId, $sessionDatetime, $duration]);
                     $bookingId = $pdo->lastInsertId();
                     $gatewayId = 'CASHLEG_' . time() . '_' . rand(1000, 9999);
-                    $paymentStatus = ($paymentMethod === 'cash_test') ? 'success' : 'pending';
+                    $paymentStatus = ($paymentMethod === 'cash_test' || $paymentMethod === 'cod') ? 'success' : 'pending';
                     $stmt = $pdo->prepare("
                 INSERT INTO payments (booking_id, learner_id, expert_id, payment_gateway_id, amount, payment_type, payment_method, status, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, 'one_time', ?, ?, NOW(), NOW())
@@ -216,6 +289,14 @@ try {
                     $stmt->execute([$bookingId, $learnerId, $expertId, $gatewayId, $amount, $paymentMethod, $paymentStatus]);
                     $paymentId = $pdo->lastInsertId();
                     $pdo->commit();
+                    
+                    // Log trust event
+                    TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
+                        'booking_id' => $bookingId,
+                        'amount' => $amount,
+                        'payment_method' => $paymentMethod
+                    ]);
+
                     echo json_encode(['success' => true, 'message' => 'Legacy payment processed successfully', 'data' => [
                         'payment_id' => $paymentId,
                         'booking_id' => $bookingId,

@@ -1,14 +1,15 @@
 <?php
-// For online deployment, set BASE_PATH to empty for root directory
-$BASE_PATH = '';
+// Load domain path configuration
+$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
 
 require_once dirname(__DIR__) . '/includes/session-config.php';
+require_once dirname(__DIR__) . '/includes/config.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
     // Save the current URL to redirect back after login
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header('Location: ' . $BASE_PATH . '/index.php?panel=expert&page=auth');
+    header('Location: ' . BASE_PATH . '/index.php?panel=expert&page=auth');
     exit;
 }
 
@@ -130,20 +131,6 @@ function getVerificationMessage($status) {
     
     <!-- Add SweetAlert2 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
-    
-    <!-- Diagnostic script to log BASE_PATH -->
-    <script>
-        console.log('BASE_PATH:', '<?php echo $BASE_PATH; ?>');
-        window.onerror = function(message, source, lineno, colno, error) {
-            console.error('Global Error:', {
-                message: message,
-                source: source,
-                lineno: lineno,
-                colno: colno,
-                error: error
-            });
-        };
-    </script>
 </head>
 <body>
 <?php
@@ -259,13 +246,28 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
+                                    <select name="category" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                                        <option value="">Select Category</option>
+                                        <option value="coach" <?php echo (isset($profileData['category']) && $profileData['category'] === 'coach') ? 'selected' : ''; ?>>Coach</option>
+                                        <option value="mentor" <?php echo (isset($profileData['category']) && $profileData['category'] === 'mentor') ? 'selected' : ''; ?>>Mentor</option>
+                                        <option value="consultant" <?php echo (isset($profileData['category']) && $profileData['category'] === 'consultant') ? 'selected' : ''; ?>>Consultant</option>
+                                        <option value="trainer" <?php echo (isset($profileData['category']) && $profileData['category'] === 'trainer') ? 'selected' : ''; ?>>Trainer</option>
+                                        <option value="freelancer" <?php echo (isset($profileData['category']) && $profileData['category'] === 'freelancer') ? 'selected' : ''; ?>>Freelancer</option>
+                                    </select>
+                                </div>
+                                <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Email Address *</label>
                                     <input type="email" name="email" value="<?php echo htmlspecialchars($profileData['email'] ?? ''); ?>" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-sm sm:text-base">
                                 </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Mobile Number *</label>
                                     <input type="tel" name="phone" value="<?php echo htmlspecialchars($profileData['phone'] ?? ''); ?>" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-sm sm:text-base">
                                 </div>
+                                <div></div>
                             </div>
 
                             <div>
@@ -275,8 +277,8 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
-                                    <input type="text" name="timezone" value="<?php echo htmlspecialchars($profileData['timezone'] ?? 'UTC'); ?>" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-sm sm:text-base">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tags (comma-separated)</label>
+                                    <input type="text" name="tags" value="<?php echo htmlspecialchars($profileData['tags'] ?? ''); ?>" placeholder="e.g. Python, Data Science, Machine Learning" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-sm sm:text-base">
                                 </div>
                                 <div>
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Years of Experience</label>
@@ -288,6 +290,56 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                                         <option value="8-10" <?php echo (isset($profileData['experience_years']) && $profileData['experience_years'] >= 8 && $profileData['experience_years'] <= 10) ? 'selected' : ''; ?>>8-10 years</option>
                                         <option value="10+" <?php echo (isset($profileData['experience_years']) && $profileData['experience_years'] > 10) ? 'selected' : ''; ?>>10+ years</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <!-- Strengths & Expected Outcomes Section -->
+                            <div class="border-t pt-6 mt-6">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">💼 Expert Card Information</h3>
+                                <p class="text-sm text-gray-600 mb-4">This information will be displayed on your expert card when learners browse experts.</p>
+                                
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <!-- Strengths -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            💪 Strengths
+                                            <span class="text-xs font-normal text-gray-500">(One per line, max 3)</span>
+                                        </label>
+                                        <textarea 
+                                            name="strengths" 
+                                            rows="5" 
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                                            placeholder="Professional Guidance&#10;Industry Expertise&#10;Practical Solutions"
+                                        ><?php 
+                                            $strengths = $profileData['strengths'] ?? '';
+                                            if ($strengths && $strengths !== '[]') {
+                                                $strengthsArray = json_decode($strengths, true);
+                                                echo htmlspecialchars(is_array($strengthsArray) ? implode("\n", $strengthsArray) : '');
+                                            }
+                                        ?></textarea>
+                                        <p class="text-xs text-gray-500 mt-1">Example: Professional Guidance, Industry Expertise, Strategic Planning</p>
+                                    </div>
+
+                                    <!-- Expected Outcomes -->
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            🎯 Expected Outcomes
+                                            <span class="text-xs font-normal text-gray-500">(One per line, max 3)</span>
+                                        </label>
+                                        <textarea 
+                                            name="expected_outcomes" 
+                                            rows="5" 
+                                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent"
+                                            placeholder="Skill improvement&#10;Goal achievement&#10;Career growth"
+                                        ><?php 
+                                            $outcomes = $profileData['expected_outcomes'] ?? '';
+                                            if ($outcomes && $outcomes !== '[]') {
+                                                $outcomesArray = json_decode($outcomes, true);
+                                                echo htmlspecialchars(is_array($outcomesArray) ? implode("\n", $outcomesArray) : '');
+                                            }
+                                        ?></textarea>
+                                        <p class="text-xs text-gray-500 mt-1">Example: Skill improvement, Goal achievement, Career growth</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -390,62 +442,54 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                 <div id="content-bank" class="tab-content bg-white rounded-lg shadow-lg p-4 sm:p-6 md:p-8 hidden">
                     <h2 class="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 sm:mb-6">Bank Account Details</h2>
                     
-                    <form id="bankForm">
-                        <div class="space-y-4">
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Account Holder Name *</label>
-                                <input type="text" name="account_holder_name" value="<?php echo htmlspecialchars($bankData['account_holder_name'] ?? ''); ?>" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                            </div>
+                    <div class="bg-blue-50 border-l-4 border-blue-400 p-4 mb-6">
+                        <p class="text-sm text-blue-700">
+                            <strong>Note:</strong> Bank details are managed through your KYC verification. Please update your bank information on the KYC page.
+                        </p>
+                    </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Bank Name *</label>
-                                    <input type="text" name="bank_name" value="<?php echo htmlspecialchars($bankData['bank_name'] ?? ''); ?>" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-sm sm:text-base">
+                    <?php if (!empty($bankData)): ?>
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">Current Bank Details</h3>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                                    <p class="text-xs sm:text-sm text-gray-600 mb-1">Account Holder Name</p>
+                                    <p class="font-semibold text-gray-900 text-sm sm:text-base"><?php echo htmlspecialchars($bankData['account_holder_name'] ?? 'Not provided'); ?></p>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Branch Name</label>
-                                    <input type="text" name="branch_name" value="<?php echo htmlspecialchars($bankData['branch_name'] ?? ''); ?>" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-sm sm:text-base">
+                                <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                                    <p class="text-xs sm:text-sm text-gray-600 mb-1">Bank Name</p>
+                                    <p class="font-semibold text-gray-900 text-sm sm:text-base"><?php echo htmlspecialchars($bankData['bank_name'] ?? 'Not provided'); ?></p>
                                 </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Account Number *</label>
-                                    <input type="text" name="account_number" value="<?php echo !empty($bankData['account_number']) ? '****' . substr($bankData['account_number'], -4) : ''; ?>" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-sm sm:text-base">
+                                <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                                    <p class="text-xs sm:text-sm text-gray-600 mb-1">Account Number</p>
+                                    <p class="font-semibold text-gray-900 text-sm sm:text-base"><?php echo !empty($bankData['account_number']) ? '****' . substr($bankData['account_number'], -4) : 'Not provided'; ?></p>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirm Account Number *</label>
-                                    <input type="text" name="account_number_confirm" placeholder="Re-enter account number" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent text-sm sm:text-base">
+                                <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                                    <p class="text-xs sm:text-sm text-gray-600 mb-1">IFSC Code</p>
+                                    <p class="font-semibold text-gray-900 text-sm sm:text-base"><?php echo htmlspecialchars($bankData['ifsc_code'] ?? 'Not provided'); ?></p>
                                 </div>
-                            </div>
-
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">IFSC Code *</label>
-                                    <input type="text" name="ifsc_code" value="<?php echo htmlspecialchars($bankData['ifsc_code'] ?? ''); ?>" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                                <div class="bg-gray-50 p-3 sm:p-4 rounded-lg">
+                                    <p class="text-xs sm:text-sm text-gray-600 mb-1">Account Type</p>
+                                    <p class="font-semibold text-gray-900 text-sm sm:text-base"><?php echo ucfirst($bankData['account_type'] ?? 'Not provided'); ?></p>
                                 </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Account Type *</label>
-                                    <select name="account_type" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                                        <option value="">Select type</option>
-                                        <option value="savings" <?php echo (isset($bankData['account_type']) && $bankData['account_type'] == 'savings') ? 'selected' : ''; ?>>Savings</option>
-                                        <option value="current" <?php echo (isset($bankData['account_type']) && $bankData['account_type'] == 'current') ? 'selected' : ''; ?>>Current</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4">
-                                <p class="text-sm text-yellow-700">
-                                    <strong>Note:</strong> Ensure all bank details are correct. Incorrect details may delay your payouts.
-                                </p>
                             </div>
                         </div>
+                    </div>
+                    <?php else: ?>
+                    <div class="text-center py-12">
+                        <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path>
+                        </svg>
+                        <p class="text-gray-600 mb-4">No bank details found. Please complete your KYC verification to add bank details.</p>
+                    </div>
+                    <?php endif; ?>
 
-                        <div class="mt-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
-                            <button type="submit" class="w-full sm:w-auto bg-accent text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition font-semibold text-sm sm:text-base">Save Changes</button>
-                            <button type="button" class="w-full sm:w-auto bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-semibold text-sm sm:text-base">Cancel</button>
-                        </div>
-                    </form>
+                    <div class="mt-6">
+                        <a href="<?php echo BASE_PATH; ?>/?panel=expert&page=kyc" class="bg-accent text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition font-semibold inline-block">
+                            Update Bank Details in KYC
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Availability Tab -->
@@ -487,9 +531,9 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
-                                <button onclick="editDayAvailability('<?php echo $day; ?>')" class="ml-4 text-accent hover:text-yellow-600">
+                                <button data-delete-day="<?php echo $day; ?>" class="delete-availability-btn ml-4 text-red-600 hover:text-red-800 transition">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                                     </svg>
                                 </button>
                             </div>
@@ -511,38 +555,120 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
                     <!-- Add New Availability Form -->
                     <div class="border-t pt-6">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Add New Time Slot</h3>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Add New Availability</h3>
                         <form id="availabilityForm">
-                            <div class="grid md:grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Day of Week *</label>
-                                    <select name="day_of_week" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                                        <option value="">Select day</option>
-                                        <option value="0">Monday</option>
-                                        <option value="1">Tuesday</option>
-                                        <option value="2">Wednesday</option>
-                                        <option value="3">Thursday</option>
-                                        <option value="4">Friday</option>
-                                        <option value="5">Saturday</option>
-                                        <option value="6">Sunday</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Start Time *</label>
-                                    <input type="time" name="start_time" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                                </div>
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">End Time *</label>
-                                    <input type="time" name="end_time" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                            <div class="mb-4">
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Day of Week *</label>
+                                <select id="availabilityDayOfWeek" name="day_of_week" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                                    <option value="">Select day</option>
+                                    <option value="0">Monday</option>
+                                    <option value="1">Tuesday</option>
+                                    <option value="2">Wednesday</option>
+                                    <option value="3">Thursday</option>
+                                    <option value="4">Friday</option>
+                                    <option value="5">Saturday</option>
+                                    <option value="6">Sunday</option>
+                                </select>
+                            </div>
+
+                            <div id="time-slots-container" class="space-y-3">
+                                <div class="time-slot-item border border-gray-200 rounded-lg p-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="flex-1">
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">Start Time *</label>
+                                            <input type="time" name="start_time[]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-xs font-medium text-gray-600 mb-1">End Time *</label>
+                                            <input type="time" name="end_time[]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                                        </div>
+                                        <button type="button" onclick="removeTimeSlot(this)" class="remove-slot-btn hidden mt-5 text-red-500 hover:text-red-700 p-2">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
+                            <button type="button" onclick="addTimeSlot()" class="mt-3 text-accent hover:text-yellow-600 font-semibold text-sm flex items-center">
+                                <svg class="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Add Another Time Slot
+                            </button>
+
                             <div class="mt-6 flex space-x-4">
-                                <button type="submit" class="bg-accent text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition font-semibold">Add Time Slot</button>
+                                <button type="submit" class="bg-accent text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition font-semibold">Save Availability</button>
                                 <button type="button" onclick="clearAvailabilityForm()" class="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition font-semibold">Clear</button>
                             </div>
                         </form>
                     </div>
+
+                    <script>
+                        function addTimeSlot() {
+                            const container = document.getElementById('time-slots-container');
+                            const slotCount = container.children.length;
+                            
+                            const newSlot = document.createElement('div');
+                            newSlot.className = 'time-slot-item border border-gray-200 rounded-lg p-4';
+                            newSlot.innerHTML = `
+                                <div class="flex items-center gap-3">
+                                    <div class="flex-1">
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Start Time *</label>
+                                        <input type="time" name="start_time[]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                                    </div>
+                                    <div class="flex-1">
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">End Time *</label>
+                                        <input type="time" name="end_time[]" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                                    </div>
+                                    <button type="button" onclick="removeTimeSlot(this)" class="remove-slot-btn mt-5 text-red-500 hover:text-red-700 p-2">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            `;
+                            
+                            container.appendChild(newSlot);
+                            
+                            // Show remove buttons if more than one slot
+                            updateRemoveButtons();
+                        }
+
+                        function removeTimeSlot(button) {
+                            const container = document.getElementById('time-slots-container');
+                            if (container.children.length > 1) {
+                                button.closest('.time-slot-item').remove();
+                                updateRemoveButtons();
+                            }
+                        }
+
+                        function updateRemoveButtons() {
+                            const container = document.getElementById('time-slots-container');
+                            const removeButtons = container.querySelectorAll('.remove-slot-btn');
+                            
+                            if (container.children.length === 1) {
+                                removeButtons.forEach(btn => btn.classList.add('hidden'));
+                            } else {
+                                removeButtons.forEach(btn => btn.classList.remove('hidden'));
+                            }
+                        }
+
+                        function clearAvailabilityForm() {
+                            const container = document.getElementById('time-slots-container');
+                            // Remove all slots except the first one
+                            while (container.children.length > 1) {
+                                container.lastChild.remove();
+                            }
+                            // Clear the first slot
+                            const firstSlot = container.firstElementChild;
+                            firstSlot.querySelectorAll('input[type="time"]').forEach(input => input.value = '');
+                            // Reset day selector
+                            document.querySelector('select[name="day_of_week"]').value = '';
+                            updateRemoveButtons();
+                        }
+                    </script>
                 </div>
 
                 <!-- Pricing Tab -->
@@ -851,12 +977,8 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 </body>
 </html>
 
-    <script>
-        // Set BASE_PATH globally
-        window.BASE_PATH = '<?php echo $BASE_PATH; ?>';
-    </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
-    <script src="<?php echo $BASE_PATH; ?>/admin-panel/js/expert-settings.js"></script>
+    <script src="<?php echo BASE_PATH; ?>/admin-panel/js/expert-settings.js"></script>
     <script>
         // Function to update pricing display
         function updatePricingDisplay(pricingData) {
@@ -1037,14 +1159,123 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
             }
         });
 
-        // Placeholder functions for edit and delete (to be implemented later)
-        function editPricing(pricingId) {
-            Swal.fire({
-                icon: 'info',
-                title: 'Coming Soon',
-                text: 'Edit functionality will be added in a future update.',
-                confirmButtonColor: '#3085d6'
-            });
+        // Edit pricing function
+        async function editPricing(pricingId) {
+            try {
+                // Fetch pricing details
+                const response = await fetch(`admin-panel/apis/expert/get-pricing.php?pricing_id=${pricingId}`);
+                const result = await response.json();
+                
+                if (!result.success || !result.data) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'Failed to load pricing details',
+                        confirmButtonColor: '#3085d6'
+                    });
+                    return;
+                }
+                
+                const pricing = result.data;
+                
+                // Show edit form in SweetAlert
+                const { value: formValues } = await Swal.fire({
+                    title: 'Edit Pricing Tier',
+                    html: `
+                        <div class="text-left space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Duration (minutes)</label>
+                                <input type="number" id="edit_duration" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent" value="${pricing.duration_minutes}" min="15" step="15">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Price (₹)</label>
+                                <input type="number" id="edit_price" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent" value="${pricing.price}" min="0" step="100">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Description (Optional)</label>
+                                <textarea id="edit_description" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-accent focus:border-transparent" rows="3">${pricing.description || ''}</textarea>
+                            </div>
+                        </div>
+                    `,
+                    focusConfirm: false,
+                    showCancelButton: true,
+                    confirmButtonText: 'Update Pricing',
+                    cancelButtonText: 'Cancel',
+                    confirmButtonColor: '#F59E0B',
+                    cancelButtonColor: '#6B7280',
+                    preConfirm: () => {
+                        const duration = parseInt(document.getElementById('edit_duration').value);
+                        const price = parseFloat(document.getElementById('edit_price').value);
+                        const description = document.getElementById('edit_description').value;
+                        
+                        if (!duration || duration <= 0) {
+                            Swal.showValidationMessage('Please enter a valid duration');
+                            return false;
+                        }
+                        
+                        if (price < 0) {
+                            Swal.showValidationMessage('Price cannot be negative');
+                            return false;
+                        }
+                        
+                        return { duration, price, description };
+                    }
+                });
+                
+                if (formValues) {
+                    // Update pricing (keep existing session_type)
+                    const updateResponse = await fetch(`admin-panel/apis/expert/update-pricing-tier.php`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: JSON.stringify({
+                            pricing_id: pricingId,
+                            duration_minutes: formValues.duration,
+                            price: formValues.price,
+                            description: formValues.description
+                        })
+                    });
+                    
+                    const updateResult = await updateResponse.json();
+                    
+                    if (updateResult.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Pricing Updated!',
+                            toast: true,
+                            position: 'top-end',
+                            showConfirmButton: false,
+                            timer: 3000,
+                            timerProgressBar: true
+                        });
+                        
+                        // Reload pricing data
+                        const pricingResponse = await fetch(`admin-panel/apis/expert/get-pricing.php`);
+                        const pricingData = await pricingResponse.json();
+                        
+                        if (pricingData.success) {
+                            updatePricingDisplay(pricingData.data);
+                        }
+                    } else {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: updateResult.message || 'Failed to update pricing',
+                            confirmButtonColor: '#3085d6'
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Edit pricing error:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'An error occurred while editing pricing',
+                    confirmButtonColor: '#3085d6'
+                });
+            }
         }
 
         function deletePricing(pricingId) {

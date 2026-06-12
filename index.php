@@ -1,8 +1,8 @@
 <?php
 require_once 'includes/session-config.php';
 
-// Define BASE_PATH for use in other files
-$BASE_PATH = '/nexpert';
+// Load domain path configuration
+$base_path = require_once 'admin-panel/apis/connection/domain-path.php';
 
 // Main router for Nexpert.ai application
 // If no panel specified, show homepage
@@ -29,8 +29,8 @@ if (!isset($_GET['panel']) && !isset($_GET['page'])) {
 }
 
 // Define available pages for each panel
-$learner_pages = ['auth', 'profile', 'browse-experts', 'expert-profile', 'booking', 'payments', 'dashboard', 'notifications', 'my-programs'];
-$expert_pages = ['auth', 'dashboard', 'profile-setup', 'kyc', 'workflow-builder', 'booking-management', 'session-execution', 'earnings', 'learner-management', 'notifications', 'settings', 'my-programs'];
+$learner_pages = ['auth', 'profile', 'browse-experts', 'expert-profile', 'booking', 'payments', 'dashboard', 'notifications', 'my-programs', 'my-sessions', 'messages', 'booking-details', 'program-details', 'program-payment', 'program-execution', 'webinar-details', 'webinar-payment'];
+$expert_pages = ['auth', 'dashboard', 'profile-setup', 'profile-view', 'booking-details', 'program-details', 'kyc', 'workflow-builder', 'booking-management', 'session-execution', 'earnings', 'learner-management', 'notifications', 'settings', 'my-programs', 'my-webinars', 'webinar-details', 'messages'];
 $admin_pages = ['auth', 'dashboard', 'experts', 'users', 'payouts', 'bookings', 'payments', 'kyc-verification', 'settings'];
 
 // Function to render 404 page

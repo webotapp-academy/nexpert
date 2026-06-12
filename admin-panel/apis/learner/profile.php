@@ -83,17 +83,44 @@ if ($method === 'POST') {
             
             $uploadPath = $uploadDir . $filename;
             
+            error_log("Photo Upload - Attempting to save file to: " . $uploadPath);
+            error_log("Photo Upload - Upload directory exists: " . (is_dir($uploadDir) ? 'yes' : 'no'));
+            error_log("Photo Upload - Upload directory writable: " . (is_writable($uploadDir) ? 'yes' : 'no'));
+            error_log("Photo Upload - Temp file exists: " . (file_exists($file['tmp_name']) ? 'yes' : 'no'));
+            
             if (move_uploaded_file($file['tmp_name'], $uploadPath)) {
                 $photoPath = '/uploads/profiles/' . $filename;
+                
+                error_log("Photo Upload - File saved successfully: " . $photoPath);
                 
                 // Update database
                 $stmt = $pdo->prepare("UPDATE learner_profiles SET profile_photo = ? WHERE user_id = ?");
                 $stmt->execute([$photoPath, $userId]);
                 
+                // Update session for immediate reflection in navigation
+                $_SESSION['profile_photo'] = $photoPath;
+                
+                error_log("Photo Upload - Database updated successfully");
+                error_log("Photo Upload - Session updated with new photo: " . $photoPath);
+                
                 echo json_encode(['success' => true, 'photo_url' => $photoPath]);
             } else {
+                $error = error_get_last();
+                error_log("Photo Upload - Failed to move file: " . print_r($error, true));
+                error_log("Photo Upload - PHP upload_tmp_dir: " . ini_get('upload_tmp_dir'));
+                error_log("Photo Upload - PHP file_uploads: " . ini_get('file_uploads'));
+                
                 http_response_code(500);
-                echo json_encode(['success' => false, 'message' => 'Failed to save file']);
+                echo json_encode([
+                    'success' => false, 
+                    'message' => 'Failed to save file',
+                    'debug' => [
+                        'upload_dir' => $uploadDir,
+                        'writable' => is_writable($uploadDir),
+                        'temp_file' => $file['tmp_name'],
+                        'target' => $uploadPath
+                    ]
+                ]);
             }
             
         } catch (PDOException $e) {
@@ -106,50 +133,85 @@ if ($method === 'POST') {
     
     // Regular profile update
     try {
-        $data = json_decode(file_get_contents('php://input'), true);
+        $rawInput = file_get_contents('php://input');
+        error_log("Learner Profile Update - Raw Input: " . $rawInput);
+        
+        $data = json_decode($rawInput, true);
+        
+        if ($data === null) {
+            error_log("Learner Profile Update - JSON decode failed: " . json_last_error_msg());
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid JSON data']);
+            exit;
+        }
+        
+        error_log("Learner Profile Update - Decoded data: " . print_r($data, true));
         
         $fullName = $data['full_name'] ?? '';
         $phone = $data['phone'] ?? '';
         $timezone = $data['timezone'] ?? 'Asia/Kolkata';
         $learningGoals = $data['learning_goals'] ?? '';
+        $challenges = $data['challenges'] ?? '';
+        $education = $data['education'] ?? '';
+        $profession = $data['profession'] ?? '';
         
         // Validate required fields
         if (empty($fullName)) {
+            error_log("Learner Profile Update - Full name is empty");
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => 'Full name is required']);
             exit;
         }
         
+        error_log("Learner Profile Update - Updating for user ID: " . $userId);
+        
         // Start transaction
         $pdo->beginTransaction();
         
         try {
-            // Update learner profile (only update columns that exist)
+            // Update learner profile with new fields
             $stmt = $pdo->prepare("
                 UPDATE learner_profiles 
-                SET full_name = ?, timezone = ?
+                SET full_name = ?, 
+                    timezone = ?, 
+                    goals = ?,
+                    challenges = ?,
+                    education = ?,
+                    profession = ?
                 WHERE user_id = ?
             ");
-            $stmt->execute([$fullName, $timezone, $userId]);
+            $result = $stmt->execute([$fullName, $timezone, $learningGoals, $challenges, $education, $profession, $userId]);
+            
+            error_log("Learner Profile Update - Profile update result: " . ($result ? 'success' : 'failed'));
+            error_log("Learner Profile Update - Rows affected: " . $stmt->rowCount());
             
             // Update phone in users table
             if ($phone) {
                 $stmt = $pdo->prepare("UPDATE users SET phone = ? WHERE id = ?");
                 $stmt->execute([$phone, $userId]);
+                error_log("Learner Profile Update - Phone updated");
             }
             
             $pdo->commit();
             
+            // Update session data for immediate reflection in navigation
+            $_SESSION['full_name'] = $fullName;
+            
+            error_log("Learner Profile Update - Transaction committed successfully");
+            error_log("Learner Profile Update - Session updated with new name: " . $fullName);
+            
             echo json_encode(['success' => true, 'message' => 'Profile updated successfully']);
         } catch (PDOException $e) {
             $pdo->rollBack();
+            error_log("Learner Profile Update - Transaction rollback: " . $e->getMessage());
             throw $e;
         }
         
     } catch (PDOException $e) {
         error_log("Learner Update Profile Error: " . $e->getMessage());
+        error_log("Learner Update Profile Error - Stack trace: " . $e->getTraceAsString());
         http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Server error occurred']);
+        echo json_encode(['success' => false, 'message' => 'Server error occurred', 'debug' => $e->getMessage()]);
     }
     exit;
 }

@@ -31,7 +31,9 @@ if ($app_root !== $document_root) {
 }
 
 // Full base URL
-define('BASE_URL', $protocol . '://' . $_SERVER['HTTP_HOST'] . $base_path);
-define('BASE_PATH', $base_path);
-
-?>
+if (!defined('BASE_URL')) {
+    define('BASE_URL', $protocol . '://' . $_SERVER['HTTP_HOST'] . $base_path);
+}
+if (!defined('BASE_PATH')) {
+    define('BASE_PATH', $base_path);
+}
