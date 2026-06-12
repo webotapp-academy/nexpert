@@ -31,7 +31,7 @@ if (!isset($_GET['panel']) && !isset($_GET['page'])) {
 // Define available pages for each panel
 $learner_pages = ['auth', 'profile', 'browse-experts', 'expert-profile', 'booking', 'payments', 'dashboard', 'notifications', 'my-programs', 'my-sessions', 'messages', 'booking-details', 'program-details', 'program-payment', 'program-execution', 'webinar-details', 'webinar-payment'];
 $expert_pages = ['auth', 'dashboard', 'profile-setup', 'profile-view', 'booking-details', 'program-details', 'kyc', 'workflow-builder', 'booking-management', 'session-execution', 'earnings', 'learner-management', 'notifications', 'settings', 'my-programs', 'my-webinars', 'webinar-details', 'messages'];
-$admin_pages = ['auth', 'dashboard', 'experts', 'users', 'payouts', 'bookings', 'payments', 'kyc-verification', 'settings'];
+$admin_pages = ['auth', 'dashboard', 'experts', 'users', 'payouts', 'bookings', 'payments', 'kyc-verification', 'settings', 'credibility'];
 
 // Function to render 404 page
 function render_404() {
