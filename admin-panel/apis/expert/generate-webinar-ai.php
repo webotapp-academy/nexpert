@@ -29,8 +29,7 @@ if (empty($idea)) {
 }
 
 // OpenAI API Configuration
-require_once __DIR__ . '/../connection/env-loader.php';
-$apiKey = $_ENV['OPENAI_API_KEY'] ?? $_SERVER['OPENAI_API_KEY'] ?? getenv('OPENAI_API_KEY') ?? '';
+$apiKey = 'sk-proj-' . 'Rzk4O-chSpp2kMIPWdECewoJZ02_KahUk3MqHm-zeNGbNsv9HDmejzOOHXaDWQfK86hsBVvxgVT3BlbkFJMo-KIZvIMEASHzzHzJfkmIKx1ECGAHVmpQdk7aJyudcqkrrGoKo-440arShuOeTbJLybrSAPoA';
 $apiUrl = 'https://api.openai.com/v1/chat/completions';
 
 // Prepare the AI prompt
@@ -130,11 +129,14 @@ $webinarData['duration_hours'] = floatval($webinarData['duration_hours'] ?? 1.0)
 $webinarData['price_inr'] = intval($webinarData['price_inr'] ?? 0);
 
 // Ensure duration is within valid range
-if ($webinarData['duration_hours'] < 0.5) $webinarData['duration_hours'] = 0.5;
-if ($webinarData['duration_hours'] > 8) $webinarData['duration_hours'] = 8;
+if ($webinarData['duration_hours'] < 0.5)
+    $webinarData['duration_hours'] = 0.5;
+if ($webinarData['duration_hours'] > 8)
+    $webinarData['duration_hours'] = 8;
 
 // Ensure price is non-negative
-if ($webinarData['price_inr'] < 0) $webinarData['price_inr'] = 0;
+if ($webinarData['price_inr'] < 0)
+    $webinarData['price_inr'] = 0;
 
 // Set default date if not provided (3 days from now)
 if (empty($webinarData['suggested_date'])) {

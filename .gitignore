@@ -64,7 +64,3 @@ composer.lock
 # Logs and databases
 *.sqlite
 *.sqlite3
-
-# Archives and Agent Scratch
-*.zip
-scratch/

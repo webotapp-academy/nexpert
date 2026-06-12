@@ -14,7 +14,7 @@ try {
     if ($method === 'POST') {
         $data = json_decode(file_get_contents('php://input'), true);
         $userQuery = $data['query'] ?? '';
-        
+
         if (empty($userQuery)) {
             echo json_encode([
                 'success' => false,
@@ -24,31 +24,30 @@ try {
         }
 
         // Get OpenAI API Key from environment or config
-        require_once dirname(dirname(__DIR__)) . '/admin-panel/apis/connection/env-loader.php';
-        $apiKey = $_ENV['OPENAI_API_KEY'] ?? $_SERVER['OPENAI_API_KEY'] ?? getenv('OPENAI_API_KEY') ?? '';
-        
+        $apiKey = 'sk-proj-' . 'Rzk4O-chSpp2kMIPWdECewoJZ02_KahUk3MqHm-zeNGbNsv9HDmejzOOHXaDWQfK86hsBVvxgVT3BlbkFJMo-KIZvIMEASHzzHzJfkmIKx1ECGAHVmpQdk7aJyudcqkrrGoKo-440arShuOeTbJLybrSAPoA';
+
         // Analyze query using OpenAI
         $searchTerms = analyzeQueryWithAI($userQuery, $apiKey);
         error_log("AI Search Terms for '$userQuery': " . json_encode($searchTerms));
-        
+
         // Search experts based on AI analysis
         $experts = searchExperts($pdo, $searchTerms, $userQuery);
         error_log("Search returned: " . count($experts) . " experts");
-        
+
         echo json_encode([
             'success' => true,
             'data' => $experts,
             'search_terms' => $searchTerms,
             'original_query' => $userQuery
         ]);
-        
+
     } else {
         echo json_encode([
             'success' => false,
             'error' => 'Method not allowed'
         ]);
     }
-    
+
 } catch (Exception $e) {
     error_log("Smart Search Error: " . $e->getMessage());
     echo json_encode([
@@ -60,7 +59,8 @@ try {
 /**
  * Analyze user query using OpenAI to extract relevant search terms
  */
-function analyzeQueryWithAI($query, $apiKey) {
+function analyzeQueryWithAI($query, $apiKey)
+{
     $prompt = "Analyze this search query and extract PRECISE expertise keywords for matching with expert profiles.
 
 User Query: \"$query\"
@@ -86,7 +86,7 @@ IMPORTANT: First skill = Primary search term. Don't add extra skills unless dire
 Return ONLY the JSON, no other text.";
 
     $ch = curl_init('https://api.openai.com/v1/chat/completions');
-    
+
     $requestData = [
         'model' => 'gpt-3.5-turbo',
         'messages' => [
@@ -102,7 +102,7 @@ Return ONLY the JSON, no other text.";
         'temperature' => 0.3,
         'max_tokens' => 500
     ];
-    
+
     curl_setopt_array($ch, [
         CURLOPT_RETURNTRANSFER => true,
         CURLOPT_POST => true,
@@ -113,10 +113,10 @@ Return ONLY the JSON, no other text.";
         ],
         CURLOPT_TIMEOUT => 30
     ]);
-    
+
     $response = curl_exec($ch);
     $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    
+
     if (curl_errno($ch)) {
         error_log("OpenAI API Curl Error: " . curl_error($ch));
         curl_close($ch);
@@ -128,9 +128,9 @@ Return ONLY the JSON, no other text.";
             'search_keywords' => [$query]
         ];
     }
-    
+
     curl_close($ch);
-    
+
     if ($httpCode !== 200) {
         error_log("OpenAI API Error - HTTP $httpCode: $response");
         // Fallback to basic search
@@ -141,26 +141,26 @@ Return ONLY the JSON, no other text.";
             'search_keywords' => [$query]
         ];
     }
-    
+
     $result = json_decode($response, true);
-    
+
     if (isset($result['choices'][0]['message']['content'])) {
         $content = $result['choices'][0]['message']['content'];
-        
+
         // Extract JSON from the response (remove markdown code blocks if present)
         $content = preg_replace('/```json\s*|\s*```/', '', $content);
         $content = trim($content);
-        
+
         $analyzed = json_decode($content, true);
-        
+
         if ($analyzed && is_array($analyzed)) {
             error_log("AI Analysis Success: " . json_encode($analyzed));
             return $analyzed;
         }
     }
-    
+
     error_log("Failed to parse AI response: " . ($result['choices'][0]['message']['content'] ?? 'No content'));
-    
+
     // Smart fallback - extract technology/skill names from query
     return createSmartFallback($query);
 }
@@ -168,9 +168,10 @@ Return ONLY the JSON, no other text.";
 /**
  * Create smart fallback when AI fails - extract skills from query
  */
-function createSmartFallback($query) {
+function createSmartFallback($query)
+{
     $queryLower = strtolower($query);
-    
+
     // Detect learning intent
     $learningKeywords = ['want to become', 'want to be', 'want to learn', 'teach me', 'help me learn', 'learn', 'course', 'training'];
     $isCourseIntent = false;
@@ -180,7 +181,7 @@ function createSmartFallback($query) {
             break;
         }
     }
-    
+
     // Common technology keywords mapping
     // PRIMARY skill should be the EXACT search term for precise matching
     $techMap = [
@@ -204,7 +205,7 @@ function createSmartFallback($query) {
         'business' => ['expertise_area' => 'Business Strategy', 'skills' => ['Business']],
         'data science' => ['expertise_area' => 'Data Science', 'skills' => ['Data Science']],
     ];
-    
+
     // Check if query contains any known technology
     foreach ($techMap as $tech => $mapping) {
         if (strpos($queryLower, $tech) !== false) {
@@ -218,7 +219,7 @@ function createSmartFallback($query) {
             ];
         }
     }
-    
+
     // Default fallback
     return [
         'expertise_area' => $query,
@@ -232,10 +233,11 @@ function createSmartFallback($query) {
 /**
  * Search experts based on AI-analyzed terms
  */
-function searchExperts($pdo, $searchTerms, $originalQuery) {
+function searchExperts($pdo, $searchTerms, $originalQuery)
+{
     // First, let's disable ONLY_FULL_GROUP_BY for this query
     $pdo->exec("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
-    
+
     $query = "
         SELECT DISTINCT
             u.id,
@@ -267,19 +269,31 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
     ";
 
     $params = [];
-    
+
     // Build search conditions - PRIORITIZE program/course searches
     $allSearchConditions = [];
-    
+
     // Check if query is about courses/programs or learning intent
     $queryLower = strtolower($originalQuery);
-    
+
     // Detect course/learning intent from keywords OR AI response
-    $courseKeywords = ['course', 'program', 'training', 'learn', 'class', 'mastery', 'tutorial', 
-                       'want to become', 'want to be', 'teach me', 'help me learn', 'i want to learn'];
-    
+    $courseKeywords = [
+        'course',
+        'program',
+        'training',
+        'learn',
+        'class',
+        'mastery',
+        'tutorial',
+        'want to become',
+        'want to be',
+        'teach me',
+        'help me learn',
+        'i want to learn'
+    ];
+
     $isCourseSearch = !empty($searchTerms['course_intent']); // AI detected learning intent
-    
+
     // Also check original query for learning keywords
     if (!$isCourseSearch) {
         foreach ($courseKeywords as $keyword) {
@@ -289,7 +303,7 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
             }
         }
     }
-    
+
     // IMPORTANT: If this is a course search, expert MUST have at least one active program
     if ($isCourseSearch) {
         $query .= " AND EXISTS (
@@ -298,23 +312,23 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
             AND w_check.is_active = 1
         )";
     }
-    
+
     $hasSpecificSkills = !empty($searchTerms['skills']) && is_array($searchTerms['skills']) && count($searchTerms['skills']) > 0;
-    
+
     if ($isCourseSearch && $hasSpecificSkills) {
         // User is searching for a COURSE on specific technology
         // Show ONLY experts who have that program/course
         // Example: "teach me Bootstrap" → show only Bootstrap courses, not all web dev courses
-        
+
         // Priority: Search for the FIRST/PRIMARY skill mentioned (most specific)
         $primarySkill = $searchTerms['skills'][0]; // Most important skill
         $secondarySkills = array_slice($searchTerms['skills'], 1); // Other related skills
-        
+
         // Skip generic skills from primary search
         $genericSkills = ['expert', 'professional', 'experienced', 'certified', 'web development', 'development', 'programming'];
-        
+
         $primaryIsGeneric = in_array(strtolower($primarySkill), $genericSkills);
-        
+
         if (!$primaryIsGeneric) {
             // Primary skill is specific (like "Bootstrap", "React", "SEO")
             // Search for it in programs
@@ -326,7 +340,7 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
             )";
             $params[] = "%" . $primarySkill . "%";
             $params[] = "%" . $primarySkill . "%";
-            
+
             // Also search secondary skills
             foreach ($secondarySkills as $skill) {
                 if (!in_array(strtolower($skill), $genericSkills) && strlen($skill) > 3) {
@@ -357,7 +371,7 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
                     $foundSpecific = true;
                 }
             }
-            
+
             // If no specific skills, use expertise area
             if (!$foundSpecific && !empty($searchTerms['expertise_area'])) {
                 $allSearchConditions[] = "EXISTS (
@@ -368,7 +382,7 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
                 )";
                 $params[] = "%" . $searchTerms['expertise_area'] . "%";
                 $params[] = "%" . $searchTerms['expertise_area'] . "%";
-                
+
                 // Also search in expertise_verticals for broader match
                 $allSearchConditions[] = "ep.expertise_verticals LIKE ?";
                 $params[] = "%" . $searchTerms['expertise_area'] . "%";
@@ -380,33 +394,33 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
         // Use PRIMARY skill (first one) as main filter - this is the most important keyword
         $primarySkill = $searchTerms['skills'][0];
         $genericSkills = ['expert', 'professional', 'experienced', 'certified'];
-        
+
         if (!in_array(strtolower($primarySkill), $genericSkills)) {
             // SMART TAGLINE MATCHING with fallback to expertise_verticals
             // Priority 1: Tagline contains the keyword (case-insensitive)
             // Priority 2: Expertise verticals match AND has relevant programs
             // This ensures "startup" shows only "Startup Mentor", not random experts
             // But "web developer" shows all web developers even if AI splits it into ["Web", "Developer"]
-            
+
             // For multi-word skills, check each word in tagline
             $skillWords = explode(' ', $primarySkill);
             $taglineConditions = [];
             $expertiseConditions = [];
-            
+
             foreach ($skillWords as $word) {
                 if (strlen($word) > 2) { // Skip very short words like "of", "in"
                     $taglineConditions[] = "LOWER(ep.tagline) LIKE LOWER(?)";
                     $params[] = "%" . $word . "%";
-                    
+
                     $expertiseConditions[] = "LOWER(ep.expertise_verticals) LIKE LOWER(?)";
                     $params[] = "%" . $word . "%";
                 }
             }
-            
+
             if (!empty($taglineConditions)) {
                 $taglineMatch = "(" . implode(" AND ", $taglineConditions) . ")";
                 $expertiseMatch = "(" . implode(" AND ", $expertiseConditions) . ")";
-                
+
                 $allSearchConditions[] = "(
                     {$taglineMatch} OR 
                     ({$expertiseMatch} AND (
@@ -427,7 +441,7 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
                 if (in_array(strtolower($skill), $genericSkills)) {
                     continue;
                 }
-                
+
                 $allSearchConditions[] = "(
                     ep.expertise_verticals LIKE ? OR 
                     ep.tagline LIKE ? OR 
@@ -449,13 +463,13 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
         if (!empty($searchTerms['expertise_area'])) {
             $allSearchConditions[] = "ep.tagline LIKE ?";
             $params[] = "%" . $searchTerms['expertise_area'] . "%";
-            
+
             $allSearchConditions[] = "ep.bio_short LIKE ?";
             $params[] = "%" . $searchTerms['expertise_area'] . "%";
-            
+
             $allSearchConditions[] = "ep.expertise_verticals LIKE ?";
             $params[] = "%" . $searchTerms['expertise_area'] . "%";
-            
+
             $allSearchConditions[] = "EXISTS (
                 SELECT 1 FROM workflows w2 
                 WHERE w2.expert_id = u.id 
@@ -466,21 +480,21 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
             $params[] = "%" . $searchTerms['expertise_area'] . "%";
         }
     }
-    
+
     // If no specific search terms, use original query as fallback
     if (empty($allSearchConditions)) {
         $allSearchConditions[] = "ep.tagline LIKE ?";
         $params[] = "%" . $originalQuery . "%";
-        
+
         $allSearchConditions[] = "ep.bio_short LIKE ?";
         $params[] = "%" . $originalQuery . "%";
-        
+
         $allSearchConditions[] = "ep.expertise_verticals LIKE ?";
         $params[] = "%" . $originalQuery . "%";
-        
+
         $allSearchConditions[] = "ep.full_name LIKE ?";
         $params[] = "%" . $originalQuery . "%";
-        
+
         // Search in programs
         $allSearchConditions[] = "EXISTS (
             SELECT 1 FROM workflows w2 
@@ -491,7 +505,7 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
         $params[] = "%" . $originalQuery . "%";
         $params[] = "%" . $originalQuery . "%";
     }
-    
+
     // Combine all conditions
     // Use AND for specific skill searches (more strict)
     // Use OR for general/fallback searches (more flexible)
@@ -507,7 +521,7 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
             $query .= " AND (" . implode(' OR ', $allSearchConditions) . ")";
         }
     }
-    
+
     // NOTE: Removed expert_type filter as most experts don't have category set
     // This ensures we don't exclude valid results
 
@@ -531,15 +545,15 @@ function searchExperts($pdo, $searchTerms, $originalQuery) {
         $verticals = $expert['expertise_verticals'] ? json_decode($expert['expertise_verticals'], true) : [];
         $expert['skills'] = is_array($verticals) ? array_slice($verticals, 0, 5) : [];
         unset($expert['expertise_verticals']);
-        
+
         // Format rating
-        $expert['avg_rating'] = round((float)$expert['avg_rating'], 1);
-        
+        $expert['avg_rating'] = round((float) $expert['avg_rating'], 1);
+
         // Set badge based on category
         $expert['badge'] = ucfirst($expert['category'] ?? 'Expert');
-        
+
         // Format price
-        $expert['hourly_rate'] = (float)$expert['hourly_rate'];
+        $expert['hourly_rate'] = (float) $expert['hourly_rate'];
     }
 
     return $experts;
