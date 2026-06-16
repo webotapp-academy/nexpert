@@ -266,16 +266,6 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                     The world's premier platform connecting learners with expert coaches, mentors, consultants, trainers, and freelancers worldwide.
                 </p>
                 
-                <div class="grid grid-cols-2 gap-6 mb-8">
-                    <div class="text-center bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-                        <div class="text-2xl font-bold text-white">5,000+</div>
-                        <div class="text-gray-400 text-sm">Global Experts</div>
-                    </div>
-                    <div class="text-center bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
-                        <div class="text-2xl font-bold text-white">50,000+</div>
-                        <div class="text-gray-400 text-sm">Active Learners</div>
-                    </div>
-                </div>
             </div>
             
             <div>
@@ -284,11 +274,11 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                     Categories
                 </h5>
                 <ul class="space-y-3">
-                    <li><a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-white transition">Coaches</a></li>
-                    <li><a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-white transition">Mentors</a></li>
-                    <li><a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-white transition">Consultants</a></li>
-                    <li><a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-white transition">Trainers</a></li>
-                    <li><a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-white transition">Freelancers</a></li>
+                    <li><a href="?panel=learner&page=browse-experts&category=AI%20%26%20Technology" class="text-gray-300 hover:text-white transition">AI & Technology</a></li>
+                    <li><a href="?panel=learner&page=browse-experts&category=Leadership" class="text-gray-300 hover:text-white transition">Leadership</a></li>
+                    <li><a href="?panel=learner&page=browse-experts&category=career%20Growth" class="text-gray-300 hover:text-white transition">career Growth</a></li>
+                    <li><a href="?panel=learner&page=browse-experts&category=Entrepreneurship" class="text-gray-300 hover:text-white transition">Entrepreneurship</a></li>
+                    <li><a href="?panel=learner&page=browse-experts&category=Product%26Strategy" class="text-gray-300 hover:text-white transition">Product&Strategy</a></li>
                 </ul>
             </div>
             

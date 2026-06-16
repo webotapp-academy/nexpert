@@ -72,11 +72,11 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                     <label class="block text-sm font-medium text-gray-400 mb-2">Category</label>
                     <select id="category-select" class="w-full px-3 py-2 bg-[#131b2e] border border-gray-800 rounded-lg focus:outline-none focus:border-gray-700 text-sm text-white">
                         <option value="">All Categories</option>
-                        <option value="coach">Coach</option>
-                        <option value="mentor">Mentor</option>
-                        <option value="consultant">Consultant</option>
-                        <option value="trainer">Trainer</option>
-                        <option value="freelancer">Freelancer</option>
+                        <option value="AI & Technology">AI & Technology</option>
+                        <option value="Leadership">Leadership</option>
+                        <option value="career Growth">career Growth</option>
+                        <option value="Entrepreneurship">Entrepreneurship</option>
+                        <option value="Product&Strategy">Product&Strategy</option>
                     </select>
                 </div>
 
@@ -216,11 +216,11 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                         <label class="block text-sm font-medium text-gray-400 mb-2">Category</label>
                         <select id="mobile-category-select" class="w-full px-3 py-3 bg-[#131b2e] border border-gray-800 rounded-lg text-white focus:outline-none focus:border-gray-700">
                             <option value="">All Categories</option>
-                            <option value="coach">Coach</option>
-                            <option value="mentor">Mentor</option>
-                            <option value="consultant">Consultant</option>
-                            <option value="trainer">Trainer</option>
-                            <option value="freelancer">Freelancer</option>
+                            <option value="AI & Technology">AI & Technology</option>
+                            <option value="Leadership">Leadership</option>
+                            <option value="career Growth">career Growth</option>
+                            <option value="Entrepreneurship">Entrepreneurship</option>
+                            <option value="Product&Strategy">Product&Strategy</option>
                         </select>
                     </div>
 

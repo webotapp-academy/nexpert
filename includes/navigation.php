@@ -85,7 +85,6 @@ if ($panel_type === 'home'):
                     <a href="#categories" class="text-gray-300 hover:text-[#00D4AA] transition font-medium">Explore</a>
                     <a href="#how-it-works" class="text-gray-300 hover:text-[#00D4AA] transition font-medium">How it Works</a>
                     <a href="#experts" class="text-gray-300 hover:text-[#00D4AA] transition font-medium">For Learners</a>
-                    <a href="#testimonials" class="text-gray-300 hover:text-[#00D4AA] transition font-medium">For Experts</a>
                     
                     <?php if ($isLoggedIn): ?>
                         <!-- Logged in user options -->
@@ -132,14 +131,12 @@ if ($panel_type === 'home'):
                         <a href="#categories" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Categories</a>
                         <a href="#how-it-works" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">How It Works</a>
                         <a href="#experts" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Top Experts</a>
-                        <a href="#testimonials" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Success Stories</a>
                         <button id="home-logout-btn-mobile" class="text-left text-gray-300 hover:text-red-500 transition px-2 py-2">Logout</button>
                     <?php else: ?>
                         <!-- Guest mobile menu -->
                         <a href="#categories" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Categories</a>
                         <a href="#how-it-works" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">How It Works</a>
                         <a href="#experts" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Top Experts</a>
-                        <a href="#testimonials" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Success Stories</a>
                         <a href="?panel=learner&page=auth" class="bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition text-center">Learner Login</a>
                         <a href="?panel=expert&page=auth" class="border border-gray-700 text-white px-6 py-3 rounded-lg hover:bg-white hover:text-black transition text-center">Expert Login</a>
                     <?php endif; ?>

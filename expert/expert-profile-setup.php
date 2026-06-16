@@ -112,11 +112,11 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                         <label class="block text-sm font-medium text-gray-700 mb-2">Primary Expert Category *</label>
                         <select id="category" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
                             <option value="">Select category</option>
-                            <option value="coach">Coach</option>
-                            <option value="mentor">Mentor</option>
-                            <option value="consultant">Consultant</option>
-                            <option value="trainer">Trainer</option>
-                            <option value="freelancer">Freelancer</option>
+                            <option value="AI & Technology">AI & Technology</option>
+                            <option value="Leadership">Leadership</option>
+                            <option value="career Growth">career Growth</option>
+                            <option value="Entrepreneurship">Entrepreneurship</option>
+                            <option value="Product&Strategy">Product&Strategy</option>
                         </select>
                     </div>
 

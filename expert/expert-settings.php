@@ -249,11 +249,11 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                                     <label class="block text-sm font-medium text-gray-700 mb-2">Category *</label>
                                     <select name="category" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
                                         <option value="">Select Category</option>
-                                        <option value="coach" <?php echo (isset($profileData['category']) && $profileData['category'] === 'coach') ? 'selected' : ''; ?>>Coach</option>
-                                        <option value="mentor" <?php echo (isset($profileData['category']) && $profileData['category'] === 'mentor') ? 'selected' : ''; ?>>Mentor</option>
-                                        <option value="consultant" <?php echo (isset($profileData['category']) && $profileData['category'] === 'consultant') ? 'selected' : ''; ?>>Consultant</option>
-                                        <option value="trainer" <?php echo (isset($profileData['category']) && $profileData['category'] === 'trainer') ? 'selected' : ''; ?>>Trainer</option>
-                                        <option value="freelancer" <?php echo (isset($profileData['category']) && $profileData['category'] === 'freelancer') ? 'selected' : ''; ?>>Freelancer</option>
+                                        <option value="AI & Technology" <?php echo (isset($profileData['category']) && $profileData['category'] === 'AI & Technology') ? 'selected' : ''; ?>>AI & Technology</option>
+                                        <option value="Leadership" <?php echo (isset($profileData['category']) && $profileData['category'] === 'Leadership') ? 'selected' : ''; ?>>Leadership</option>
+                                        <option value="career Growth" <?php echo (isset($profileData['category']) && $profileData['category'] === 'career Growth') ? 'selected' : ''; ?>>career Growth</option>
+                                        <option value="Entrepreneurship" <?php echo (isset($profileData['category']) && $profileData['category'] === 'Entrepreneurship') ? 'selected' : ''; ?>>Entrepreneurship</option>
+                                        <option value="Product&Strategy" <?php echo (isset($profileData['category']) && $profileData['category'] === 'Product&Strategy') ? 'selected' : ''; ?>>Product&Strategy</option>
                                     </select>
                                 </div>
                                 <div>

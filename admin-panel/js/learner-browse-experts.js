@@ -438,6 +438,27 @@
 
     // Event listeners
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize filters from URL parameters if present
+        const urlParams = new URLSearchParams(window.location.search);
+        
+        const catParam = urlParams.get('category');
+        if (catParam) {
+            filters.category = catParam;
+            const categorySelect = document.getElementById('category-select');
+            if (categorySelect) categorySelect.value = catParam;
+            const mobileCategorySelect = document.getElementById('mobile-category-select');
+            if (mobileCategorySelect) mobileCategorySelect.value = catParam;
+        }
+        
+        const searchParam = urlParams.get('search');
+        if (searchParam) {
+            filters.search = searchParam;
+            const searchInput = document.getElementById('search-input');
+            if (searchInput) searchInput.value = searchParam;
+            const mobileMainSearch = document.getElementById('mobile-main-search-input');
+            if (mobileMainSearch) mobileMainSearch.value = searchParam;
+        }
+
         // Load experts on page load
         loadExperts();
 
