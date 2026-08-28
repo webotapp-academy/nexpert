@@ -153,7 +153,7 @@ if ($panel_type === 'home'):
     </nav>
 <?php elseif ($panel_type === 'learner'): 
     $isLoggedIn = isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'learner';
-    $currentPage = $_GET['page'] ?? '';
+    $currentPage = $_GET['page'] ?? 'dashboard';
     
     // Get learner profile data if logged in - prioritize session data
     $learnerName = '';
@@ -192,11 +192,11 @@ if ($panel_type === 'home'):
                 <!-- Desktop Menu -->
                 <div class="hidden md:flex items-center space-x-1 lg:space-x-2">
                     <?php if ($isLoggedIn): ?>
-                        <a href="?panel=learner&page=dashboard" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3.5 py-2 rounded-xl transition font-medium text-sm">Dashboard</a>
-                        <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3.5 py-2 rounded-xl transition font-medium text-sm">Browse Experts</a>
-                        <a href="?panel=learner&page=my-programs" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3.5 py-2 rounded-xl transition font-medium text-sm">My Programs</a>
-                        <a href="?panel=learner&page=profile" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3.5 py-2 rounded-xl transition font-medium text-sm">Profile</a>
-                        <a href="?panel=learner&page=messages" class="relative text-gray-300 hover:text-white hover:bg-white/[0.06] p-2 rounded-xl transition">
+                        <a href="?panel=learner&page=dashboard" class="<?php echo in_array($currentPage, ['dashboard', '']) ? 'bg-white/[0.08] text-[#00D4AA] font-bold' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> px-3.5 py-2 rounded-xl transition text-sm">Dashboard</a>
+                        <a href="?panel=learner&page=browse-experts" class="<?php echo in_array($currentPage, ['browse-experts', 'expert-profile']) ? 'bg-white/[0.08] text-[#00D4AA] font-bold' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> px-3.5 py-2 rounded-xl transition text-sm">Browse Experts</a>
+                        <a href="?panel=learner&page=my-programs" class="<?php echo in_array($currentPage, ['my-programs', 'program-details']) ? 'bg-white/[0.08] text-[#00D4AA] font-bold' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> px-3.5 py-2 rounded-xl transition text-sm">My Programs</a>
+                        <a href="?panel=learner&page=profile" class="<?php echo in_array($currentPage, ['profile', 'settings']) ? 'bg-white/[0.08] text-[#00D4AA] font-bold' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> px-3.5 py-2 rounded-xl transition text-sm">Profile</a>
+                        <a href="?panel=learner&page=messages" class="relative <?php echo ($currentPage === 'messages') ? 'bg-white/[0.08] text-[#00D4AA]' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> p-2 rounded-xl transition">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                             </svg>
@@ -256,10 +256,10 @@ if ($panel_type === 'home'):
                                 <p class="text-xs text-gray-400">Learner</p>
                             </div>
                         </div>
-                        <a href="?panel=learner&page=dashboard" class="text-gray-200 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Dashboard</a>
-                        <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Browse Experts</a>
-                        <a href="?panel=learner&page=my-programs" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">My Programs</a>
-                        <a href="?panel=learner&page=profile" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Profile</a>
+                        <a href="?panel=learner&page=dashboard" class="<?php echo in_array($currentPage, ['dashboard', '']) ? 'text-[#00D4AA] font-bold bg-white/[0.06]' : 'text-gray-200 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Dashboard</a>
+                        <a href="?panel=learner&page=browse-experts" class="<?php echo in_array($currentPage, ['browse-experts', 'expert-profile']) ? 'text-[#00D4AA] font-bold bg-white/[0.06]' : 'text-gray-300 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Browse Experts</a>
+                        <a href="?panel=learner&page=my-programs" class="<?php echo in_array($currentPage, ['my-programs', 'program-details']) ? 'text-[#00D4AA] font-bold bg-white/[0.06]' : 'text-gray-300 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">My Programs</a>
+                        <a href="?panel=learner&page=profile" class="<?php echo in_array($currentPage, ['profile', 'settings']) ? 'text-[#00D4AA] font-bold bg-white/[0.06]' : 'text-gray-300 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Profile</a>
                         <button id="learner-logout-btn-mobile" class="text-left text-red-400 hover:text-red-300 px-3 py-2 rounded-xl hover:bg-red-950/30 transition">Logout</button>
                     <?php else: ?>
                         <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Browse Experts</a>
@@ -274,6 +274,7 @@ if ($panel_type === 'home'):
     </nav>
 <?php elseif ($panel_type === 'expert'): 
     $isLoggedIn = isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'expert';
+    $currentPage = $_GET['page'] ?? 'dashboard';
     
     // Get expert profile data if logged in
     $expertName = '';
@@ -311,16 +312,16 @@ if ($panel_type === 'home'):
                 <!-- Desktop Menu -->
                 <div class="hidden md:flex items-center space-x-1 lg:space-x-2">
                     <?php if ($isLoggedIn): ?>
-                        <a href="?panel=expert&page=dashboard" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Dashboard</a>
-                        <a href="?panel=expert&page=daily-credibility-card" class="text-[#00D4AA] font-bold hover:text-white bg-[#00D4AA]/10 hover:bg-[#00D4AA]/20 border border-[#00D4AA]/30 px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-sm shadow-[0_0_15px_rgba(0,212,170,0.15)]">
-                            <span class="animate-pulse">✨</span><span>Credibility Card</span>
+                        <a href="?panel=expert&page=dashboard" class="<?php echo in_array($currentPage, ['dashboard', '']) ? 'bg-white/[0.08] text-[#00D4AA] font-bold' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> px-3.5 py-2 rounded-xl transition text-sm">Dashboard</a>
+                        <a href="?panel=expert&page=daily-credibility-card" class="<?php echo ($currentPage === 'daily-credibility-card') ? 'bg-[#00D4AA]/15 border border-[#00D4AA]/35 text-[#00D4AA] font-bold shadow-[0_0_15px_rgba(0,212,170,0.15)]' : 'text-gray-300 hover:text-[#00D4AA] hover:bg-white/[0.06]'; ?> px-3.5 py-2 rounded-xl transition flex items-center gap-1.5 text-sm">
+                            <span class="<?php echo ($currentPage === 'daily-credibility-card') ? 'animate-pulse' : ''; ?>">✨</span><span>Credibility Card</span>
                         </a>
-                        <a href="?panel=expert&page=my-programs" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Programs</a>
-                        <a href="?panel=expert&page=my-webinars" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Webinars</a>
-                        <a href="?panel=expert&page=earnings" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Earnings</a>
-                        <a href="?panel=expert&page=booking-management" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Bookings</a>
-                        <a href="?panel=expert&page=learner-management" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Learners</a>
-                        <a href="?panel=expert&page=messages" class="relative text-gray-300 hover:text-white hover:bg-white/[0.06] p-2 rounded-xl transition">
+                        <a href="?panel=expert&page=my-programs" class="<?php echo in_array($currentPage, ['my-programs', 'program-details']) ? 'bg-white/[0.08] text-[#00D4AA] font-bold' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> px-3.5 py-2 rounded-xl transition text-sm">Programs</a>
+                        <a href="?panel=expert&page=my-webinars" class="<?php echo in_array($currentPage, ['my-webinars', 'webinar-details']) ? 'bg-white/[0.08] text-[#00D4AA] font-bold' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> px-3.5 py-2 rounded-xl transition text-sm">Webinars</a>
+                        <a href="?panel=expert&page=earnings" class="<?php echo ($currentPage === 'earnings') ? 'bg-white/[0.08] text-[#00D4AA] font-bold' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> px-3.5 py-2 rounded-xl transition text-sm">Earnings</a>
+                        <a href="?panel=expert&page=booking-management" class="<?php echo in_array($currentPage, ['booking-management', 'booking-details']) ? 'bg-white/[0.08] text-[#00D4AA] font-bold' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> px-3.5 py-2 rounded-xl transition text-sm">Bookings</a>
+                        <a href="?panel=expert&page=learner-management" class="<?php echo ($currentPage === 'learner-management') ? 'bg-white/[0.08] text-[#00D4AA] font-bold' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> px-3.5 py-2 rounded-xl transition text-sm">Learners</a>
+                        <a href="?panel=expert&page=messages" class="relative <?php echo ($currentPage === 'messages') ? 'bg-white/[0.08] text-[#00D4AA]' : 'text-gray-300 hover:text-white hover:bg-white/[0.06]'; ?> p-2 rounded-xl transition">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                             </svg>
@@ -378,14 +379,14 @@ if ($panel_type === 'home'):
                                 <p class="text-xs text-[#00D4AA]">Verified Expert</p>
                             </div>
                         </div>
-                        <a href="?panel=expert&page=dashboard" class="text-gray-200 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Dashboard</a>
-                        <a href="?panel=expert&page=daily-credibility-card" class="text-[#00D4AA] font-bold px-3 py-2 rounded-xl bg-[#00D4AA]/10 border border-[#00D4AA]/25 transition flex items-center gap-2">✨ Credibility Card</a>
-                        <a href="?panel=expert&page=my-programs" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">My Programs</a>
-                        <a href="?panel=expert&page=my-webinars" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">My Webinars</a>
-                        <a href="?panel=expert&page=earnings" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Earnings</a>
-                        <a href="?panel=expert&page=booking-management" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Bookings</a>
-                        <a href="?panel=expert&page=learner-management" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Learners</a>
-                        <a href="?panel=expert&page=settings" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Settings</a>
+                        <a href="?panel=expert&page=dashboard" class="<?php echo in_array($currentPage, ['dashboard', '']) ? 'text-[#00D4AA] font-bold bg-white/[0.06]' : 'text-gray-200 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Dashboard</a>
+                        <a href="?panel=expert&page=daily-credibility-card" class="<?php echo ($currentPage === 'daily-credibility-card') ? 'text-[#00D4AA] font-bold bg-[#00D4AA]/15 border border-[#00D4AA]/30' : 'text-gray-300 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl transition flex items-center gap-2">✨ Credibility Card</a>
+                        <a href="?panel=expert&page=my-programs" class="<?php echo in_array($currentPage, ['my-programs', 'program-details']) ? 'text-[#00D4AA] font-bold bg-white/[0.06]' : 'text-gray-300 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">My Programs</a>
+                        <a href="?panel=expert&page=my-webinars" class="<?php echo in_array($currentPage, ['my-webinars', 'webinar-details']) ? 'text-[#00D4AA] font-bold bg-white/[0.06]' : 'text-gray-300 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">My Webinars</a>
+                        <a href="?panel=expert&page=earnings" class="<?php echo ($currentPage === 'earnings') ? 'text-[#00D4AA] font-bold bg-white/[0.06]' : 'text-gray-300 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Earnings</a>
+                        <a href="?panel=expert&page=booking-management" class="<?php echo in_array($currentPage, ['booking-management', 'booking-details']) ? 'text-[#00D4AA] font-bold bg-white/[0.06]' : 'text-gray-300 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Bookings</a>
+                        <a href="?panel=expert&page=learner-management" class="<?php echo ($currentPage === 'learner-management') ? 'text-[#00D4AA] font-bold bg-white/[0.06]' : 'text-gray-300 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Learners</a>
+                        <a href="?panel=expert&page=settings" class="<?php echo ($currentPage === 'settings') ? 'text-[#00D4AA] font-bold bg-white/[0.06]' : 'text-gray-300 hover:text-[#00D4AA]'; ?> px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Settings</a>
                         <button id="expert-logout-btn-mobile" class="text-left text-red-400 hover:text-red-300 px-3 py-2 rounded-xl hover:bg-red-950/30 transition">Logout</button>
                     <?php else: ?>
                         <div class="pt-1 flex flex-col gap-2">
