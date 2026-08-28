@@ -251,6 +251,18 @@ $hasLearnerData = !empty($booking['learner_goals']) || !empty($booking['learner_
                                 <span class="text-xs font-mono text-gray-300"><?php echo htmlspecialchars($callDetails['password'] ?? 'N/A'); ?></span>
                             </div>
                             <div class="pt-3 border-t border-gray-800 flex flex-wrap gap-2.5">
+                                <?php if ($booking['status'] === 'completed'): ?>
+                                <button disabled
+                                        class="flex-1 min-w-[140px] text-center bg-gray-800/80 text-gray-400 py-2.5 px-4 rounded-xl text-xs font-bold border border-gray-700 cursor-not-allowed flex items-center justify-center gap-1.5">
+                                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    Session Completed
+                                </button>
+                                <?php elseif ($booking['status'] === 'cancelled'): ?>
+                                <button disabled
+                                        class="flex-1 min-w-[140px] text-center bg-red-950/30 text-red-400 py-2.5 px-4 rounded-xl text-xs font-bold border border-red-800/30 cursor-not-allowed flex items-center justify-center gap-1.5">
+                                    Session Cancelled
+                                </button>
+                                <?php else: ?>
                                 <a href="<?php echo htmlspecialchars($callDetails['start_url'] ?? '#'); ?>" 
                                    target="_blank"
                                    class="flex-1 min-w-[120px] text-center bg-[#00D4AA] text-[#080B10] py-2.5 px-4 rounded-xl text-xs font-extrabold hover:bg-[#00bfa0] transition shadow-md flex items-center justify-center gap-1.5">
@@ -268,6 +280,7 @@ $hasLearnerData = !empty($booking['learner_goals']) || !empty($booking['learner_
                                         class="px-3.5 py-2.5 bg-[#0D131F] border border-gray-700 rounded-xl text-xs font-bold hover:border-gray-500 text-gray-300 hover:text-white transition">
                                     Copy Link
                                 </button>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>

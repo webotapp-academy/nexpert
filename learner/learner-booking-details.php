@@ -217,16 +217,35 @@ $hasExpertData = !empty($booking['expert_bio_short']) || !empty($booking['expert
                             <span class="text-sm text-gray-400">Password</span>
                             <span class="text-sm font-mono text-white"><?php echo htmlspecialchars($callDetails['password'] ?? 'N/A'); ?></span>
                         </div>
-                        <div class="pt-3 border-t border-gray-800 flex gap-3">
-                            <a href="<?php echo htmlspecialchars($callDetails['join_url'] ?? '#'); ?>" 
-                               target="_blank"
-                               class="flex-1 text-center bg-emerald-600 text-white py-2 px-4 rounded-lg text-sm font-semibold hover:bg-emerald-700 transition">
-                                Join Meeting
-                            </a>
-                            <button onclick="copyToClipboard('<?php echo htmlspecialchars($callDetails['join_url'] ?? ''); ?>')" 
-                                    class="px-4 py-2 border border-gray-800 text-gray-300 rounded-lg text-sm font-medium hover:bg-gray-800 transition">
-                                Copy Link
-                            </button>
+                        <div class="pt-3 border-t border-gray-800 flex flex-wrap gap-3">
+                            <?php if ($booking['status'] === 'completed'): ?>
+                                <button disabled
+                                        class="flex-1 text-center bg-gray-800/80 text-gray-400 py-2.5 px-4 rounded-xl text-xs font-bold border border-gray-700 cursor-not-allowed flex items-center justify-center gap-1.5">
+                                    <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    Session Completed
+                                </button>
+                            <?php elseif ($booking['status'] === 'cancelled'): ?>
+                                <button disabled
+                                        class="flex-1 text-center bg-red-950/30 text-red-400 py-2.5 px-4 rounded-xl text-xs font-bold border border-red-800/30 cursor-not-allowed flex items-center justify-center gap-1.5">
+                                    Session Cancelled
+                                </button>
+                            <?php elseif ($booking['accept_booking'] !== 'yes'): ?>
+                                <button disabled
+                                        class="flex-1 text-center bg-gray-800/80 text-amber-400 py-2.5 px-4 rounded-xl text-xs font-bold border border-amber-500/30 cursor-not-allowed flex items-center justify-center gap-1.5">
+                                    Pending Expert Acceptance
+                                </button>
+                            <?php else: ?>
+                                <a href="<?php echo htmlspecialchars($callDetails['join_url'] ?? '#'); ?>" 
+                                   target="_blank"
+                                   class="flex-1 text-center bg-[#00D4AA] text-[#080B10] py-2.5 px-4 rounded-xl text-xs font-extrabold hover:bg-[#00bfa0] transition shadow-md flex items-center justify-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                                    Join Meeting
+                                </a>
+                                <button onclick="copyToClipboard('<?php echo htmlspecialchars($callDetails['join_url'] ?? ''); ?>')" 
+                                        class="px-4 py-2.5 bg-[#080B10] border border-gray-700 text-gray-300 rounded-xl text-xs font-bold hover:border-gray-500 hover:text-white transition">
+                                    Copy Link
+                                </button>
+                            <?php endif; ?>
                         </div>
                     </div>
                 </div>
