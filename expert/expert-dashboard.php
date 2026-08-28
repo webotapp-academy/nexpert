@@ -6,12 +6,12 @@ $base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domai
 require_once dirname(__DIR__) . '/includes/session-config.php';
 
 // DB connection
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
+require_once dirname(__DIR__) . '/admin-panel/apis/connection/pdo.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
     // Save the current URL to redirect back after login
-    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
+    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'] ?? '';
     header('Location: ' . BASE_PATH . '/index.php?panel=expert&page=auth');
     exit;
 }
@@ -19,8 +19,8 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
 $page_title = "Expert Dashboard - Nexpert.ai";
 $panel_type = "expert";
 
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
+require_once dirname(__DIR__) . '/includes/header.php';
+require_once dirname(__DIR__) . '/includes/navigation.php';
 
 // Check onboarding steps completion
 $userId = $_SESSION['user_id'] ?? null;
@@ -386,12 +386,7 @@ if ($userId) {
                     WHEN COUNT(b.id) > 2 THEN 85
                     WHEN COUNT(b.id) > 1 THEN 70
                     ELSE 50
-                END as engagement_score,
-                (
-                    SELECT COUNT(*) 
-                    FROM profile_views pv 
-                    WHERE pv.expert_profile_id = (SELECT id FROM expert_profiles WHERE user_id = ?)
-                ) as profile_views
+                END as engagement_score
             FROM bookings b
             LEFT JOIN users u ON b.learner_id = u.id
             LEFT JOIN learner_profiles lp ON u.id = lp.user_id
@@ -400,7 +395,7 @@ if ($userId) {
             ORDER BY engagement_score DESC
             LIMIT 8
         ");
-        $stmt->execute([$userId, $userId]);
+        $stmt->execute([$userId]);
         $learnerActivityData = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $e) {
         error_log("Error fetching learner activity data: " . $e->getMessage());
@@ -496,9 +491,25 @@ function getScoreLabel($score) {
             
             <!-- Left Side: Profile & Score Jump -->
             <div class="flex items-center gap-5">
+                <?php
+                $dashPhotoSrc = '';
+                if (!empty($expertProfile['profile_photo'])) {
+                    $rawP = $expertProfile['profile_photo'];
+                    if (preg_match('/^(https?:\/\/|data:)/', $rawP)) {
+                        $dashPhotoSrc = $rawP;
+                    } elseif (strpos($rawP, BASE_PATH) === 0) {
+                        $dashPhotoSrc = $rawP;
+                    } else {
+                        $dashPhotoSrc = BASE_PATH . '/' . ltrim($rawP, '/');
+                    }
+                }
+                ?>
                 <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-indigo-500 bg-gray-900 shrink-0 shadow-lg shadow-purple-900/50">
-                    <?php if (!empty($expertProfile['profile_photo'])): ?>
-                        <img src="<?= htmlspecialchars($expertProfile['profile_photo']) ?>" class="w-full h-full object-cover">
+                    <?php if (!empty($dashPhotoSrc)): ?>
+                        <img src="<?= htmlspecialchars($dashPhotoSrc) ?>" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <div class="w-full h-full hidden items-center justify-center font-black text-xl text-purple-300 bg-indigo-950">
+                            <?= strtoupper(substr($expertProfile['full_name'] ?? 'E', 0, 1)) ?>
+                        </div>
                     <?php else: ?>
                         <div class="w-full h-full flex items-center justify-center font-black text-xl text-purple-300 bg-indigo-950">
                             <?= strtoupper(substr($expertProfile['full_name'] ?? 'E', 0, 1)) ?>
@@ -1492,4 +1503,4 @@ setTimeout(() => {
     }
 </script>
 
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>
+<?php require_once dirname(__DIR__) . '/includes/footer.php'; ?>

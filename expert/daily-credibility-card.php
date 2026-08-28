@@ -36,9 +36,17 @@ if (!$cardRow || empty($cardRow['card_data'])) {
 $cardData = json_decode($cardRow['card_data'] ?? '{}', true);
 
 // Extract card variables with clean fallbacks
-$expertName = !empty($cardRow['expert_name']) ? $cardRow['expert_name'] : ($cardData['profile']['name'] ?? 'Verified Expert');
-$expertTitle = !empty($cardRow['tagline']) ? $cardRow['tagline'] : ($cardData['profile']['title'] ?? 'AI / ML Architect');
-$profilePhoto = !empty($cardRow['profile_photo']) ? $cardRow['profile_photo'] : ($cardData['profile']['photo_url'] ?? '');
+$rawPhoto = !empty($cardRow['profile_photo']) ? $cardRow['profile_photo'] : ($cardData['profile']['photo_url'] ?? '');
+$profilePhoto = '';
+if (!empty($rawPhoto)) {
+    if (preg_match('/^(https?:\/\/|data:)/', $rawPhoto)) {
+        $profilePhoto = $rawPhoto;
+    } elseif (strpos($rawPhoto, BASE_PATH) === 0) {
+        $profilePhoto = $rawPhoto;
+    } else {
+        $profilePhoto = BASE_PATH . '/' . ltrim($rawPhoto, '/');
+    }
+}
 $bandName = $cardRow['band_name'] ?? ($cardData['profile']['band'] ?? 'Verified');
 
 $yesterdayPts = (int)($cardRow['score_before'] ?? ($cardData['metrics']['yesterday_points'] ?? 847));
@@ -168,7 +176,10 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                             <div class="relative shrink-0">
                                 <div class="w-20 h-20 rounded-full overflow-hidden avatar-glow bg-gray-900 border-2 border-[#070913]">
                                     <?php if (!empty($profilePhoto)): ?>
-                                        <img src="<?= htmlspecialchars($profilePhoto) ?>" alt="<?= htmlspecialchars($expertName) ?>" class="w-full h-full object-cover">
+                                        <img src="<?= htmlspecialchars($profilePhoto) ?>" alt="<?= htmlspecialchars($expertName) ?>" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="w-full h-full hidden items-center justify-center font-black text-2xl text-purple-300 bg-gradient-to-br from-indigo-950 to-purple-900">
+                                            <?= strtoupper(substr($expertName, 0, 1)) ?>
+                                        </div>
                                     <?php else: ?>
                                         <div class="w-full h-full flex items-center justify-center font-black text-2xl text-purple-300 bg-gradient-to-br from-indigo-950 to-purple-900">
                                             <?= strtoupper(substr($expertName, 0, 1)) ?>
