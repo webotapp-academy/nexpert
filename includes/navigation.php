@@ -191,43 +191,50 @@ if ($panel_type === 'home'):
         }
     }
 ?>
-    <nav class="bg-[#080B10] border-b border-gray-800 sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="flex justify-between items-center py-4">
-                <a href="<?php echo BASE_PATH; ?>/index.php" class="text-xl sm:text-2xl font-bold text-white hover:text-[#00D4AA] transition">Nexpert.ai</a>
+    <nav class="backdrop-blur-2xl bg-[#070913]/80 border-b border-white/[0.08] sticky top-0 z-50 transition-all duration-300 shadow-[0_10px_35px_-10px_rgba(0,0,0,0.8)]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-3.5">
+                <a href="<?php echo BASE_PATH; ?>/index.php" class="flex items-center space-x-3 group">
+                    <div class="w-10 h-10 bg-gradient-to-tr from-[#00D4AA] via-[#00e5b7] to-[#06b6d4] rounded-xl flex items-center justify-center font-black text-[#080B10] text-2xl transition group-hover:scale-105 shadow-[0_0_20px_rgba(0,212,170,0.35)]">N</div>
+                    <span class="text-xl sm:text-2xl font-black text-white tracking-tight">nexpert<span class="text-[#00D4AA]">.ai</span></span>
+                </a>
                 
                 <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center space-x-6">
+                <div class="hidden md:flex items-center space-x-1 lg:space-x-2">
                     <?php if ($isLoggedIn): ?>
-                        <a href="?panel=learner&page=dashboard" class="text-gray-300 hover:text-[#00D4AA] transition">Dashboard</a>
-                        <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-[#00D4AA] transition">Browse Experts</a>
-                        <a href="?panel=learner&page=my-programs" class="text-gray-300 hover:text-[#00D4AA] transition">My Programs</a>
-                        <a href="?panel=learner&page=profile" class="text-gray-300 hover:text-[#00D4AA] transition">Profile</a>
-                        <a href="?panel=learner&page=messages" class="relative text-gray-300 hover:text-[#00D4AA] transition">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <a href="?panel=learner&page=dashboard" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3.5 py-2 rounded-xl transition font-medium text-sm">Dashboard</a>
+                        <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3.5 py-2 rounded-xl transition font-medium text-sm">Browse Experts</a>
+                        <a href="?panel=learner&page=my-programs" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3.5 py-2 rounded-xl transition font-medium text-sm">My Programs</a>
+                        <a href="?panel=learner&page=profile" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3.5 py-2 rounded-xl transition font-medium text-sm">Profile</a>
+                        <a href="?panel=learner&page=messages" class="relative text-gray-300 hover:text-white hover:bg-white/[0.06] p-2 rounded-xl transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                             </svg>
-                            <span class="learner-unread-badge absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center hidden">0</span>
+                            <span class="learner-unread-badge absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold hidden">0</span>
                         </a>
-                        <div class="flex items-center space-x-2">
-                            <img src="<?php echo htmlspecialchars($learnerPhoto); ?>" alt="Profile" class="w-8 h-8 rounded-full object-cover border-2 border-gray-700">
-                            <span class="text-sm font-medium text-gray-300"><?php echo htmlspecialchars($learnerName); ?></span>
+
+                        <div class="h-5 w-px bg-white/10 mx-2"></div>
+
+                        <div class="flex items-center space-x-3 pl-1">
+                            <div class="flex items-center space-x-2">
+                                <img src="<?php echo htmlspecialchars($learnerPhoto); ?>" alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-[#00D4AA]/40">
+                                <span class="text-sm font-medium text-gray-200"><?php echo htmlspecialchars($learnerName); ?></span>
+                            </div>
+                            <button id="learner-logout-btn" title="Logout" class="text-gray-400 hover:text-red-400 p-2 rounded-lg hover:bg-red-950/30 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                </svg>
+                            </button>
                         </div>
-                        <button id="learner-logout-btn" class="text-gray-400 hover:text-red-500 transition flex items-center space-x-1">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                            </svg>
-                            <span class="text-sm font-medium">Logout</span>
-                        </button>
                     <?php else: ?>
-                        <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-[#00D4AA] transition">Browse Experts</a>
-                        <a href="?panel=learner&page=auth" class="bg-[#00D4AA] text-[#080B10] px-6 py-2 rounded-xl hover:bg-[#00bda0] font-bold transition">Learner Login</a>
-                        <a href="?panel=expert&page=apply" class="border border-gray-800 text-white px-6 py-2 rounded-xl hover:bg-[#131b2e] hover:border-gray-700 transition font-semibold">Apply as Expert</a>
+                        <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3.5 py-2 rounded-xl transition font-medium text-sm">Browse Experts</a>
+                        <a href="?panel=learner&page=auth" class="bg-gradient-to-r from-[#00D4AA] to-[#059669] hover:from-[#00bda0] hover:to-[#047857] text-[#080B10] font-black px-5 py-2 rounded-xl shadow-[0_0_20px_rgba(0,212,170,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all text-sm">Learner Login</a>
+                        <a href="?panel=expert&page=apply" class="bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-white/20 text-gray-200 hover:text-white px-4 py-2 rounded-xl text-sm font-semibold backdrop-blur-md transition-all">Apply as Expert</a>
                     <?php endif; ?>
                 </div>
 
                 <!-- Mobile Hamburger Button -->
-                <button id="learner-mobile-menu-btn" class="md:hidden p-2 text-gray-400 hover:text-white">
+                <button id="learner-mobile-menu-btn" class="md:hidden p-2 text-gray-400 hover:text-white rounded-xl bg-white/[0.04] border border-white/10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
@@ -235,29 +242,27 @@ if ($panel_type === 'home'):
             </div>
 
             <!-- Mobile Menu -->
-            <div id="learner-mobile-menu" class="hidden md:hidden pb-4">
-                <div class="flex flex-col space-y-3">
+            <div id="learner-mobile-menu" class="hidden md:hidden pb-4 pt-2">
+                <div class="flex flex-col space-y-2 bg-[#0c1222]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-2xl">
                     <?php if ($isLoggedIn): ?>
-                        <div class="flex items-center space-x-3 px-2 py-3 border-b border-gray-800">
-                            <img src="<?php echo htmlspecialchars($learnerPhoto); ?>" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-gray-700">
+                        <div class="flex items-center space-x-3 px-2 py-2.5 border-b border-white/10">
+                            <img src="<?php echo htmlspecialchars($learnerPhoto); ?>" alt="Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-[#00D4AA]/40">
                             <div>
-                                <p class="font-semibold text-white"><?php echo htmlspecialchars($learnerName); ?></p>
+                                <p class="font-bold text-white"><?php echo htmlspecialchars($learnerName); ?></p>
                                 <p class="text-xs text-gray-400">Learner</p>
                             </div>
                         </div>
-                        <a href="?panel=learner&page=dashboard" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Dashboard</a>
-                        <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Browse Experts</a>
-                        <a href="?panel=learner&page=my-programs" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">My Programs</a>
-                        <a href="?panel=learner&page=profile" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Profile</a>
-                        <div class="flex items-center justify-between px-2 py-2">
-                            <span class="text-gray-300">Notifications</span>
-                            <span class="bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
-                        </div>
-                        <button id="learner-logout-btn-mobile" class="text-left text-gray-400 hover:text-red-500 transition px-2 py-2">Logout</button>
+                        <a href="?panel=learner&page=dashboard" class="text-gray-200 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Dashboard</a>
+                        <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Browse Experts</a>
+                        <a href="?panel=learner&page=my-programs" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">My Programs</a>
+                        <a href="?panel=learner&page=profile" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Profile</a>
+                        <button id="learner-logout-btn-mobile" class="text-left text-red-400 hover:text-red-300 px-3 py-2 rounded-xl hover:bg-red-950/30 transition">Logout</button>
                     <?php else: ?>
-                        <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Browse Experts</a>
-                        <a href="?panel=learner&page=auth" class="bg-[#00D4AA] text-[#080B10] px-6 py-3 rounded-lg hover:bg-[#00bda0] transition text-center font-bold">Learner Login</a>
-                        <a href="?panel=expert&page=apply" class="border border-gray-800 text-white px-6 py-3 rounded-lg hover:bg-[#131b2e] hover:border-gray-700 transition text-center font-semibold">Apply as Expert</a>
+                        <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Browse Experts</a>
+                        <div class="pt-2 flex flex-col gap-2">
+                            <a href="?panel=learner&page=auth" class="bg-gradient-to-r from-[#00D4AA] to-[#059669] text-[#080B10] font-black px-4 py-2.5 rounded-xl shadow-lg transition text-center text-sm">Learner Login</a>
+                            <a href="?panel=expert&page=apply" class="bg-white/[0.05] border border-white/10 text-white px-4 py-2.5 rounded-xl hover:bg-white/[0.1] transition text-center font-semibold text-sm">Apply as Expert</a>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
@@ -289,51 +294,53 @@ if ($panel_type === 'home'):
         $expertName = $_SESSION['full_name'] ?? 'Expert';
     }
 ?>
-    <nav class="bg-[#080B10]/90 backdrop-blur-md border-b border-gray-800/80 sticky top-0 z-50 transition-all duration-200">
-        <div class="max-w-7xl mx-auto px-4">
+    <nav class="backdrop-blur-2xl bg-[#070913]/80 border-b border-white/[0.08] sticky top-0 z-50 transition-all duration-300 shadow-[0_10px_35px_-10px_rgba(0,0,0,0.8)]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center py-3.5">
                 <a href="<?php echo BASE_PATH; ?>/index.php" class="flex items-center space-x-3 group">
-                    <div class="w-9 h-9 bg-[#00D4AA] rounded-xl flex items-center justify-center font-extrabold text-[#080B10] text-xl transition-all duration-300 group-hover:scale-105 shadow-[0_0_15px_rgba(0,212,170,0.3)]">N</div>
-                    <span class="text-xl font-bold text-white tracking-tight group-hover:text-[#00D4AA] transition-colors">nexpert.ai</span>
+                    <div class="w-10 h-10 bg-gradient-to-tr from-[#00D4AA] via-[#00e5b7] to-[#06b6d4] rounded-xl flex items-center justify-center font-black text-[#080B10] text-2xl transition group-hover:scale-105 shadow-[0_0_20px_rgba(0,212,170,0.35)]">N</div>
+                    <span class="text-xl sm:text-2xl font-black text-white tracking-tight">nexpert<span class="text-[#00D4AA]">.ai</span></span>
                 </a>
                 
                 <!-- Desktop Menu -->
-                <div class="hidden md:flex items-center space-x-6 text-sm font-medium">
+                <div class="hidden md:flex items-center space-x-1 lg:space-x-2">
                     <?php if ($isLoggedIn): ?>
-                        <a href="?panel=expert&page=dashboard" class="text-gray-300 hover:text-[#00D4AA] transition-colors">Dashboard</a>
-                        <a href="?panel=expert&page=daily-credibility-card" class="text-[#00D4AA] font-semibold hover:text-[#00bfa0] flex items-center gap-1.5 px-3 py-1 bg-[#00D4AA]/10 rounded-lg border border-[#00D4AA]/25 transition">
-                            <svg class="w-3.5 h-3.5 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg><span>Credibility Card</span>
+                        <a href="?panel=expert&page=dashboard" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Dashboard</a>
+                        <a href="?panel=expert&page=daily-credibility-card" class="text-[#00D4AA] font-bold hover:text-white bg-[#00D4AA]/10 hover:bg-[#00D4AA]/20 border border-[#00D4AA]/30 px-3 py-2 rounded-xl transition flex items-center gap-1.5 text-sm shadow-[0_0_15px_rgba(0,212,170,0.15)]">
+                            <span class="animate-pulse">✨</span><span>Credibility Card</span>
                         </a>
-                        <a href="?panel=expert&page=my-programs" class="text-gray-300 hover:text-[#00D4AA] transition-colors">Programs</a>
-                        <a href="?panel=expert&page=my-webinars" class="text-gray-300 hover:text-[#00D4AA] transition-colors">Webinars</a>
-                        <a href="?panel=expert&page=earnings" class="text-gray-300 hover:text-[#00D4AA] transition-colors">Earnings</a>
-                        <a href="?panel=expert&page=booking-management" class="text-gray-300 hover:text-[#00D4AA] transition-colors">Bookings</a>
-                        <a href="?panel=expert&page=learner-management" class="text-gray-300 hover:text-[#00D4AA] transition-colors">Learners</a>
-                        <a href="?panel=expert&page=messages" class="relative text-gray-300 hover:text-[#00D4AA] transition-colors p-1">
+                        <a href="?panel=expert&page=my-programs" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Programs</a>
+                        <a href="?panel=expert&page=my-webinars" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Webinars</a>
+                        <a href="?panel=expert&page=earnings" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Earnings</a>
+                        <a href="?panel=expert&page=booking-management" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Bookings</a>
+                        <a href="?panel=expert&page=learner-management" class="text-gray-300 hover:text-white hover:bg-white/[0.06] px-3 py-2 rounded-xl transition font-medium text-sm">Learners</a>
+                        <a href="?panel=expert&page=messages" class="relative text-gray-300 hover:text-white hover:bg-white/[0.06] p-2 rounded-xl transition">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                             </svg>
                             <span class="expert-unread-badge absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold hidden">0</span>
                         </a>
-                        <div class="flex items-center space-x-2 pl-2 border-l border-gray-800">
-                            <a href="?panel=expert&page=settings" class="block">
-                                <img id="expert-nav-photo" src="<?php echo htmlspecialchars($expertPhoto); ?>" alt="Profile" class="w-8 h-8 rounded-full object-cover cursor-pointer hover:ring-2 hover:ring-[#00D4AA] transition border-2 border-gray-700">
+
+                        <div class="h-5 w-px bg-white/10 mx-2"></div>
+
+                        <div class="flex items-center space-x-3 pl-1">
+                            <a href="?panel=expert&page=settings" class="flex items-center space-x-2 group/prof">
+                                <img id="expert-nav-photo" src="<?php echo htmlspecialchars($expertPhoto); ?>" alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-[#00D4AA]/40 group-hover/prof:ring-[#00D4AA] transition">
+                                <span class="text-sm font-medium text-gray-200 group-hover/prof:text-white"><?php echo htmlspecialchars($expertName); ?></span>
                             </a>
-                            <span class="text-sm font-medium text-gray-200"><?php echo htmlspecialchars($expertName); ?></span>
+                            <button id="expert-logout-btn" title="Logout" class="text-gray-400 hover:text-red-400 p-2 rounded-lg hover:bg-red-950/30 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                </svg>
+                            </button>
                         </div>
-                        <button id="expert-logout-btn" class="text-gray-400 hover:text-red-400 transition-colors flex items-center space-x-1 pl-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                            </svg>
-                            <span class="text-xs font-semibold">Logout</span>
-                        </button>
                     <?php else: ?>
-                        <a href="?panel=expert&page=auth" class="bg-[#00D4AA] text-[#080B10] px-5 py-2 rounded-xl font-bold hover:bg-[#00bda0] transition">Expert Login</a>
+                        <a href="?panel=expert&page=auth" class="bg-gradient-to-r from-[#00D4AA] to-[#059669] hover:from-[#00bda0] hover:to-[#047857] text-[#080B10] font-black px-5 py-2 rounded-xl shadow-[0_0_20px_rgba(0,212,170,0.3)] hover:scale-[1.02] active:scale-[0.98] transition-all text-sm">Expert Login</a>
                     <?php endif; ?>
                 </div>
 
                 <!-- Mobile Hamburger Button -->
-                <button id="expert-mobile-menu-btn" class="md:hidden p-2 text-gray-400 hover:text-white">
+                <button id="expert-mobile-menu-btn" class="md:hidden p-2 text-gray-400 hover:text-white rounded-xl bg-white/[0.04] border border-white/10">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                     </svg>
@@ -341,25 +348,29 @@ if ($panel_type === 'home'):
             </div>
 
             <!-- Mobile Menu -->
-            <div id="expert-mobile-menu" class="hidden md:hidden pb-4 pt-2 border-t border-gray-800">
-                <div class="flex flex-col space-y-2.5">
+            <div id="expert-mobile-menu" class="hidden md:hidden pb-4 pt-2">
+                <div class="flex flex-col space-y-2 bg-[#0c1222]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-2xl">
                     <?php if ($isLoggedIn): ?>
-                        <div class="flex items-center space-x-3 px-2 py-3 bg-[#0d131f] rounded-xl border border-gray-800">
-                            <img src="<?php echo htmlspecialchars($expertPhoto); ?>" alt="Profile" class="w-10 h-10 rounded-full object-cover border-2 border-gray-700">
+                        <div class="flex items-center space-x-3 px-2 py-2.5 border-b border-white/10">
+                            <img src="<?php echo htmlspecialchars($expertPhoto); ?>" alt="Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-[#00D4AA]/40">
                             <div>
-                                <p class="font-semibold text-white"><?php echo htmlspecialchars($expertName); ?></p>
+                                <p class="font-bold text-white"><?php echo htmlspecialchars($expertName); ?></p>
                                 <p class="text-xs text-[#00D4AA]">Verified Expert</p>
                             </div>
                         </div>
-                        <a href="?panel=expert&page=dashboard" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Dashboard</a>
-                        <a href="?panel=expert&page=daily-credibility-card" class="text-[#00D4AA] font-bold transition px-2 py-2 flex items-center gap-2"><svg class="w-4 h-4 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>Credibility Card</a>
-                        <a href="?panel=expert&page=my-programs" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">My Programs</a>
-                        <a href="?panel=expert&page=my-webinars" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">My Webinars</a>
-                        <a href="?panel=expert&page=earnings" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Earnings</a>
-                        <a href="?panel=expert&page=booking-management" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Bookings</a>
-                        <a href="?panel=expert&page=learner-management" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Learners</a>
-                        <a href="?panel=expert&page=settings" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Settings</a>
-                        <button id="expert-logout-btn-mobile" class="text-left text-red-400 hover:text-red-300 transition px-2 py-2 font-medium">Logout</button>
+                        <a href="?panel=expert&page=dashboard" class="text-gray-200 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Dashboard</a>
+                        <a href="?panel=expert&page=daily-credibility-card" class="text-[#00D4AA] font-bold px-3 py-2 rounded-xl bg-[#00D4AA]/10 border border-[#00D4AA]/25 transition flex items-center gap-2">✨ Credibility Card</a>
+                        <a href="?panel=expert&page=my-programs" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">My Programs</a>
+                        <a href="?panel=expert&page=my-webinars" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">My Webinars</a>
+                        <a href="?panel=expert&page=earnings" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Earnings</a>
+                        <a href="?panel=expert&page=booking-management" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Bookings</a>
+                        <a href="?panel=expert&page=learner-management" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Learners</a>
+                        <a href="?panel=expert&page=settings" class="text-gray-300 hover:text-[#00D4AA] px-3 py-2 rounded-xl hover:bg-white/[0.04] transition">Settings</a>
+                        <button id="expert-logout-btn-mobile" class="text-left text-red-400 hover:text-red-300 px-3 py-2 rounded-xl hover:bg-red-950/30 transition">Logout</button>
+                    <?php else: ?>
+                        <div class="pt-1 flex flex-col gap-2">
+                            <a href="?panel=expert&page=auth" class="bg-gradient-to-r from-[#00D4AA] to-[#059669] text-[#080B10] font-black px-4 py-2.5 rounded-xl shadow-lg transition text-center text-sm">Expert Login</a>
+                        </div>
                     <?php endif; ?>
                 </div>
             </div>
