@@ -55,22 +55,23 @@ if ($userId) {
     }
     
     // Check if availability is set
-    if ($expertProfileId) {
-        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM expert_availability WHERE expert_id = ?");
-        $stmt->execute([$expertProfileId]);
-        $availCount = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($availCount && $availCount['count'] > 0) {
-            $availabilitySet = true;
-        }
-        
-        // Check for first booking - use userId for bookings.expert_id
-        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM bookings WHERE expert_id = ?");
-        $stmt->execute([$userId]);
-        $bookingCount = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($bookingCount && $bookingCount['count'] > 0) {
-            $firstBooking = true;
-        }
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM expert_availability WHERE (expert_id = ? OR expert_id = ?) AND is_active = 1");
+    $stmt->execute([$userId, $expertProfileId]);
+    $availCount = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($availCount && $availCount['count'] > 0) {
+        $availabilitySet = true;
     }
+    
+    // Check for first booking - use userId for bookings.expert_id
+    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM bookings WHERE expert_id = ?");
+    $stmt->execute([$userId]);
+    $bookingCount = $stmt->fetch(PDO::FETCH_ASSOC);
+    if ($bookingCount && $bookingCount['count'] > 0) {
+        $firstBooking = true;
+    }
+
+    // Hide onboarding checklist once all 4 items are completed
+    $allOnboardingComplete = ($profileComplete && $kycComplete && $availabilitySet && $firstBooking);
 }
 
 // Get total completed sessions count for achievements
@@ -478,7 +479,8 @@ function getScoreLabel($score) {
         </div>
     </div>
 
-    <!-- Getting Started Guide (TOP) -->
+    <!-- Getting Started Guide (TOP) - Automatically hidden once all 4 onboarding steps are complete -->
+    <?php if (empty($allOnboardingComplete)): ?>
     <div class="bg-[#0b0f19] border border-white/[0.08] rounded-2xl p-5 sm:p-7 shadow-[0_10px_35px_-10px_rgba(0,0,0,0.8)]">
         <h2 class="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-5 flex items-center gap-2">
             <span>🚀</span>
@@ -546,6 +548,7 @@ function getScoreLabel($score) {
             </div>
         </div>
     </div>
+    <?php endif; ?>
 
     <!-- DAILY CREDIBILITY UPDATE HERO CARD -->
     <?php if ($latestCard && !empty($latestCard['card_data'])): 
