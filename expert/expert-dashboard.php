@@ -596,7 +596,7 @@ function getScoreLabel($score) {
                         <span class="text-3xl sm:text-4xl font-black text-[#10b981]"><?= $cAfter ?></span>
                         <span class="text-xs font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/40 px-2 py-0.5 rounded-full uppercase">+<?= $cGain ?> Points</span>
                     </div>
-                    <p class="text-xs text-gray-400 mt-1">Top <?= $cData['ranking']['percentile'] ?? 8 ?>% ranking · Verified status with 90% confidence</p>
+                    <p class="text-xs text-gray-400 mt-1">Top <?= $cData['ranking']['percentile'] ?? 8 ?>% ranking · <?= $cData['profile']['band'] ?? 'Verified' ?> status with <?= $cData['profile']['confidence'] ?? 90 ?>% confidence</p>
                 </div>
             </div>
 

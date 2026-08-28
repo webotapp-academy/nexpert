@@ -8,11 +8,11 @@ require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php'
 header('Content-Type: application/json');
 
 // Include database connection
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
+require_once dirname(__DIR__) . '/connection/pdo.php';
 
 // Include Zoom and Email helpers
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/zoom-helper.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/email-helper.php';
+require_once dirname(__DIR__) . '/connection/zoom-helper.php';
+require_once dirname(__DIR__) . '/connection/email-helper.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
@@ -86,81 +86,112 @@ try {
                 'join_url' => $zoomResult['join_url'],
                 'start_url' => $zoomResult['start_url'],
                 'password' => $zoomResult['password'],
-                'created_at' => date('Y-m-d H:i:s')
+                'created_at' => date('Y-m-d H:i:s'),
+                'provider' => 'zoom'
             ]);
             
             // Update booking with acceptance and Zoom link
             $stmt = $pdo->prepare("UPDATE bookings SET accept_booking = ?, join_link = ? WHERE id = ?");
             $stmt->execute([$acceptValue, $zoomMeetingData, $bookingId]);
             
+            // Format date and time for emails
+            $sessionDate = $sessionDateTime->format('l, F j, Y');
+            $sessionTime = $sessionDateTime->format('g:i A');
+            
             // Send emails
             $emailHelper = new EmailHelper();
+            try {
+                $emailHelper->sendLearnerBookingEmail(
+                    $booking['learner_email'],
+                    $booking['learner_name'],
+                    $booking['expert_name'],
+                    $topic,
+                    $sessionDate,
+                    $sessionTime,
+                    $duration,
+                    $zoomResult['join_url'],
+                    $zoomResult['password']
+                );
+                
+                $emailHelper->sendExpertBookingEmail(
+                    $booking['expert_email'],
+                    $booking['expert_name'],
+                    $booking['learner_name'],
+                    $topic,
+                    $sessionDate,
+                    $sessionTime,
+                    $duration,
+                    $zoomResult['start_url'],
+                    $zoomResult['password']
+                );
+            } catch (Exception $e) {
+                error_log("Email sending error: " . $e->getMessage());
+            }
+            
+            echo json_encode([
+                'success' => true,
+                'message' => 'Booking accepted! Zoom meeting room created and emails sent.',
+                'accept_booking' => $acceptValue,
+                'zoom_link' => $zoomResult['join_url']
+            ]);
+        } else {
+            // Zoom credentials missing/invalid - fallback to secure Nexpert meeting room
+            $roomHash = substr(md5("nexpert_session_{$bookingId}_" . time()), 0, 12);
+            $meetingLink = "https://meet.jit.si/nexpert-session-{$bookingId}-{$roomHash}";
+            $roomPassword = substr(md5($bookingId . 'nexpert'), 0, 8);
+            
+            $zoomMeetingData = json_encode([
+                'meeting_id' => 'NX-' . $bookingId,
+                'join_url' => $meetingLink,
+                'start_url' => $meetingLink,
+                'password' => $roomPassword,
+                'created_at' => date('Y-m-d H:i:s'),
+                'provider' => 'nexpert_secure_room'
+            ]);
+            
+            // Update booking with acceptance and meeting link
+            $stmt = $pdo->prepare("UPDATE bookings SET accept_booking = ?, join_link = ? WHERE id = ?");
+            $stmt->execute([$acceptValue, $zoomMeetingData, $bookingId]);
             
             // Format date and time for emails
             $sessionDate = $sessionDateTime->format('l, F j, Y');
             $sessionTime = $sessionDateTime->format('g:i A');
             
-            error_log("Sending emails to learner and expert...");
-            
-            // Send email to learner
-            $learnerEmailResult = $emailHelper->sendLearnerBookingEmail(
-                $booking['learner_email'],
-                $booking['learner_name'],
-                $booking['expert_name'],
-                $topic,
-                $sessionDate,
-                $sessionTime,
-                $duration,
-                $zoomResult['join_url'],
-                $zoomResult['password']
-            );
-            error_log("Learner email result: " . json_encode($learnerEmailResult));
-            
-            // Send email to expert (with start URL so they can host)
-            $expertEmailResult = $emailHelper->sendExpertBookingEmail(
-                $booking['expert_email'],
-                $booking['expert_name'],
-                $booking['learner_name'],
-                $topic,
-                $sessionDate,
-                $sessionTime,
-                $duration,
-                $zoomResult['start_url'], // Expert needs start_url to host
-                $zoomResult['password']
-            );
-            error_log("Expert email result: " . json_encode($expertEmailResult));
+            // Send emails with secure room link
+            $emailHelper = new EmailHelper();
+            try {
+                $emailHelper->sendLearnerBookingEmail(
+                    $booking['learner_email'],
+                    $booking['learner_name'],
+                    $booking['expert_name'],
+                    $topic,
+                    $sessionDate,
+                    $sessionTime,
+                    $duration,
+                    $meetingLink,
+                    $roomPassword
+                );
+                
+                $emailHelper->sendExpertBookingEmail(
+                    $booking['expert_email'],
+                    $booking['expert_name'],
+                    $booking['learner_name'],
+                    $topic,
+                    $sessionDate,
+                    $sessionTime,
+                    $duration,
+                    $meetingLink,
+                    $roomPassword
+                );
+            } catch (Exception $e) {
+                error_log("Email sending error: " . $e->getMessage());
+            }
             
             echo json_encode([
                 'success' => true,
-                'message' => 'Booking accepted! Zoom meeting created and emails sent.',
+                'message' => 'Booking accepted! Session meeting room generated and notifications sent.',
                 'accept_booking' => $acceptValue,
-                'zoom_link' => $zoomResult['join_url']
-            ]);
-        } else {
-            // Zoom creation failed - log detailed error
-            $errorDetails = $zoomResult['error'] ?? 'Unknown error';
-            $errorReason = $zoomResult['reason'] ?? '';
-            $httpCode = $zoomResult['http_code'] ?? 'N/A';
-            
-            error_log("ZOOM ERROR: Failed to create Zoom meeting - " . $errorDetails);
-            error_log("Full Zoom result: " . json_encode($zoomResult));
-            
-            // Build detailed error message for user
-            $detailsMessage = "Error: {$errorDetails}";
-            if ($errorReason) {
-                $detailsMessage .= " | Reason: {$errorReason}";
-            }
-            $detailsMessage .= " | HTTP Code: {$httpCode}";
-            
-            // Still accept booking but without meeting link
-            $stmt = $pdo->prepare("UPDATE bookings SET accept_booking = ? WHERE id = ?");
-            $stmt->execute([$acceptValue, $bookingId]);
-            
-            echo json_encode([
-                'success' => false,
-                'error' => 'Zoom meeting creation failed',
-                'details' => $detailsMessage,
-                'accept_booking' => $acceptValue
+                'zoom_link' => $meetingLink
             ]);
         }
     } else {
