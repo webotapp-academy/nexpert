@@ -1,19 +1,17 @@
 <?php
-session_start();
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php';
 require_once __DIR__ . '/../../apis/connection/pdo.php';
 require_once __DIR__ . '/../../../includes/config.php';
 require_once __DIR__ . '/../../apis/connection/trust-helper.php';
 
 header('Content-Type: application/json');
 
-if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'expert') {
-    // Temporary: Set test session for debugging
-    $_SESSION['user_id'] = 20; // Test expert ID
-    $_SESSION['role'] = 'expert';
-    error_log("Session not found in expert API, using test session");
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
+    echo json_encode(['success' => false, 'error' => 'Unauthorized access. Please log in as an expert.']);
+    exit;
 }
 
-$expertId = $_SESSION['user_id'];
+$expertId = (int)$_SESSION['user_id'];
 $action = $_GET['action'] ?? $_POST['action'] ?? '';
 
 // Debug logging
@@ -44,9 +42,9 @@ try {
                 LEFT JOIN learner_profiles lp ON l.id = lp.user_id
                 JOIN users e ON b.expert_id = e.id
                 LEFT JOIN expert_profiles ep ON e.id = ep.user_id
-                WHERE b.id = ? AND b.expert_id = ?
+                WHERE b.id = ? AND (b.expert_id = ? OR b.expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?))
             ");
-            $stmt->execute([$bookingId, $expertId]);
+            $stmt->execute([$bookingId, $expertId, $expertId]);
             $booking = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$booking) {
@@ -151,18 +149,40 @@ try {
             ]);
             break;
 
+        case 'get_tasks':
+            $bookingId = $_GET['booking_id'] ?? $_POST['booking_id'] ?? null;
+            if (!$bookingId) {
+                throw new Exception('Booking ID is required');
+            }
+
+            $stmt = $pdo->prepare("SELECT session_tasks FROM bookings WHERE id = ? AND (expert_id = ? OR expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?))");
+            $stmt->execute([$bookingId, $expertId, $expertId]);
+            $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$booking) {
+                throw new Exception('Booking not found or unauthorized');
+            }
+
+            $tasks = !empty($booking['session_tasks']) ? json_decode($booking['session_tasks'], true) : [];
+            if (!is_array($tasks)) $tasks = [];
+
+            echo json_encode(['success' => true, 'tasks' => $tasks]);
+            break;
+
         case 'add_task':
+        case 'add_tasks':
             $bookingId = $_POST['booking_id'] ?? null;
             $title = $_POST['title'] ?? '';
+            $titles = $_POST['titles'] ?? null;
             $description = $_POST['description'] ?? '';
 
-            if (!$bookingId || !$title) {
-                throw new Exception('Booking ID and task title are required');
+            if (!$bookingId) {
+                throw new Exception('Booking ID is required');
             }
 
             // Verify booking belongs to expert
-            $stmt = $pdo->prepare("SELECT session_tasks FROM bookings WHERE id = ? AND expert_id = ?");
-            $stmt->execute([$bookingId, $expertId]);
+            $stmt = $pdo->prepare("SELECT session_tasks FROM bookings WHERE id = ? AND (expert_id = ? OR expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?))");
+            $stmt->execute([$bookingId, $expertId, $expertId]);
             $booking = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$booking) {
@@ -174,14 +194,39 @@ try {
             if (!is_array($tasks))
                 $tasks = [];
 
-            // Add new task
-            $tasks[] = [
-                'id' => uniqid(),
-                'title' => $title,
-                'description' => $description,
-                'completed' => false,
-                'created_at' => date('Y-m-d H:i:s')
-            ];
+            // Add single or multiple tasks
+            if (!empty($titles)) {
+                if (is_string($titles)) {
+                    $parsed = json_decode($titles, true);
+                    if (is_array($parsed)) {
+                        $titles = $parsed;
+                    } else {
+                        $titles = explode("\n", $titles);
+                    }
+                }
+                foreach ($titles as $t) {
+                    $t = trim($t);
+                    if (!empty($t)) {
+                        $tasks[] = [
+                            'id' => uniqid(),
+                            'title' => $t,
+                            'description' => '',
+                            'completed' => false,
+                            'created_at' => date('Y-m-d H:i:s')
+                        ];
+                    }
+                }
+            } else if (!empty($title)) {
+                $tasks[] = [
+                    'id' => uniqid(),
+                    'title' => trim($title),
+                    'description' => $description,
+                    'completed' => false,
+                    'created_at' => date('Y-m-d H:i:s')
+                ];
+            } else {
+                throw new Exception('Task title(s) are required');
+            }
 
             // Update database
             $stmt = $pdo->prepare("UPDATE bookings SET session_tasks = ? WHERE id = ?");
@@ -199,8 +244,8 @@ try {
             }
 
             // Get booking tasks
-            $stmt = $pdo->prepare("SELECT session_tasks FROM bookings WHERE id = ? AND expert_id = ?");
-            $stmt->execute([$bookingId, $expertId]);
+            $stmt = $pdo->prepare("SELECT session_tasks FROM bookings WHERE id = ? AND (expert_id = ? OR expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?))");
+            $stmt->execute([$bookingId, $expertId, $expertId]);
             $booking = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$booking) {
@@ -233,8 +278,8 @@ try {
             }
 
             // Get booking tasks
-            $stmt = $pdo->prepare("SELECT session_tasks FROM bookings WHERE id = ? AND expert_id = ?");
-            $stmt->execute([$bookingId, $expertId]);
+            $stmt = $pdo->prepare("SELECT session_tasks FROM bookings WHERE id = ? AND (expert_id = ? OR expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?))");
+            $stmt->execute([$bookingId, $expertId, $expertId]);
             $booking = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$booking) {
@@ -253,6 +298,26 @@ try {
             $stmt->execute([json_encode($tasks), $bookingId]);
 
             echo json_encode(['success' => true, 'tasks' => $tasks]);
+            break;
+
+        case 'get_resources':
+            $bookingId = $_GET['booking_id'] ?? $_POST['booking_id'] ?? null;
+            if (!$bookingId) {
+                throw new Exception('Booking ID is required');
+            }
+
+            $stmt = $pdo->prepare("SELECT session_resources FROM bookings WHERE id = ? AND (expert_id = ? OR expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?))");
+            $stmt->execute([$bookingId, $expertId, $expertId]);
+            $booking = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$booking) {
+                throw new Exception('Booking not found or unauthorized');
+            }
+
+            $resources = !empty($booking['session_resources']) ? json_decode($booking['session_resources'], true) : [];
+            if (!is_array($resources)) $resources = [];
+
+            echo json_encode(['success' => true, 'resources' => $resources]);
             break;
 
         case 'add_resource':
@@ -274,8 +339,8 @@ try {
 
             // Verify booking belongs to expert
             error_log("Verifying booking for expert_id: $expertId");
-            $stmt = $pdo->prepare("SELECT session_resources FROM bookings WHERE id = ? AND expert_id = ?");
-            $stmt->execute([$bookingId, $expertId]);
+            $stmt = $pdo->prepare("SELECT session_resources FROM bookings WHERE id = ? AND (expert_id = ? OR expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?))");
+            $stmt->execute([$bookingId, $expertId, $expertId]);
             $booking = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$booking) {
@@ -373,8 +438,8 @@ try {
             }
 
             // Get booking resources
-            $stmt = $pdo->prepare("SELECT session_resources FROM bookings WHERE id = ? AND expert_id = ?");
-            $stmt->execute([$bookingId, $expertId]);
+            $stmt = $pdo->prepare("SELECT session_resources FROM bookings WHERE id = ? AND (expert_id = ? OR expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?))");
+            $stmt->execute([$bookingId, $expertId, $expertId]);
             $booking = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$booking) {
@@ -422,8 +487,8 @@ try {
             }
 
             // Verify booking belongs to expert
-            $stmt = $pdo->prepare("SELECT session_resources FROM bookings WHERE id = ? AND expert_id = ?");
-            $stmt->execute([$bookingId, $expertId]);
+            $stmt = $pdo->prepare("SELECT session_resources FROM bookings WHERE id = ? AND (expert_id = ? OR expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?))");
+            $stmt->execute([$bookingId, $expertId, $expertId]);
             $booking = $stmt->fetch(PDO::FETCH_ASSOC);
 
             if (!$booking) {

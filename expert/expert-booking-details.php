@@ -1290,36 +1290,38 @@ async function saveTasks() {
     saveBtn.textContent = 'Adding...';
     
     try {
-        // Add tasks one by one
-        for (const taskTitle of tasks) {
-            await fetch(BASE_PATH + '/admin-panel/apis/expert/session-management.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({
-                    action: 'add_task',
-                    booking_id: bookingId,
-                    title: taskTitle,
-                    description: ''
-                })
-            });
-        }
-        
-        // Refresh tasks after all are added
-        const response = await fetch(BASE_PATH + '/admin-panel/apis/expert/session-management.php?' + new URLSearchParams({
-            action: 'get_tasks',
-            booking_id: bookingId
-        }));
+        const response = await fetch(BASE_PATH + '/admin-panel/apis/expert/session-management.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                action: 'add_tasks',
+                booking_id: bookingId,
+                titles: JSON.stringify(tasks)
+            })
+        });
         
         const data = await response.json();
         if (data.success) {
             refreshTasks(data.tasks);
+            document.getElementById('task-titles').value = '';
+            document.getElementById('task-count-preview').textContent = '';
             closeTaskModal();
             Swal.fire({
                 icon: 'success',
                 title: 'Tasks Added',
-                text: 'Action items assigned successfully!',
+                text: `${tasks.length} action item(s) assigned successfully!`,
                 timer: 1800,
                 showConfirmButton: false,
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed to Add Tasks',
+                text: data.error || 'An error occurred while saving tasks.',
+                confirmButtonColor: '#00D4AA',
                 background: '#0D131F',
                 color: '#fff',
                 customClass: { popup: 'border border-gray-800 rounded-2xl' }
@@ -1330,7 +1332,7 @@ async function saveTasks() {
         Swal.fire({
             icon: 'error',
             title: 'Failed to Add Tasks',
-            text: 'An error occurred while adding tasks.',
+            text: 'An error occurred while adding tasks. Please try again.',
             confirmButtonColor: '#00D4AA',
             background: '#0D131F',
             color: '#fff',
