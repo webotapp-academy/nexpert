@@ -60,11 +60,12 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                         <p id="expert-title" class="text-gray-400 text-sm mb-2">
                             <span class="inline-block animate-pulse bg-gray-800 rounded px-2 py-0.5 text-gray-600">Loading...</span>
                         </p>
-                        <div class="flex items-center gap-2">
-                            <div id="expert-rating-stars" class="flex text-yellow-400 text-lg">
-                                ☆☆☆☆☆
+                        <div id="expert-trust-badge-container" class="mt-2">
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#00D4AA]/10 border border-[#00D4AA]/30 shadow-sm">
+                                <span class="w-2 h-2 rounded-full bg-[#00D4AA] animate-pulse"></span>
+                                <span id="expert-trust-band" class="text-xs font-bold text-[#00D4AA] uppercase tracking-wider">Verified</span>
+                                <span id="expert-trust-score" class="text-xs font-semibold text-gray-300">| 85% Trust</span>
                             </div>
-                            <span id="expert-rating-value" class="text-gray-300 text-sm font-semibold">(0.0)</span>
                         </div>
                     </div>
                 </div>
@@ -259,22 +260,49 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
             }
         }
 
+        function formatTime12h(timeStr) {
+            if (!timeStr) return '';
+            const parts = timeStr.split(':');
+            let hours = parseInt(parts[0], 10);
+            const minutes = parts[1] || '00';
+            const ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12;
+            hours = hours ? hours : 12;
+            return `${hours}:${minutes} ${ampm}`;
+        }
+
         function renderExpertInfo() {
             document.getElementById('expert-name').textContent = expertData.name || 'Expert';
             document.getElementById('expert-title').textContent = expertData.professional_title || 'Professional';
             
-            const rating = Math.max(0, Math.min(5, Math.floor(Number(expertData.avg_rating) || 0)));
-            document.getElementById('expert-rating-stars').textContent = '★'.repeat(rating) + '☆'.repeat(5 - rating);
-            document.getElementById('expert-rating-value').textContent = `(${(Number(expertData.avg_rating) || 0).toFixed(1)})`;
+            const score = Math.round(Number(expertData.overall_score || expertData.trust_score || 85));
+            const band = expertData.band_name || (score >= 90 ? 'Sovereign' : score >= 75 ? 'Established' : score >= 60 ? 'Verified' : 'Emerging');
+            
+            const bandEl = document.getElementById('expert-trust-band');
+            const scoreEl = document.getElementById('expert-trust-score');
+            if (bandEl) bandEl.textContent = band;
+            if (scoreEl) scoreEl.textContent = `| ${score}% Trust`;
             
             const hourlyRate = Number(expertData.hourly_rate) || 0;
             document.getElementById('session-price').textContent = `₹${hourlyRate}`;
             
-            // Price increase tracking happens in background (no UI warning shown to user)
-            // Dynamic pricing calculations continue server-side
-            
+            const initials = window.getInitials ? window.getInitials(expertData.name) : (expertData.name ? expertData.name.substring(0, 2).toUpperCase() : 'EX');
+            const hasPhoto = expertData.profile_photo && expertData.profile_photo.trim() !== '' && expertData.profile_photo !== 'null';
             const photoContainer = document.getElementById('expert-photo');
-            photoContainer.innerHTML = `<img src="${resolveImagePath(expertData.profile_photo)}" alt="${expertData.name}" class="w-full h-full object-cover">`;
+            if (hasPhoto) {
+                photoContainer.innerHTML = `
+                    <img src="${resolveImagePath(expertData.profile_photo)}" alt="${expertData.name}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="hidden w-full h-full items-center justify-center font-black text-xl text-[#00D4AA] bg-gradient-to-br from-[#0c1222] to-[#131b2e] border border-[#00D4AA]/30">
+                        ${initials}
+                    </div>
+                `;
+            } else {
+                photoContainer.innerHTML = `
+                    <div class="w-full h-full flex items-center justify-center font-black text-xl text-[#00D4AA] bg-gradient-to-br from-[#0c1222] to-[#131b2e] border border-[#00D4AA]/30">
+                        ${initials}
+                    </div>
+                `;
+            }
         }
 
         function renderAvailabilitySchedule() {
@@ -283,7 +311,7 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
             const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
             
             if (!expertData.availability || expertData.availability.length === 0) {
-                container.innerHTML = '<p class="text-gray-600">No availability set. Please contact the expert.</p>';
+                container.innerHTML = '<p class="text-gray-400 text-sm">No fixed availability set. Please select a date above to check time slots.</p>';
                 return;
             }
 
@@ -296,12 +324,18 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                 schedule[day].push(`${slot.start_time} - ${slot.end_time}`);
             });
 
-            const html = Object.entries(schedule).map(([day, times]) => 
-                `<div class="flex justify-between py-2 border-b border-blue-100 last:border-0">
-                    <span class="font-semibold text-blue-900">${day}:</span>
-                    <span class="text-blue-700">${times.join(', ')}</span>
-                </div>`
-            ).join('');
+            const html = Object.entries(schedule).map(([day, times]) => {
+                const badges = times.map(t => {
+                    const [start, end] = t.split(' - ');
+                    return `<span class="inline-flex items-center px-3 py-1 rounded-lg bg-[#00D4AA]/10 border border-[#00D4AA]/30 text-[#00D4AA] font-mono text-xs font-semibold">${formatTime12h(start)} – ${formatTime12h(end)}</span>`;
+                }).join(' ');
+
+                return `
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between py-3 border-b border-gray-800/80 last:border-0 gap-2">
+                    <span class="font-bold text-white text-sm tracking-wide">${day}</span>
+                    <div class="flex flex-wrap gap-1.5">${badges}</div>
+                </div>`;
+            }).join('');
             
             container.innerHTML = html;
         }
