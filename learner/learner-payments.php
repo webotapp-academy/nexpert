@@ -74,11 +74,11 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                                 <input type="radio" name="payment_method" value="cod" class="h-4 w-4 text-[#00D4AA] focus:ring-[#00D4AA] border-gray-800 bg-[#080B10]">
                                 <div class="ml-3 flex items-center">
                                     <svg class="w-6 h-6 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                     </svg>
                                     <div>
-                                        <span class="font-semibold text-white">Cash on Delivery</span>
-                                        <p class="text-xs text-gray-400 mt-1">Pay in cash after session completion</p>
+                                        <span class="font-semibold text-white">Pay Later</span>
+                                        <p class="text-xs text-gray-400 mt-1">Book now and pay after the session</p>
                                     </div>
                                 </div>
                             </label>
@@ -226,8 +226,23 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                     document.getElementById('summary-expert-name').textContent = expert.name || 'Expert';
                     document.getElementById('summary-expert-title').textContent = expert.professional_title || 'Professional';
                     
+                    const initials = window.getInitials ? window.getInitials(expert.name) : (expert.name ? expert.name.substring(0, 2).toUpperCase() : 'EX');
+                    const hasPhoto = expert.profile_photo && expert.profile_photo.trim() !== '' && expert.profile_photo !== 'null';
                     const photoContainer = document.getElementById('summary-expert-photo');
-                    photoContainer.innerHTML = `<img src="${resolveImagePath(expert.profile_photo)}" alt="${expert.name}" class="w-full h-full object-cover">`;
+                    if (hasPhoto) {
+                        photoContainer.innerHTML = `
+                            <img src="${resolveImagePath(expert.profile_photo)}" alt="${expert.name || 'Expert'}" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                            <div class="hidden w-full h-full items-center justify-center font-black text-sm text-[#00D4AA] bg-gradient-to-br from-[#0c1222] to-[#131b2e] border border-[#00D4AA]/30">
+                                ${initials}
+                            </div>
+                        `;
+                    } else {
+                        photoContainer.innerHTML = `
+                            <div class="w-full h-full flex items-center justify-center font-black text-sm text-[#00D4AA] bg-gradient-to-br from-[#0c1222] to-[#131b2e] border border-[#00D4AA]/30">
+                                ${initials}
+                            </div>
+                        `;
+                    }
                 }
             } catch (error) {
                 console.error('Error loading expert data:', error);
@@ -388,19 +403,21 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
             try {
                 if (paymentMethod === 'cod') {
-                    // Handle Cash on Delivery
+                    // Handle Pay Later
                     const result = await createOrder('cod');
                     if (result.success) {
                         await Swal.fire({ 
                             icon: 'success', 
                             title: 'Booking Confirmed!', 
-                            html: '<p>Your session has been booked successfully.</p><p class="text-sm text-gray-600 mt-2">Please pay in cash after session completion.</p>',
-                            confirmButtonColor: '#10B981'
+                            html: '<p class="text-gray-200">Your session has been reserved successfully.</p><p class="text-xs text-gray-400 mt-2">You can complete payment after your session.</p>',
+                            confirmButtonColor: '#00D4AA',
+                            background: '#0D131F',
+                            color: '#fff'
                         });
                         window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=dashboard`;
                         return;
                     }
-                    throw new Error(result.message || 'COD booking failed');
+                    throw new Error(result.message || 'Pay Later booking failed');
                 } else if (paymentMethod === 'cash_test') {
                     const result = await createOrder('cash_test');
                     if (result.success) {
