@@ -1,8 +1,7 @@
 <?php
 header('Content-Type: application/json');
+require_once dirname(__DIR__, 3) . '/includes/session-config.php';
 require_once __DIR__ . '/../connection/pdo.php';
-
-session_start();
 
 // Check if expert is logged in
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'expert') {
@@ -11,77 +10,75 @@ if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'expert') {
     exit;
 }
 
-$userId = $_SESSION['user_id'];
+$userId = (int)$_SESSION['user_id'];
 $period = $_GET['period'] ?? 'month';
 $view = $_GET['view'] ?? 'monthly';
 
 try {
-    // Note: bookings.expert_id stores user_id, not expert_profile.id
-    // So we use $userId directly for querying bookings
-    
-    // Build date filter based on period
-    $dateFilter = '';
-    switch ($period) {
-        case 'last_month':
-            $dateFilter = "AND MONTH(p.created_at) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH) AND YEAR(p.created_at) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH)";
-            break;
-        case 'last_3_months':
-            $dateFilter = "AND p.created_at >= DATE_SUB(CURRENT_DATE, INTERVAL 3 MONTH)";
-            break;
-        case 'year':
-            $dateFilter = "AND YEAR(p.created_at) = YEAR(CURRENT_DATE)";
-            break;
-        case 'month':
-        default:
-            $dateFilter = "AND MONTH(p.created_at) = MONTH(CURRENT_DATE) AND YEAR(p.created_at) = YEAR(CURRENT_DATE)";
-            break;
-    }
-    
-    // Build grouping based on view
-    $groupBy = '';
-    $dateFormat = '';
-    switch ($view) {
-        case 'daily':
-            $dateFormat = "DATE_FORMAT(p.created_at, '%b %d')";
-            $groupBy = "DATE(p.created_at)";
-            break;
-        case 'weekly':
-            $dateFormat = "DATE_FORMAT(p.created_at, 'Week %u')";
-            $groupBy = "WEEK(p.created_at)";
-            break;
-        case 'monthly':
-        default:
-            $dateFormat = "DATE_FORMAT(p.created_at, '%b')";
-            $groupBy = "MONTH(p.created_at)";
-            break;
-    }
-    
-    // Fetch earnings data grouped by the specified period - use userId for bookings.expert_id
-    $stmt = $pdo->prepare("
-        SELECT 
-            $dateFormat as label,
-            COALESCE(SUM(p.amount), 0) as total
-        FROM payments p
-        JOIN bookings b ON p.booking_id = b.id
-        WHERE b.expert_id = ? AND p.status = 'success' $dateFilter
-        GROUP BY $groupBy
-        ORDER BY p.created_at ASC
-    ");
-    $stmt->execute([$userId]);
-    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
     $labels = [];
     $data = [];
     
-    foreach ($results as $row) {
-        $labels[] = $row['label'];
-        $data[] = (float)$row['total'];
-    }
-    
-    // If no data, provide empty arrays
-    if (empty($labels)) {
-        $labels = ['No Data'];
-        $data = [0];
+    if ($view === 'daily') {
+        // Last 14 days
+        $days = 14;
+        $stmt = $pdo->prepare("
+            SELECT DATE(p.created_at) as pay_date, COALESCE(SUM(p.amount), 0) as total
+            FROM payments p
+            LEFT JOIN bookings b ON p.booking_id = b.id
+            WHERE (p.expert_id = ? OR b.expert_id = ?) AND p.status = 'success'
+              AND p.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL ? DAY)
+            GROUP BY DATE(p.created_at)
+        ");
+        $stmt->execute([$userId, $userId, $days]);
+        $rows = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+        
+        for ($i = $days - 1; $i >= 0; $i--) {
+            $dateStr = date('Y-m-d', strtotime("-$i days"));
+            $label = date('M d', strtotime($dateStr));
+            $labels[] = $label;
+            $data[] = isset($rows[$dateStr]) ? (float)$rows[$dateStr] : 0.0;
+        }
+    } elseif ($view === 'weekly') {
+        // Last 8 weeks
+        $weeks = 8;
+        $stmt = $pdo->prepare("
+            SELECT YEARWEEK(p.created_at, 1) as yw, COALESCE(SUM(p.amount), 0) as total
+            FROM payments p
+            LEFT JOIN bookings b ON p.booking_id = b.id
+            WHERE (p.expert_id = ? OR b.expert_id = ?) AND p.status = 'success'
+              AND p.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL ? WEEK)
+            GROUP BY YEARWEEK(p.created_at, 1)
+        ");
+        $stmt->execute([$userId, $userId, $weeks]);
+        $rows = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+        
+        for ($i = $weeks - 1; $i >= 0; $i--) {
+            $time = strtotime("-$i weeks");
+            $yw = date('oW', $time);
+            $label = 'Wk ' . date('W', $time);
+            $labels[] = $label;
+            $data[] = isset($rows[$yw]) ? (float)$rows[$yw] : 0.0;
+        }
+    } else {
+        // Monthly view - last 6 months
+        $months = 6;
+        $stmt = $pdo->prepare("
+            SELECT DATE_FORMAT(p.created_at, '%Y-%m') as ym, COALESCE(SUM(p.amount), 0) as total
+            FROM payments p
+            LEFT JOIN bookings b ON p.booking_id = b.id
+            WHERE (p.expert_id = ? OR b.expert_id = ?) AND p.status = 'success'
+              AND p.created_at >= DATE_SUB(CURRENT_DATE(), INTERVAL ? MONTH)
+            GROUP BY DATE_FORMAT(p.created_at, '%Y-%m')
+        ");
+        $stmt->execute([$userId, $userId, $months]);
+        $rows = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+        
+        for ($i = $months - 1; $i >= 0; $i--) {
+            $ym = date('Y-m', strtotime("-$i months"));
+            $label = date('M Y', strtotime($ym . '-01'));
+            $labels[] = $label;
+            $data[] = isset($rows[$ym]) ? (float)$rows[$ym] : 0.0;
+        }
     }
     
     echo json_encode([
@@ -89,7 +86,6 @@ try {
         'labels' => $labels,
         'data' => $data
     ]);
-    
 } catch (PDOException $e) {
     error_log("Earnings Data API Error: " . $e->getMessage());
     http_response_code(500);
