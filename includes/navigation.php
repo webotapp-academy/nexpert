@@ -425,95 +425,102 @@ if (expertMobileMenuBtn && expertMobileMenu) {
     });
 }
 
-// Learner logout handlers (desktop and mobile)
-const learnerLogoutBtn = document.getElementById('learner-logout-btn');
-const learnerLogoutBtnMobile = document.getElementById('learner-logout-btn-mobile');
-const handleLearnerLogout = async function() {
-    if (confirm('Are you sure you want to logout?')) {
+// Unified SweetAlert Logout Function
+const confirmAndLogout = async function(apiUrl, redirectUrl = BASE_PATH + '/') {
+    if (typeof Swal !== 'undefined') {
+        const result = await Swal.fire({
+            title: 'Sign Out?',
+            text: 'Are you sure you want to end your current session?',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Yes, Sign Out',
+            cancelButtonText: 'Stay Logged In',
+            background: '#0D131F',
+            color: '#FFFFFF',
+            iconColor: '#00D4AA',
+            customClass: {
+                popup: 'border border-white/10 rounded-2xl shadow-2xl backdrop-blur-xl',
+                title: 'text-white font-extrabold text-lg',
+                htmlContainer: 'text-gray-400 text-xs',
+                confirmButton: 'bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] font-black px-6 py-2.5 rounded-xl shadow-[0_0_15px_rgba(0,212,170,0.3)] transition text-xs mr-3 cursor-pointer',
+                cancelButton: 'bg-white/[0.05] hover:bg-white/10 text-gray-300 hover:text-white border border-white/10 font-bold px-5 py-2.5 rounded-xl transition text-xs cursor-pointer'
+            },
+            buttonsStyling: false
+        });
+
+        if (!result.isConfirmed) return;
+
+        Swal.fire({
+            title: 'Signing Out...',
+            text: 'Securing your session telemetry',
+            background: '#0D131F',
+            color: '#FFFFFF',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         try {
-            const response = await fetch(BASE_PATH + '/admin-panel/apis/learner/auth.php', {
+            await fetch(apiUrl, {
                 method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
+                headers: { 'Content-Type': 'application/json' }
             });
             
-            const result = await response.json();
+            await Swal.fire({
+                icon: 'success',
+                title: 'Signed Out Successfully',
+                text: 'See you next time!',
+                background: '#0D131F',
+                color: '#FFFFFF',
+                iconColor: '#00D4AA',
+                timer: 1000,
+                showConfirmButton: false
+            });
             
-            if (result.success) {
-                window.location.href = BASE_PATH + '/';
-            } else {
-                alert('Logout failed. Please try again.');
-            }
+            window.location.href = redirectUrl;
         } catch (error) {
             console.error('Logout error:', error);
-            alert('Logout failed. Please try again.');
+            window.location.href = redirectUrl;
+        }
+    } else {
+        if (confirm('Are you sure you want to logout?')) {
+            try {
+                await fetch(apiUrl, { method: 'DELETE' });
+                window.location.href = redirectUrl;
+            } catch (error) {
+                console.error('Logout error:', error);
+                window.location.href = redirectUrl;
+            }
         }
     }
 };
+
+// Learner logout handlers (desktop and mobile)
+const learnerLogoutBtn = document.getElementById('learner-logout-btn');
+const learnerLogoutBtnMobile = document.getElementById('learner-logout-btn-mobile');
+const handleLearnerLogout = () => confirmAndLogout(BASE_PATH + '/admin-panel/apis/learner/auth.php');
 if (learnerLogoutBtn) learnerLogoutBtn.addEventListener('click', handleLearnerLogout);
 if (learnerLogoutBtnMobile) learnerLogoutBtnMobile.addEventListener('click', handleLearnerLogout);
 
 // Expert logout handlers (desktop and mobile)
 const expertLogoutBtn = document.getElementById('expert-logout-btn');
 const expertLogoutBtnMobile = document.getElementById('expert-logout-btn-mobile');
-const handleExpertLogout = async function() {
-    if (confirm('Are you sure you want to logout?')) {
-        try {
-            const response = await fetch(BASE_PATH + '/admin-panel/apis/expert/auth.php', {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                window.location.href = BASE_PATH + '/';
-            } else {
-                alert('Logout failed. Please try again.');
-            }
-        } catch (error) {
-            console.error('Logout error:', error);
-            alert('Logout failed. Please try again.');
-        }
-    }
-};
+const handleExpertLogout = () => confirmAndLogout(BASE_PATH + '/admin-panel/apis/expert/auth.php');
 if (expertLogoutBtn) expertLogoutBtn.addEventListener('click', handleExpertLogout);
 if (expertLogoutBtnMobile) expertLogoutBtnMobile.addEventListener('click', handleExpertLogout);
 
-// Home page logout handlers (desktop and mobile) - for any logged in user
+// Home page logout handlers (desktop and mobile)
 const homeLogoutBtn = document.getElementById('home-logout-btn');
 const homeLogoutBtnMobile = document.getElementById('home-logout-btn-mobile');
-const handleHomeLogout = async function() {
-    if (confirm('Are you sure you want to logout?')) {
-        try {
-            // Determine which API to call based on user role
-            const userRole = '<?php echo $_SESSION["role"] ?? ""; ?>';
-            const apiUrl = userRole === 'learner' 
-                ? BASE_PATH + '/admin-panel/apis/learner/auth.php'
-                : BASE_PATH + '/admin-panel/apis/expert/auth.php';
-            
-            const response = await fetch(apiUrl, {
-                method: 'DELETE',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                window.location.href = BASE_PATH + '/';
-            } else {
-                alert('Logout failed. Please try again.');
-            }
-        } catch (error) {
-            console.error('Logout error:', error);
-            alert('Logout failed. Please try again.');
-        }
-    }
+const handleHomeLogout = () => {
+    const userRole = '<?php echo $_SESSION["role"] ?? ""; ?>';
+    const apiUrl = userRole === 'learner' 
+        ? BASE_PATH + '/admin-panel/apis/learner/auth.php'
+        : BASE_PATH + '/admin-panel/apis/expert/auth.php';
+    confirmAndLogout(apiUrl);
 };
 if (homeLogoutBtn) homeLogoutBtn.addEventListener('click', handleHomeLogout);
 if (homeLogoutBtnMobile) homeLogoutBtnMobile.addEventListener('click', handleHomeLogout);
