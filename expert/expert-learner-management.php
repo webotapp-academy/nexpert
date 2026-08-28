@@ -267,7 +267,20 @@ if ($userId) {
                         $statusText = 'Completed';
                     }
                     
-                    $profilePhoto = !empty($learner['profile_photo']) ? $learner['profile_photo'] : 'attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
+                    // Photo & Initials setup
+                    $learnerInitials = getInitials($learner['full_name']);
+                    $hasRealPhoto = !empty($learner['profile_photo']) && $learner['profile_photo'] !== 'null' && strpos($learner['profile_photo'], 'diverse_professional') === false;
+                    $learnerPhotoSrc = '';
+                    if ($hasRealPhoto) {
+                        $rawP = $learner['profile_photo'];
+                        if (preg_match('/^(https?:\/\/|data:)/', $rawP)) {
+                            $learnerPhotoSrc = $rawP;
+                        } elseif (strpos($rawP, BASE_PATH) === 0) {
+                            $learnerPhotoSrc = $rawP;
+                        } else {
+                            $learnerPhotoSrc = BASE_PATH . '/' . ltrim($rawP, '/');
+                        }
+                    }
                     
                     // Parse enrolled programs
                     $enrolledPrograms = [];
@@ -290,7 +303,18 @@ if ($userId) {
                 <div class="bg-[#0D131F] border border-gray-800 rounded-2xl shadow-xl p-6 hover:border-gray-700 transition">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center">
-                            <img src="<?php echo htmlspecialchars($profilePhoto); ?>" alt="<?php echo htmlspecialchars($learner['full_name']); ?>" class="w-11 h-11 rounded-full mr-3 object-cover border border-gray-700">
+                            <?php if ($hasRealPhoto): ?>
+                                <div class="relative w-11 h-11 rounded-full mr-3 overflow-hidden border border-gray-700 shrink-0">
+                                    <img src="<?php echo htmlspecialchars($learnerPhotoSrc); ?>" alt="<?php echo htmlspecialchars($learner['full_name']); ?>" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="hidden w-full h-full items-center justify-center font-black text-sm text-[#00D4AA] bg-gradient-to-br from-[#0c1222] to-[#131b2e]">
+                                        <?php echo htmlspecialchars($learnerInitials); ?>
+                                    </div>
+                                </div>
+                            <?php else: ?>
+                                <div class="w-11 h-11 rounded-full mr-3 bg-gradient-to-br from-[#0c1222] to-[#131b2e] border border-[#00D4AA]/30 flex items-center justify-center font-black text-sm text-[#00D4AA] shrink-0">
+                                    <?php echo htmlspecialchars($learnerInitials); ?>
+                                </div>
+                            <?php endif; ?>
                             <div>
                                 <h3 class="font-bold text-white text-sm"><?php echo htmlspecialchars($learner['full_name']); ?></h3>
                                 <p class="text-gray-400 text-xs"><?php echo htmlspecialchars($learner['email']); ?></p>
@@ -415,12 +439,33 @@ if ($userId) {
                                         $learnerIds = !empty($program['learner_ids']) ? explode(',', $program['learner_ids']) : [];
                                         if (count($learnerNames) > 0):
                                             foreach ($learnerNames as $i => $name):
-                                                $photo = !empty($learnerPhotos[$i]) ? $learnerPhotos[$i] : 'attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
+                                                $photoRaw = $learnerPhotos[$i] ?? '';
+                                                $hasRealPhotoItem = !empty($photoRaw) && $photoRaw !== 'null' && strpos($photoRaw, 'diverse_professional') === false;
+                                                $photoSrc = '';
+                                                if ($hasRealPhotoItem) {
+                                                    if (preg_match('/^(https?:\/\/|data:)/', $photoRaw)) {
+                                                        $photoSrc = $photoRaw;
+                                                    } elseif (strpos($photoRaw, BASE_PATH) === 0) {
+                                                        $photoSrc = $photoRaw;
+                                                    } else {
+                                                        $photoSrc = BASE_PATH . '/' . ltrim($photoRaw, '/');
+                                                    }
+                                                }
+                                                $initialsItem = getInitials($name);
                                                 $learnerId = !empty($learnerIds[$i]) ? $learnerIds[$i] : '';
                                     ?>
                                     <tr class="hover:bg-[#131B2E] transition-colors">
                                         <td class="py-3 px-4 text-center">
-                                            <img src="<?php echo htmlspecialchars($photo); ?>" alt="<?php echo htmlspecialchars($name); ?>" class="w-8 h-8 rounded-full object-cover border border-gray-700 mx-auto" />
+                                            <?php if ($hasRealPhotoItem): ?>
+                                                <img src="<?php echo htmlspecialchars($photoSrc); ?>" alt="<?php echo htmlspecialchars($name); ?>" class="w-8 h-8 rounded-full object-cover border border-gray-700 mx-auto" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+                                                <div class="hidden w-8 h-8 rounded-full bg-[#0c1222] border border-[#00D4AA]/30 items-center justify-center font-bold text-xs text-[#00D4AA] mx-auto">
+                                                    <?php echo htmlspecialchars($initialsItem); ?>
+                                                </div>
+                                            <?php else: ?>
+                                                <div class="w-8 h-8 rounded-full bg-[#0c1222] border border-[#00D4AA]/30 flex items-center justify-center font-bold text-xs text-[#00D4AA] mx-auto">
+                                                    <?php echo htmlspecialchars($initialsItem); ?>
+                                                </div>
+                                            <?php endif; ?>
                                         </td>
                                         <td class="py-3 px-4 font-bold text-white text-center"><?php echo htmlspecialchars($name); ?></td>
                                         <td class="py-3 px-4 text-[#00D4AA] font-semibold text-center"><?php echo htmlspecialchars($program['title']); ?></td>
@@ -435,7 +480,9 @@ if ($userId) {
                                             <?php endforeach;
                                         endif;
                                     endforeach; ?>
-                                                            </tbody>
+                                </tbody>
+                            </table>
+                        </div>
                     <?php else: ?>
                         <svg class="w-16 h-16 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>

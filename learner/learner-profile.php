@@ -32,7 +32,12 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
             <form id="profile-form">
                 <!-- Profile Photo -->
                 <div class="flex items-center mb-8">
-                    <img id="profile-photo" src="<?php echo BASE_PATH; ?>/attached_assets/stock_images/diverse_professional_1d96e39f.jpg" alt="Profile" class="w-20 h-20 rounded-full object-cover mr-6 border border-gray-800">
+                    <div id="profile-photo-container" class="relative w-20 h-20 rounded-full mr-6 overflow-hidden border border-gray-800 shrink-0 bg-[#0d131f] flex items-center justify-center">
+                        <img id="profile-photo" src="" alt="Profile" class="w-full h-full object-cover hidden" onerror="this.classList.add('hidden'); document.getElementById('profile-photo-fallback').classList.remove('hidden');">
+                        <div id="profile-photo-fallback" class="w-full h-full flex items-center justify-center font-black text-2xl text-[#00D4AA] bg-gradient-to-br from-[#0c1222] to-[#131b2e]">
+                            <?php echo htmlspecialchars(getInitials($_SESSION['user_name'] ?? $_SESSION['name'] ?? 'Learner')); ?>
+                        </div>
+                    </div>
                     <div>
                         <input type="file" id="photo-upload" accept="image/jpeg,image/png,image/jpg" class="hidden">
                         <button type="button" id="change-photo-btn" class="bg-[#00D4AA] text-[#080B10] px-4 py-2 rounded-lg hover:bg-[#00bda0] transition font-bold">
@@ -175,8 +180,14 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                 document.getElementById('profession').value = profileData.profession || '';
                 
                 // Update profile photo
-                if (profileData.profile_photo) {
-                    document.getElementById('profile-photo').src = resolveImagePath(profileData.profile_photo);
+                if (profileData.profile_photo && profileData.profile_photo.trim() !== '' && profileData.profile_photo !== 'null' && profileData.profile_photo.indexOf('diverse_professional') === -1) {
+                    const imgEl = document.getElementById('profile-photo');
+                    imgEl.src = resolveImagePath(profileData.profile_photo);
+                    imgEl.classList.remove('hidden');
+                    document.getElementById('profile-photo-fallback').classList.add('hidden');
+                } else if (profileData.full_name) {
+                    const initials = window.getInitials ? window.getInitials(profileData.full_name) : profileData.full_name.substring(0, 2).toUpperCase();
+                    document.getElementById('profile-photo-fallback').textContent = initials;
                 }
             }
         } catch (error) {
