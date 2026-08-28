@@ -1,4 +1,20 @@
 <?php
+if (!function_exists('getNavPhotoUrl')) {
+    function getNavPhotoUrl($photoPath) {
+        if (empty($photoPath)) {
+            return '';
+        }
+        if (preg_match('/^(https?:\/\/|data:)/', $photoPath)) {
+            return $photoPath;
+        }
+        $base = defined('BASE_PATH') ? BASE_PATH : '';
+        if (!empty($base) && strpos($photoPath, $base) === 0) {
+            return $photoPath;
+        }
+        return rtrim($base, '/') . '/' . ltrim($photoPath, '/');
+    }
+}
+
 $panel_type = isset($panel_type) ? $panel_type : 'home';
 
 if ($panel_type === 'home'): 
@@ -6,70 +22,43 @@ if ($panel_type === 'home'):
     $isLoggedIn = isset($_SESSION['user_id']) && isset($_SESSION['role']);
     $userRole = $_SESSION['role'] ?? null;
     $userName = '';
-    $userPhoto = 'attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
+    $userPhoto = '';
     
     if ($isLoggedIn) {
         // Prioritize session data (updated immediately after profile save)
         $userName = $_SESSION['full_name'] ?? 'User';
+        $rawPhoto = $_SESSION['profile_photo'] ?? '';
         
-        // Check for profile photo in session first (most up-to-date)
-        if (!empty($_SESSION['profile_photo'])) {
-            $photoPath = $_SESSION['profile_photo'];
-            if (!preg_match('/^(https?:\/\/|data:)/', $photoPath)) {
-                $userPhoto = BASE_PATH . $photoPath;
-            } else {
-                $userPhoto = $photoPath;
-            }
-        } elseif (isset($pdo)) {
+        if (empty($rawPhoto) && isset($pdo)) {
             // Fallback to database if session photo not set
             try {
                 if ($userRole === 'learner') {
                     $stmt = $pdo->prepare("SELECT lp.full_name, lp.profile_photo FROM learner_profiles lp WHERE lp.user_id = ?");
                     $stmt->execute([$_SESSION['user_id']]);
                     $profile = $stmt->fetch(PDO::FETCH_ASSOC);
-                    $userName = $profile['full_name'] ?? $userName;
-                    if (!empty($profile['profile_photo'])) {
-                        $photoPath = $profile['profile_photo'];
-                        if (!preg_match('/^(https?:\/\/|data:)/', $photoPath)) {
-                            $userPhoto = BASE_PATH . $photoPath;
-                        } else {
-                            $userPhoto = $photoPath;
+                    if ($profile) {
+                        $userName = $profile['full_name'] ?? $userName;
+                        if (!empty($profile['profile_photo'])) {
+                            $rawPhoto = $profile['profile_photo'];
+                            $_SESSION['profile_photo'] = $rawPhoto;
                         }
-                        // Update session with database photo
-                        $_SESSION['profile_photo'] = $profile['profile_photo'];
-                    } else {
-                        $userPhoto = BASE_PATH . '/attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
                     }
                 } elseif ($userRole === 'expert') {
                     $stmt = $pdo->prepare("SELECT ep.full_name, ep.profile_photo FROM expert_profiles ep WHERE ep.user_id = ?");
                     $stmt->execute([$_SESSION['user_id']]);
                     $profile = $stmt->fetch(PDO::FETCH_ASSOC);
-                    $userName = $profile['full_name'] ?? $userName;
-                    if (!empty($profile['profile_photo'])) {
-                        $photoPath = $profile['profile_photo'];
-                        if (!preg_match('/^(https?:\/\/|data:)/', $photoPath)) {
-                            $userPhoto = BASE_PATH . $photoPath;
-                        } else {
-                            $userPhoto = $photoPath;
+                    if ($profile) {
+                        $userName = $profile['full_name'] ?? $userName;
+                        if (!empty($profile['profile_photo'])) {
+                            $rawPhoto = $profile['profile_photo'];
+                            $_SESSION['profile_photo'] = $rawPhoto;
                         }
-                        // Update session with database photo
-                        $_SESSION['profile_photo'] = $profile['profile_photo'];
-                    } else {
-                        $userPhoto = BASE_PATH . '/attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
                     }
                 }
-            } catch (Exception $e) {
-                $userPhoto = BASE_PATH . '/attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
-            }
-        } else {
-            $userPhoto = BASE_PATH . '/attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
+            } catch (Exception $e) {}
         }
-    } elseif ($isLoggedIn) {
-        // If PDO is not available, use session data as fallback
-        $userName = $_SESSION['full_name'] ?? 'User';
-        $userPhoto = BASE_PATH . '/attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
-    } else {
-        $userPhoto = BASE_PATH . '/attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
+        
+        $userPhoto = getNavPhotoUrl($rawPhoto);
     }
 ?>
     <nav class="backdrop-blur-2xl bg-[#070913]/80 border-b border-white/[0.08] sticky top-0 z-50 transition-all duration-300 shadow-[0_10px_35px_-10px_rgba(0,0,0,0.8)]">
@@ -95,7 +84,14 @@ if ($panel_type === 'home'):
                         <div class="flex items-center space-x-3">
                             <a href="?panel=<?php echo $userRole; ?>&page=dashboard" class="bg-white/[0.05] hover:bg-white/[0.1] border border-white/10 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">Dashboard</a>
                             <div class="flex items-center space-x-2 pl-2">
-                                <img src="<?php echo htmlspecialchars($userPhoto); ?>" alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-[#00D4AA]/40">
+                                <div class="w-8 h-8 rounded-full overflow-hidden ring-2 ring-[#00D4AA]/40 flex items-center justify-center bg-gray-900 shrink-0">
+                                    <?php if (!empty($userPhoto)): ?>
+                                        <img src="<?php echo htmlspecialchars($userPhoto); ?>" alt="Profile" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <span class="hidden w-full h-full items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($userName ?: 'U', 0, 1)); ?></span>
+                                    <?php else: ?>
+                                        <span class="w-full h-full flex items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($userName ?: 'U', 0, 1)); ?></span>
+                                    <?php endif; ?>
+                                </div>
                                 <span class="text-sm font-medium text-gray-200"><?php echo htmlspecialchars($userName); ?></span>
                             </div>
                             <button id="home-logout-btn" title="Logout" class="text-gray-400 hover:text-red-400 p-2 rounded-lg hover:bg-red-950/30 transition">
@@ -124,7 +120,14 @@ if ($panel_type === 'home'):
                 <div class="flex flex-col space-y-2 bg-[#0c1222]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-2xl">
                     <?php if ($isLoggedIn): ?>
                         <div class="flex items-center space-x-3 px-2 py-2.5 border-b border-white/10">
-                            <img src="<?php echo htmlspecialchars($userPhoto); ?>" alt="Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-[#00D4AA]/40">
+                            <div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#00D4AA]/40 flex items-center justify-center bg-gray-900 shrink-0">
+                                <?php if (!empty($userPhoto)): ?>
+                                    <img src="<?php echo htmlspecialchars($userPhoto); ?>" alt="Profile" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <span class="hidden w-full h-full items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($userName ?: 'U', 0, 1)); ?></span>
+                                <?php else: ?>
+                                    <span class="w-full h-full flex items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($userName ?: 'U', 0, 1)); ?></span>
+                                <?php endif; ?>
+                            </div>
                             <div>
                                 <p class="font-bold text-white"><?php echo htmlspecialchars($userName); ?></p>
                                 <p class="text-xs text-gray-400"><?php echo ucfirst($userRole); ?></p>
@@ -154,19 +157,12 @@ if ($panel_type === 'home'):
     
     // Get learner profile data if logged in - prioritize session data
     $learnerName = '';
-    $learnerPhoto = BASE_PATH . '/attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
+    $learnerPhoto = '';
     if ($isLoggedIn) {
         $learnerName = $_SESSION['full_name'] ?? 'Learner';
+        $rawPhoto = $_SESSION['profile_photo'] ?? '';
         
-        // Check session photo first (most up-to-date after save)
-        if (!empty($_SESSION['profile_photo'])) {
-            $photoPath = $_SESSION['profile_photo'];
-            if (!preg_match('/^(https?:\/\/|data:)/', $photoPath)) {
-                $learnerPhoto = BASE_PATH . $photoPath;
-            } else {
-                $learnerPhoto = $photoPath;
-            }
-        } elseif (isset($pdo)) {
+        if (empty($rawPhoto) && isset($pdo)) {
             // Fallback to database if session doesn't have photo
             try {
                 $stmt = $pdo->prepare("SELECT lp.full_name, lp.profile_photo FROM learner_profiles lp WHERE lp.user_id = ?");
@@ -175,20 +171,14 @@ if ($panel_type === 'home'):
                 if ($learnerProfile) {
                     $learnerName = $learnerProfile['full_name'] ?? $learnerName;
                     if (!empty($learnerProfile['profile_photo'])) {
-                        $photoPath = $learnerProfile['profile_photo'];
-                        if (!preg_match('/^(https?:\/\/|data:)/', $photoPath)) {
-                            $learnerPhoto = BASE_PATH . $photoPath;
-                        } else {
-                            $learnerPhoto = $photoPath;
-                        }
-                        // Update session with database photo for next page load
-                        $_SESSION['profile_photo'] = $learnerProfile['profile_photo'];
+                        $rawPhoto = $learnerProfile['profile_photo'];
+                        $_SESSION['profile_photo'] = $rawPhoto;
                     }
                 }
-            } catch (Exception $e) {
-                // Keep default values
-            }
+            } catch (Exception $e) {}
         }
+        
+        $learnerPhoto = getNavPhotoUrl($rawPhoto);
     }
 ?>
     <nav class="backdrop-blur-2xl bg-[#070913]/80 border-b border-white/[0.08] sticky top-0 z-50 transition-all duration-300 shadow-[0_10px_35px_-10px_rgba(0,0,0,0.8)]">
@@ -217,7 +207,14 @@ if ($panel_type === 'home'):
 
                         <div class="flex items-center space-x-3 pl-1">
                             <div class="flex items-center space-x-2">
-                                <img src="<?php echo htmlspecialchars($learnerPhoto); ?>" alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-[#00D4AA]/40">
+                                <div class="w-8 h-8 rounded-full overflow-hidden ring-2 ring-[#00D4AA]/40 flex items-center justify-center bg-gray-900 shrink-0">
+                                    <?php if (!empty($learnerPhoto)): ?>
+                                        <img src="<?php echo htmlspecialchars($learnerPhoto); ?>" alt="Profile" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <span class="hidden w-full h-full items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($learnerName ?: 'L', 0, 1)); ?></span>
+                                    <?php else: ?>
+                                        <span class="w-full h-full flex items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($learnerName ?: 'L', 0, 1)); ?></span>
+                                    <?php endif; ?>
+                                </div>
                                 <span class="text-sm font-medium text-gray-200"><?php echo htmlspecialchars($learnerName); ?></span>
                             </div>
                             <button id="learner-logout-btn" title="Logout" class="text-gray-400 hover:text-red-400 p-2 rounded-lg hover:bg-red-950/30 transition">
@@ -246,7 +243,14 @@ if ($panel_type === 'home'):
                 <div class="flex flex-col space-y-2 bg-[#0c1222]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-2xl">
                     <?php if ($isLoggedIn): ?>
                         <div class="flex items-center space-x-3 px-2 py-2.5 border-b border-white/10">
-                            <img src="<?php echo htmlspecialchars($learnerPhoto); ?>" alt="Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-[#00D4AA]/40">
+                            <div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#00D4AA]/40 flex items-center justify-center bg-gray-900 shrink-0">
+                                <?php if (!empty($learnerPhoto)): ?>
+                                    <img src="<?php echo htmlspecialchars($learnerPhoto); ?>" alt="Profile" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <span class="hidden w-full h-full items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($learnerName ?: 'L', 0, 1)); ?></span>
+                                <?php else: ?>
+                                    <span class="w-full h-full flex items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($learnerName ?: 'L', 0, 1)); ?></span>
+                                <?php endif; ?>
+                            </div>
                             <div>
                                 <p class="font-bold text-white"><?php echo htmlspecialchars($learnerName); ?></p>
                                 <p class="text-xs text-gray-400">Learner</p>
@@ -273,25 +277,27 @@ if ($panel_type === 'home'):
     
     // Get expert profile data if logged in
     $expertName = '';
-    $expertPhoto = 'attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
-    if ($isLoggedIn && isset($pdo)) {
-        try {
-            $stmt = $pdo->prepare("SELECT ep.full_name, ep.profile_photo FROM expert_profiles ep WHERE ep.user_id = ?");
-            $stmt->execute([$_SESSION['user_id']]);
-            $expertProfile = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($expertProfile) {
-                $expertName = $expertProfile['full_name'] ?? $_SESSION['full_name'] ?? 'Expert';
-                if (!empty($expertProfile['profile_photo'])) {
-                    $expertPhoto = $expertProfile['profile_photo'];
-                }
-            } else {
-                $expertName = $_SESSION['full_name'] ?? 'Expert';
-            }
-        } catch (Exception $e) {
-            $expertName = $_SESSION['full_name'] ?? 'Expert';
-        }
-    } elseif ($isLoggedIn) {
+    $expertPhoto = '';
+    if ($isLoggedIn) {
         $expertName = $_SESSION['full_name'] ?? 'Expert';
+        $rawPhoto = $_SESSION['profile_photo'] ?? '';
+        
+        if (empty($rawPhoto) && isset($pdo)) {
+            try {
+                $stmt = $pdo->prepare("SELECT ep.full_name, ep.profile_photo FROM expert_profiles ep WHERE ep.user_id = ?");
+                $stmt->execute([$_SESSION['user_id']]);
+                $expertProfile = $stmt->fetch(PDO::FETCH_ASSOC);
+                if ($expertProfile) {
+                    $expertName = $expertProfile['full_name'] ?? $expertName;
+                    if (!empty($expertProfile['profile_photo'])) {
+                        $rawPhoto = $expertProfile['profile_photo'];
+                        $_SESSION['profile_photo'] = $rawPhoto;
+                    }
+                }
+            } catch (Exception $e) {}
+        }
+        
+        $expertPhoto = getNavPhotoUrl($rawPhoto);
     }
 ?>
     <nav class="backdrop-blur-2xl bg-[#070913]/80 border-b border-white/[0.08] sticky top-0 z-50 transition-all duration-300 shadow-[0_10px_35px_-10px_rgba(0,0,0,0.8)]">
@@ -325,7 +331,14 @@ if ($panel_type === 'home'):
 
                         <div class="flex items-center space-x-3 pl-1">
                             <a href="?panel=expert&page=settings" class="flex items-center space-x-2 group/prof">
-                                <img id="expert-nav-photo" src="<?php echo htmlspecialchars($expertPhoto); ?>" alt="Profile" class="w-8 h-8 rounded-full object-cover ring-2 ring-[#00D4AA]/40 group-hover/prof:ring-[#00D4AA] transition">
+                                <div class="w-8 h-8 rounded-full overflow-hidden ring-2 ring-[#00D4AA]/40 group-hover/prof:ring-[#00D4AA] transition flex items-center justify-center bg-gray-900 shrink-0">
+                                    <?php if (!empty($expertPhoto)): ?>
+                                        <img id="expert-nav-photo" src="<?php echo htmlspecialchars($expertPhoto); ?>" alt="Profile" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <span class="hidden w-full h-full items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($expertName ?: 'E', 0, 1)); ?></span>
+                                    <?php else: ?>
+                                        <span class="w-full h-full flex items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($expertName ?: 'E', 0, 1)); ?></span>
+                                    <?php endif; ?>
+                                </div>
                                 <span class="text-sm font-medium text-gray-200 group-hover/prof:text-white"><?php echo htmlspecialchars($expertName); ?></span>
                             </a>
                             <button id="expert-logout-btn" title="Logout" class="text-gray-400 hover:text-red-400 p-2 rounded-lg hover:bg-red-950/30 transition">
@@ -352,7 +365,14 @@ if ($panel_type === 'home'):
                 <div class="flex flex-col space-y-2 bg-[#0c1222]/95 backdrop-blur-2xl border border-white/10 rounded-2xl p-4 shadow-2xl">
                     <?php if ($isLoggedIn): ?>
                         <div class="flex items-center space-x-3 px-2 py-2.5 border-b border-white/10">
-                            <img src="<?php echo htmlspecialchars($expertPhoto); ?>" alt="Profile" class="w-10 h-10 rounded-full object-cover ring-2 ring-[#00D4AA]/40">
+                            <div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#00D4AA]/40 flex items-center justify-center bg-gray-900 shrink-0">
+                                <?php if (!empty($expertPhoto)): ?>
+                                    <img src="<?php echo htmlspecialchars($expertPhoto); ?>" alt="Profile" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <span class="hidden w-full h-full items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($expertName ?: 'E', 0, 1)); ?></span>
+                                <?php else: ?>
+                                    <span class="w-full h-full flex items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($expertName ?: 'E', 0, 1)); ?></span>
+                                <?php endif; ?>
+                            </div>
                             <div>
                                 <p class="font-bold text-white"><?php echo htmlspecialchars($expertName); ?></p>
                                 <p class="text-xs text-[#00D4AA]">Verified Expert</p>
@@ -503,8 +523,12 @@ if (expertNavPhoto) {
     fetch(BASE_PATH + '/admin-panel/apis/expert/profile.php?user_id=<?php echo $_SESSION["user_id"] ?? ""; ?>')
         .then(response => response.json())
         .then(result => {
-            if (result.success && result.data.profile_photo) {
-                expertNavPhoto.src = result.data.profile_photo;
+            if (result.success && result.data && result.data.profile_photo) {
+                let photo = result.data.profile_photo;
+                if (!photo.startsWith('http') && !photo.startsWith('data:') && !photo.startsWith(BASE_PATH)) {
+                    photo = BASE_PATH + '/' + photo.replace(/^\/+/, '');
+                }
+                expertNavPhoto.src = photo;
             }
         })
         .catch(error => console.error('Error loading profile photo:', error));
