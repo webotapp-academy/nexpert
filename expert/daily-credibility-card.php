@@ -28,6 +28,7 @@ $cardRow = $stmt->fetch(PDO::FETCH_ASSOC);
 // If no card exists, generate one
 if (!$cardRow || empty($cardRow['card_data'])) {
     require_once dirname(__DIR__) . '/cron/generate_credibility_cards.php';
+    generateExpertCard($pdo, $expertId);
     $stmt->execute([$expertId]);
     $cardRow = $stmt->fetch(PDO::FETCH_ASSOC);
 }
