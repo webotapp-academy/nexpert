@@ -525,18 +525,35 @@ document.getElementById('googleSignInBtn').addEventListener('click', async funct
             window.location.href = result.auth_url;
         } else {
             Swal.fire({
-                icon: 'error',
-                title: 'Configuration Error',
-                text: result.message || 'Google Sign In is not configured. Please contact support.',
-                confirmButtonColor: '#00D4AA'
+                icon: 'info',
+                title: 'Google Sign-In Configuration',
+                html: `
+                    <div class="text-left text-xs text-gray-300 space-y-3">
+                        <p class="text-sm text-gray-200 font-medium">To enable Google Sign-In, add your Google OAuth client credentials to <code>.env</code>:</p>
+                        <div class="bg-[#080B10] p-3 rounded-xl border border-gray-800 text-[#00D4AA] font-mono text-[11px]">
+                            <div>GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com</div>
+                            <div>GOOGLE_CLIENT_SECRET=your-client-secret</div>
+                        </div>
+                        <p class="text-[11px] text-gray-400">
+                            <strong>Authorized Redirect URI in Google Cloud:</strong><br>
+                            <span class="text-emerald-400 font-mono break-all">${window.location.origin}${window.BASE_PATH}/admin-panel/apis/oauth/google-callback.php</span>
+                        </p>
+                    </div>
+                `,
+                background: '#0D131F',
+                color: '#fff',
+                confirmButtonColor: '#00D4AA',
+                confirmButtonText: 'Got it'
             });
         }
     } catch (error) {
         console.error('Google Sign In error:', error);
         Swal.fire({
             icon: 'error',
-            title: 'Error',
-            text: 'Failed to initiate Google Sign In. Please try again.',
+            title: 'Connection Error',
+            text: 'Failed to communicate with authentication service. Please check your network or try again.',
+            background: '#0D131F',
+            color: '#fff',
             confirmButtonColor: '#00D4AA'
         });
     }
