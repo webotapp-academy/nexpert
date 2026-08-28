@@ -41,7 +41,8 @@ $expert_pages = [
     'program-details', 'kyc', 'workflow-builder', 'booking-management', 
     'session-execution', 'earnings', 'learner-management', 'notifications', 
     'settings', 'my-programs', 'my-webinars', 'webinar-details', 'messages', 
-    'trust-certificate', 'certificate', 'trust-insights', 'apply'
+    'trust-certificate', 'certificate', 'trust-insights', 'daily-credibility-card', 
+    'credibility-card', 'apply'
 ];
 
 $admin_pages = [

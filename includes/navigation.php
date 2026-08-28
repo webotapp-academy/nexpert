@@ -296,6 +296,9 @@ if ($panel_type === 'home'):
                 <div class="hidden md:flex items-center space-x-6">
                     <?php if ($isLoggedIn): ?>
                         <a href="?panel=expert&page=dashboard" class="text-gray-600 hover:text-accent">Dashboard</a>
+                        <a href="?panel=expert&page=daily-credibility-card" class="text-indigo-600 font-bold hover:text-indigo-800 flex items-center gap-1">
+                            <span>✨</span><span>Credibility Card</span>
+                        </a>
                         <a href="?panel=expert&page=my-programs" class="text-gray-600 hover:text-accent">My Programs</a>
                         <a href="?panel=expert&page=my-webinars" class="text-gray-600 hover:text-accent">My Webinars</a>
                         <a href="?panel=expert&page=earnings" class="text-gray-600 hover:text-accent">Earnings</a>
@@ -342,6 +345,7 @@ if ($panel_type === 'home'):
                             </div>
                         </div>
                         <a href="?panel=expert&page=dashboard" class="text-gray-600 hover:text-accent px-2 py-2">Dashboard</a>
+                        <a href="?panel=expert&page=daily-credibility-card" class="text-indigo-600 font-bold hover:text-indigo-800 px-2 py-2">✨ Credibility Card</a>
                         <a href="?panel=expert&page=my-programs" class="text-gray-600 hover:text-accent px-2 py-2">My Programs</a>
                         <a href="?panel=expert&page=my-webinars" class="text-gray-600 hover:text-accent px-2 py-2">My Webinars</a>
                         <a href="?panel=expert&page=earnings" class="text-gray-600 hover:text-accent px-2 py-2">Earnings</a>
