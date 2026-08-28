@@ -472,7 +472,7 @@ function getScoreLabel($score) {
         </div>
         <div class="flex items-center gap-3">
             <a href="index.php?panel=expert&page=daily-credibility-card" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition flex items-center gap-2 shadow-lg shadow-indigo-900/40">
-                <span>✨ View Credibility Card</span>
+                <span>View Credibility Card</span>
                 <span>➔</span>
             </a>
         </div>
