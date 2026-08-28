@@ -930,19 +930,28 @@ async function generateLearnerInsights(forceRefresh = false) {
 function displayInsights(insights) {
     const container = document.getElementById('ai-insights-container');
     container.innerHTML = `
-        <div class="border border-gray-800 rounded-xl p-4 bg-[#0D131F]">
-            <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-2 text-[#00D4AA]">Learner Overview</h4>
-            <p class="text-xs text-gray-300 leading-relaxed">${escapeHtml(insights.overview)}</p>
+        <div class="border border-gray-800 rounded-2xl p-5 bg-[#080B10] shadow-sm">
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-2.5 text-[#00D4AA] flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                Learner Overview
+            </h4>
+            <p class="text-xs text-gray-200 leading-relaxed">${escapeHtml(insights.overview)}</p>
         </div>
         
-        <div class="border border-gray-800 rounded-xl p-4 bg-[#0D131F]">
-            <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-2 text-[#00D4AA]">Session Goal Summary</h4>
-            <p class="text-xs text-gray-300 leading-relaxed">${escapeHtml(insights.session_goals)}</p>
+        <div class="border border-gray-800 rounded-2xl p-5 bg-[#080B10] shadow-sm">
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-2.5 text-[#00D4AA] flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Session Goal Summary
+            </h4>
+            <p class="text-xs text-gray-200 leading-relaxed">${escapeHtml(insights.session_goals)}</p>
         </div>
         
-        <div class="border border-gray-800 rounded-xl p-4 bg-[#0D131F]">
-            <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-2 text-[#00D4AA]">Recommended Approach for Expert</h4>
-            <div class="text-xs text-gray-300 leading-relaxed">${formatApproach(insights.recommended_approach)}</div>
+        <div class="border border-gray-800 rounded-2xl p-5 bg-[#080B10] shadow-sm">
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-2.5 text-[#00D4AA] flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Recommended Approach for Expert
+            </h4>
+            <div class="text-xs space-y-2">${formatApproach(insights.recommended_approach)}</div>
         </div>
     `;
 }
@@ -956,25 +965,25 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function formatApproach(text) {
-    // Format text into bullet points
-    let formatted = escapeHtml(text);
+    if (!text) return '';
+    let raw = text.toString().trim();
     
-    // Split by various patterns: ".,- " or ",- " or "\n- " or just "- " at start
-    let points = formatted.split(/\.,\s*-\s*|,\s*-\s*|\n\s*-\s*|^\s*-\s*/);
-    
-    // Clean up and filter empty strings
-    points = points.map(p => p.trim()).filter(p => p.length > 0);
-    
-    // Format as bullet points
-    if (points.length > 0) {
-        formatted = points.map(p => {
-            // Remove trailing period if exists (we'll add consistent formatting)
-            p = p.replace(/\.$/, '');
-            return '• ' + p;
-        }).join('<br>');
+    // Check if it has numbered list or standard bullet markers
+    let points = [];
+    if (/\d+[\.\)]\s+/.test(raw)) {
+        points = raw.split(/\s*(?:\d+[\.\)]\s+|\n+)/).map(p => p.trim()).filter(p => p.length > 0);
+    } else {
+        points = raw.split(/\.,\s*-\s*|,\s*-\s*|\n\s*-\s*|^\s*[-•*]\s*|\n+/).map(p => p.trim()).filter(p => p.length > 0);
     }
     
-    return formatted;
+    if (points.length > 0) {
+        return points.map(p => {
+            p = p.replace(/^[-•*]\s*/, '').replace(/\.$/, '');
+            return `<div class="flex items-start gap-2.5 py-0.5"><span class="text-[#00D4AA] font-bold shrink-0 mt-0.5">•</span><span class="text-gray-200 leading-relaxed">${escapeHtml(p)}</span></div>`;
+        }).join('');
+    }
+    
+    return `<p class="text-xs text-gray-200 leading-relaxed">${escapeHtml(raw)}</p>`;
 }
 
 function copyToClipboard(text) {

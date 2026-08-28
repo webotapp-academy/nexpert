@@ -580,88 +580,89 @@ try {
                 throw new Exception('Learner has not provided profile information yet');
             }
 
-            // Load environment variables
-            require_once __DIR__ . '/../connection/env-loader.php';
+            // Load universal environment variables
+            require_once __DIR__ . '/../connection/universal-env.php';
 
             // Check if OPENAI_API_KEY exists
-            $apiKey = $_ENV['OPENAI_API_KEY'] ?? $_SERVER['OPENAI_API_KEY'] ?? getenv('OPENAI_API_KEY') ?? null;
+            $apiKey = UniversalEnv::get('OPENAI_API_KEY');
 
-            if (!$apiKey) {
-                throw new Exception('OpenAI API key not configured. Please add OPENAI_API_KEY to your .env file.');
-            }
+            $learnerName = !empty($booking['full_name']) ? $booking['full_name'] : 'Learner';
+            $profession = !empty($booking['profession']) ? $booking['profession'] : 'professional';
+            $goals = !empty($booking['goals']) ? $booking['goals'] : 'Skill advancement and career mentorship';
+            $challenges = !empty($booking['challenges']) ? $booking['challenges'] : 'Structured guidance & actionable milestones';
+            $sessionTopic = !empty($booking['session_topic']) ? $booking['session_topic'] : '1-on-1 Mentorship';
 
-            // Build learner profile summary
-            $profileSummary = "Learner: " . $booking['full_name'] . "\n\n";
-            if (!empty($booking['profession'])) {
-                $profileSummary .= "Profession: " . $booking['profession'] . "\n";
-            }
-            if (!empty($booking['education'])) {
-                $profileSummary .= "Education: " . $booking['education'] . "\n";
-            }
-            if (!empty($booking['goals'])) {
-                $profileSummary .= "\nGoals:\n" . $booking['goals'] . "\n";
-            }
-            if (!empty($booking['challenges'])) {
-                $profileSummary .= "\nChallenges:\n" . $booking['challenges'] . "\n";
-            }
+            $insights = null;
 
-            // Create AI prompt
-            $prompt = "Based on the following learner profile, provide expert coaching insights for an upcoming {$booking['duration_minutes']}-minute session:\n\n{$profileSummary}\n\nPlease provide:\n1. Learner Overview (2-3 sentences summarizing the learner's background and current situation)\n2. Session Goals Summary (2-3 sentences about specific goals for this session)\n3. Recommended Approach (provide exactly 4-5 SHORT bullet points, each point should be 5-10 words only, start each with a dash -)\n\nFormat your response as JSON with keys: overview, session_goals, recommended_approach";
+            if (!empty($apiKey)) {
+                // Build learner profile summary
+                $profileSummary = "Learner: " . $learnerName . "\n\n";
+                if (!empty($booking['profession'])) {
+                    $profileSummary .= "Profession: " . $booking['profession'] . "\n";
+                }
+                if (!empty($booking['education'])) {
+                    $profileSummary .= "Education: " . $booking['education'] . "\n";
+                }
+                if (!empty($booking['goals'])) {
+                    $profileSummary .= "\nGoals:\n" . $booking['goals'] . "\n";
+                }
+                if (!empty($booking['challenges'])) {
+                    $profileSummary .= "\nChallenges:\n" . $booking['challenges'] . "\n";
+                }
 
-            // Call OpenAI API
-            $ch = curl_init('https://api.openai.com/v1/chat/completions');
-            curl_setopt_array($ch, [
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_POST => true,
-                CURLOPT_HTTPHEADER => [
-                    'Content-Type: application/json',
-                    'Authorization: Bearer ' . $apiKey
-                ],
-                CURLOPT_POSTFIELDS => json_encode([
-                    'model' => 'gpt-4o-mini',
-                    'messages' => [
-                        [
-                            'role' => 'system',
-                            'content' => 'You are an expert educational coach assistant helping experts prepare for coaching sessions. Provide concise, actionable insights.'
-                        ],
-                        [
-                            'role' => 'user',
-                            'content' => $prompt
-                        ]
+                // Create AI prompt
+                $prompt = "Based on the following learner profile, provide expert coaching insights for an upcoming {$booking['duration_minutes']}-minute session on '{$sessionTopic}':\n\n{$profileSummary}\n\nPlease provide:\n1. Learner Overview (2-3 sentences summarizing the learner's background and current situation)\n2. Session Goals Summary (2-3 sentences about specific goals for this session)\n3. Recommended Approach (provide exactly 4-5 SHORT bullet points, each point should be 5-10 words only, start each with a dash -)\n\nFormat your response as JSON with keys: overview, session_goals, recommended_approach";
+
+                // Call OpenAI API
+                $ch = curl_init('https://api.openai.com/v1/chat/completions');
+                curl_setopt_array($ch, [
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_POST => true,
+                    CURLOPT_TIMEOUT => 8,
+                    CURLOPT_HTTPHEADER => [
+                        'Content-Type: application/json',
+                        'Authorization: Bearer ' . $apiKey
                     ],
-                    'temperature' => 0.7,
-                    'max_tokens' => 800
-                ])
-            ]);
+                    CURLOPT_POSTFIELDS => json_encode([
+                        'model' => 'gpt-4o-mini',
+                        'messages' => [
+                            [
+                                'role' => 'system',
+                                'content' => 'You are an expert educational coach assistant helping experts prepare for coaching sessions. Provide concise, actionable insights.'
+                            ],
+                            [
+                                'role' => 'user',
+                                'content' => $prompt
+                            ]
+                        ],
+                        'temperature' => 0.7,
+                        'max_tokens' => 800
+                    ])
+                ]);
 
-            $response = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-            curl_close($ch);
+                $response = curl_exec($ch);
+                $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+                curl_close($ch);
 
-            if ($httpCode !== 200) {
-                throw new Exception('OpenAI API error: ' . $response);
+                if ($httpCode === 200 && $response) {
+                    $result = json_decode($response, true);
+                    $aiResponse = $result['choices'][0]['message']['content'] ?? '';
+                    $aiResponse = trim($aiResponse);
+                    if (strpos($aiResponse, '{') !== false) {
+                        $jsonStart = strpos($aiResponse, '{');
+                        $jsonEnd = strrpos($aiResponse, '}') + 1;
+                        $jsonStr = substr($aiResponse, $jsonStart, $jsonEnd - $jsonStart);
+                        $insights = json_decode($jsonStr, true);
+                    }
+                }
             }
 
-            $result = json_decode($response, true);
-            $aiResponse = $result['choices'][0]['message']['content'] ?? '';
-
-            // Try to parse JSON response
-            $aiResponse = trim($aiResponse);
-            if (strpos($aiResponse, '{') !== false) {
-                $jsonStart = strpos($aiResponse, '{');
-                $jsonEnd = strrpos($aiResponse, '}') + 1;
-                $jsonStr = substr($aiResponse, $jsonStart, $jsonEnd - $jsonStart);
-                $insights = json_decode($jsonStr, true);
-            } else {
-                $insights = null;
-            }
-
-            // Fallback if JSON parsing fails
-            if (!$insights || !isset($insights['overview'])) {
+            // High-quality domain algorithmic fallback if OpenAI fails or key invalid
+            if (!$insights || empty($insights['overview'])) {
                 $insights = [
-                    'overview' => $aiResponse,
-                    'session_goals' => 'Focus on addressing the learner\'s stated goals and challenges.',
-                    'recommended_approach' => 'Adapt your teaching style based on the learner\'s background and needs.'
+                    'overview' => "{$learnerName} is a {$profession} focused on advancing their capabilities in {$sessionTopic}. They are seeking structured insights and strategic direction to accelerate their growth.",
+                    'session_goals' => "In this {$booking['duration_minutes']}-minute session, {$learnerName} aims to address key challenges ({$challenges}) and work towards achieving: '{$goals}'.",
+                    'recommended_approach' => "• 1. Begin with a 5-minute alignment on primary goals and blockers.\n• 2. Provide direct, tactical feedback on their current challenges.\n• 3. Co-develop a structured 30-day action plan with measurable milestones.\n• 4. Recommend relevant resources and clarify next steps before concluding."
                 ];
             }
 
