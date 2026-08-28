@@ -375,10 +375,336 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
             <div class="bg-black/50 border border-gray-800 rounded-xl p-4 font-mono text-xs text-gray-300 whitespace-pre-wrap leading-relaxed select-all" id="share-text-box"><?= htmlspecialchars($shareText) ?></div>
         </div>
 
+        <!-- ============================================================ -->
+        <!-- CREDIBILITY SYSTEM EXPLAINER & ACCORDION KNOWLEDGE BASE -->
+        <!-- ============================================================ -->
+        <div class="mt-12 pt-8 border-t border-gray-800/80 space-y-6">
+            
+            <!-- Section Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#7c3aed]/15 text-[#a78bfa] border border-[#7c3aed]/30 mb-2">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        System Architecture & Mechanics
+                    </div>
+                    <h2 class="text-2xl font-black text-white tracking-tight">How the Nexpert Credibility System Works</h2>
+                    <p class="text-xs sm:text-sm text-gray-400 mt-1 max-w-2xl">
+                        Nexpert uses a sovereign, multi-dimensional trust telemetry engine. Instead of easily manipulated 5-star reviews, your score is calculated through actual verified execution, learner outcomes, and platform integrity.
+                    </p>
+                </div>
+                <div class="shrink-0 flex items-center gap-2">
+                    <button onclick="expandAllAccordions()" class="px-3 py-1.5 bg-[#0D131F] hover:bg-gray-800 border border-gray-800 rounded-xl text-xs font-bold text-gray-300 transition">Expand All</button>
+                    <button onclick="collapseAllAccordions()" class="px-3 py-1.5 bg-[#0D131F] hover:bg-gray-800 border border-gray-800 rounded-xl text-xs font-bold text-gray-300 transition">Collapse All</button>
+                </div>
+            </div>
+
+            <!-- Accordion Group -->
+            <div class="space-y-4" id="credibility-accordions">
+                
+                <!-- ACCORDION 1: 5-DIMENSIONAL SCORING -->
+                <div class="border border-gray-800 bg-[#0c1020]/90 rounded-2xl overflow-hidden transition-all duration-200">
+                    <button onclick="toggleAccordion('acc-scoring')" class="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 hover:bg-[#131b2e]/40 transition group">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-9 h-9 rounded-xl bg-purple-950/80 border border-purple-500/40 text-purple-300 flex items-center justify-center shrink-0 font-black text-sm">
+                                1
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-sm sm:text-base text-white group-hover:text-[#00D4AA] transition">The 5 Dimensions of Credibility</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">How your daily points and trust metrics are computed across 5 mathematical vectors</p>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-xl bg-[#080B10] border border-gray-800 flex items-center justify-center text-gray-400 group-hover:text-white shrink-0 transition" id="icon-acc-scoring">
+                            <svg class="w-4 h-4 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </button>
+                    
+                    <div id="acc-scoring" class="accordion-content hidden border-t border-gray-800/80 p-5 sm:p-6 bg-[#080B10]/80 space-y-4">
+                        <p class="text-xs text-gray-300 leading-relaxed">
+                            Your credibility is not a subjective popularity contest. It is derived mathematically from 5 independent, weighted telemetry vectors evaluated each day:
+                        </p>
+                        
+                        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-2">
+                            <!-- Dimension 1 -->
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800 space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Confidence (20%)
+                                    </span>
+                                    <span class="text-[10px] font-mono text-cyan-300 font-bold">Identity & KYC</span>
+                                </div>
+                                <p class="text-[11px] text-gray-400 leading-relaxed">Verified government KYC, verified work history, portfolio authenticity, and complete expert onboarding.</p>
+                            </div>
+
+                            <!-- Dimension 2 -->
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800 space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-indigo-400"></span> Structure (20%)
+                                    </span>
+                                    <span class="text-[10px] font-mono text-indigo-300 font-bold">Deliverables</span>
+                                </div>
+                                <p class="text-[11px] text-gray-400 leading-relaxed">Publishing structured syllabi, providing concrete action items, uploading session attachments, and advisory notes.</p>
+                            </div>
+
+                            <!-- Dimension 3 -->
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800 space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Outcome (25%)
+                                    </span>
+                                    <span class="text-[10px] font-mono text-emerald-300 font-bold">Learner ROI</span>
+                                </div>
+                                <p class="text-[11px] text-gray-400 leading-relaxed">Learner milestone achievements, problem resolution rate, verified post-session ratings, and repeat mentorship.</p>
+                            </div>
+
+                            <!-- Dimension 4 -->
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800 space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-amber-400"></span> Consistency (20%)
+                                    </span>
+                                    <span class="text-[10px] font-mono text-amber-300 font-bold">Reliability</span>
+                                </div>
+                                <p class="text-[11px] text-gray-400 leading-relaxed">On-time session starts, zero unannounced cancellations, active availability maintenance, and fast response times.</p>
+                            </div>
+
+                            <!-- Dimension 5 -->
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800 space-y-1.5">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-bold text-white flex items-center gap-1.5">
+                                        <span class="w-2 h-2 rounded-full bg-purple-400"></span> Ethics & Boundary (15%)
+                                    </span>
+                                    <span class="text-[10px] font-mono text-purple-300 font-bold">Integrity</span>
+                                </div>
+                                <p class="text-[11px] text-gray-400 leading-relaxed">Safe and professional environment, zero anti-harassment flags, encrypted messaging, and sovereign session execution.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACCORDION 2: STEP-BY-STEP CALCULATION EXAMPLE -->
+                <div class="border border-gray-800 bg-[#0c1020]/90 rounded-2xl overflow-hidden transition-all duration-200">
+                    <button onclick="toggleAccordion('acc-example')" class="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 hover:bg-[#131B2E]/40 transition group">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-9 h-9 rounded-xl bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 flex items-center justify-center shrink-0 font-black text-sm">
+                                2
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-sm sm:text-base text-white group-hover:text-[#00D4AA] transition">Real-World Daily Calculation Example</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">See how a typical expert goes from 847 ➔ 862 points in a single 24-hour cycle</p>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-xl bg-[#080B10] border border-gray-800 flex items-center justify-center text-gray-400 group-hover:text-white shrink-0 transition" id="icon-acc-example">
+                            <svg class="w-4 h-4 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </button>
+                    
+                    <div id="acc-example" class="accordion-content hidden border-t border-gray-800/80 p-5 sm:p-6 bg-[#080B10]/80 space-y-4">
+                        <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800">
+                            <div class="flex items-center justify-between mb-3 pb-2 border-b border-gray-800">
+                                <span class="text-xs font-bold text-gray-300 font-mono">SCENARIO: Senior Engineering Coach</span>
+                                <span class="text-xs font-mono font-black text-[#00D4AA]">Starting Base: 847 Points</span>
+                            </div>
+                            
+                            <div class="space-y-2.5 text-xs">
+                                <div class="flex items-center justify-between text-gray-300">
+                                    <span class="flex items-center gap-2">
+                                        <span class="text-emerald-400 font-bold">+8 pts</span> Completed 2 scheduled 1-on-1 sessions on time
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 font-mono">Outcome + Consistency</span>
+                                </div>
+                                <div class="flex items-center justify-between text-gray-300">
+                                    <span class="flex items-center gap-2">
+                                        <span class="text-emerald-400 font-bold">+4 pts</span> Published 5 action items + 2 resource links for attendees
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 font-mono">Structure</span>
+                                </div>
+                                <div class="flex items-center justify-between text-gray-300">
+                                    <span class="flex items-center gap-2">
+                                        <span class="text-emerald-400 font-bold">+3 pts</span> Received a 5.0/5.0 verified rating with positive sentiment
+                                    </span>
+                                    <span class="text-[11px] text-gray-500 font-mono">Confidence & Outcome</span>
+                                </div>
+                                <div class="pt-3 border-t border-gray-800 flex items-center justify-between font-bold text-sm">
+                                    <span class="text-white">Daily Credibility Gain:</span>
+                                    <span class="text-[#00D4AA] font-mono text-base">+15 Points (847 ➔ 862)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-400 italic">
+                            💡 Every midnight UTC, the cron automation recalculates your score and updates your shareable card image and verified telemetry URL.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- ACCORDION 3: TRUST BANDS & RANKING TIERS -->
+                <div class="border border-gray-800 bg-[#0c1020]/90 rounded-2xl overflow-hidden transition-all duration-200">
+                    <button onclick="toggleAccordion('acc-bands')" class="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 hover:bg-[#131B2E]/40 transition group">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-9 h-9 rounded-xl bg-blue-950/80 border border-blue-500/40 text-blue-300 flex items-center justify-center shrink-0 font-black text-sm">
+                                3
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-sm sm:text-base text-white group-hover:text-[#00D4AA] transition">Trust Bands & Ranking Percentiles</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">Understand how points translate into official status tiers and platform ranking</p>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-xl bg-[#080B10] border border-gray-800 flex items-center justify-center text-gray-400 group-hover:text-white shrink-0 transition" id="icon-acc-bands">
+                            <svg class="w-4 h-4 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </button>
+                    
+                    <div id="acc-bands" class="accordion-content hidden border-t border-gray-800/80 p-5 sm:p-6 bg-[#080B10]/80 space-y-4">
+                        <div class="grid sm:grid-cols-2 gap-3.5">
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-purple-500/30 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-black text-purple-300">👑 Master Sovereign</span>
+                                    <span class="text-xs font-mono font-bold text-purple-400">900+ Points</span>
+                                </div>
+                                <p class="text-[11px] text-gray-400">Top 1-3% of platform experts. Proven track record with over 50+ completed mentorship hours and zero infractions.</p>
+                            </div>
+                            
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-[#00D4AA]/30 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-black text-[#00D4AA]">⭐ Verified Authority</span>
+                                    <span class="text-xs font-mono font-bold text-[#00D4AA]">800 - 899 Points</span>
+                                </div>
+                                <p class="text-[11px] text-gray-400">Top 8-15% benchmark. Consistently delivers structured advisory with high learner retention and verified outcomes.</p>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-blue-500/30 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-black text-blue-300">🔷 Certified Practitioner</span>
+                                    <span class="text-xs font-mono font-bold text-blue-400">700 - 799 Points</span>
+                                </div>
+                                <p class="text-[11px] text-gray-400">Established expert with regular active sessions, verified identity, and reliable student feedback.</p>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-700 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-black text-gray-300">🌱 Emerging Guide</span>
+                                    <span class="text-xs font-mono font-bold text-gray-400">600 - 699 Points</span>
+                                </div>
+                                <p class="text-[11px] text-gray-400">Newly approved verified experts building momentum and conducting their initial coaching sessions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACCORDION 4: VIRAL SOCIAL PROOF & VERIFICATION LINK -->
+                <div class="border border-gray-800 bg-[#0c1020]/90 rounded-2xl overflow-hidden transition-all duration-200">
+                    <button onclick="toggleAccordion('acc-social')" class="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 hover:bg-[#131B2E]/40 transition group">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-9 h-9 rounded-xl bg-cyan-950/80 border border-cyan-500/40 text-cyan-300 flex items-center justify-center shrink-0 font-black text-sm">
+                                4
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-sm sm:text-base text-white group-hover:text-[#00D4AA] transition">LinkedIn Sharing & Verifiable Proof</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">How sharing your Daily Card drives high-intent learner acquisition</p>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-xl bg-[#080B10] border border-gray-800 flex items-center justify-center text-gray-400 group-hover:text-white shrink-0 transition" id="icon-acc-social">
+                            <svg class="w-4 h-4 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </button>
+                    
+                    <div id="acc-social" class="accordion-content hidden border-t border-gray-800/80 p-5 sm:p-6 bg-[#080B10]/80 space-y-4">
+                        <div class="space-y-3 text-xs text-gray-300 leading-relaxed">
+                            <p>
+                                When you share your Daily Credibility Card to LinkedIn, Twitter, or Discord, it includes your <strong>unique telemetry verification link</strong> (<span class="text-[#00D4AA] font-mono">nexpertapp.com/...</span>) and a live QR code.
+                            </p>
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800 space-y-2">
+                                <p class="font-bold text-white">Why learners & clients trust Nexpert Credibility Cards:</p>
+                                <ul class="space-y-1.5 text-gray-300 list-disc list-inside">
+                                    <li><strong>100% Cryptographically Verifiable:</strong> Clicking or scanning the card leads directly to your live sovereign trust certificate.</li>
+                                    <li><strong>Zero Fake Testimonials:</strong> Ratings are cryptographically linked only to completed Razorpay/Zoom sessions.</li>
+                                    <li><strong>Organic Inbound Bookings:</strong> Prospective learners can view your verified score breakdown and book sessions directly from your card.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACCORDION 5: DEDUCTIONS & ANTI-GAMING SAFEGUARDS -->
+                <div class="border border-gray-800 bg-[#0c1020]/90 rounded-2xl overflow-hidden transition-all duration-200">
+                    <button onclick="toggleAccordion('acc-safeguards')" class="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 hover:bg-[#131B2E]/40 transition group">
+                        <div class="flex items-center gap-3.5">
+                            <div class="w-9 h-9 rounded-xl bg-rose-950/80 border border-rose-500/40 text-rose-300 flex items-center justify-center shrink-0 font-black text-sm">
+                                5
+                            </div>
+                            <div>
+                                <h3 class="font-extrabold text-sm sm:text-base text-white group-hover:text-[#00D4AA] transition">Anti-Gaming Safeguards & Penalties</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">Rules protecting the integrity and prestige of the Nexpert verification seal</p>
+                            </div>
+                        </div>
+                        <div class="w-8 h-8 rounded-xl bg-[#080B10] border border-gray-800 flex items-center justify-center text-gray-400 group-hover:text-white shrink-0 transition" id="icon-acc-safeguards">
+                            <svg class="w-4 h-4 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        </div>
+                    </button>
+                    
+                    <div id="acc-safeguards" class="accordion-content hidden border-t border-gray-800/80 p-5 sm:p-6 bg-[#080B10]/80 space-y-4">
+                        <div class="space-y-3 text-xs text-gray-300 leading-relaxed">
+                            <p>To preserve maximum trust for all verified experts, the autonomous engine applies automated deductions if protocols are breached:</p>
+                            <div class="grid sm:grid-cols-3 gap-3 pt-1">
+                                <div class="p-3 bg-red-950/30 border border-red-500/30 rounded-xl space-y-1">
+                                    <span class="text-xs font-bold text-red-400">-25 Points</span>
+                                    <p class="text-[11px] text-gray-400">Unannounced session no-show or late cancellation under 2 hours.</p>
+                                </div>
+                                <div class="p-3 bg-red-950/30 border border-red-500/30 rounded-xl space-y-1">
+                                    <span class="text-xs font-bold text-red-400">-15 Points</span>
+                                    <p class="text-[11px] text-gray-400">Unresponsive to pending booking requests exceeding 48 hours.</p>
+                                </div>
+                                <div class="p-3 bg-red-950/30 border border-red-500/30 rounded-xl space-y-1">
+                                    <span class="text-xs font-bold text-red-400">Immediate Freeze</span>
+                                    <p class="text-[11px] text-gray-400">Attempting to generate artificial review signals or sybil activity.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 </div>
 
 <script>
+function toggleAccordion(id) {
+    const el = document.getElementById(id);
+    const icon = document.getElementById('icon-' + id);
+    if (!el) return;
+
+    const isHidden = el.classList.contains('hidden');
+    
+    if (isHidden) {
+        el.classList.remove('hidden');
+        if (icon) icon.querySelector('svg').classList.add('rotate-180');
+    } else {
+        el.classList.add('hidden');
+        if (icon) icon.querySelector('svg').classList.remove('rotate-180');
+    }
+}
+
+function expandAllAccordions() {
+    document.querySelectorAll('.accordion-content').forEach(el => {
+        el.classList.remove('hidden');
+    });
+    document.querySelectorAll('[id^="icon-acc-"]').forEach(icon => {
+        icon.querySelector('svg').classList.add('rotate-180');
+    });
+}
+
+function collapseAllAccordions() {
+    document.querySelectorAll('.accordion-content').forEach(el => {
+        el.classList.add('hidden');
+    });
+    document.querySelectorAll('[id^="icon-acc-"]').forEach(icon => {
+        icon.querySelector('svg').classList.remove('rotate-180');
+    });
+}
+
 const CARD_ID = <?= (int)($cardRow['id'] ?? 0) ?>;
 const EXPERT_ID = <?= $expertId ?>;
 const PROFILE_URL = "<?= addslashes($profileReportUrl) ?>";
