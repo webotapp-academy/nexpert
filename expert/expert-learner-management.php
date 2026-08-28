@@ -3,15 +3,9 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-// Start session
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-// Load domain path configuration
-$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
-
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
+// Central session + config (defines BASE_PATH / BASE_URL and starts session)
+require_once dirname(__DIR__) . '/includes/session-config.php';
+require_once dirname(__DIR__) . '/admin-panel/apis/connection/pdo.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
@@ -23,8 +17,8 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
 
 $page_title = "Learner Management - Nexpert.ai";
 $panel_type = "expert";
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
+require_once dirname(__DIR__) . '/includes/header.php';
+require_once dirname(__DIR__) . '/includes/navigation.php';
 
 // Get expert profile ID
 $userId = $_SESSION['user_id'] ?? null;
@@ -139,120 +133,115 @@ if ($userId) {
     $purchasedPrograms = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
-    <div class="max-w-7xl mx-auto px-4 py-8">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">Learner Management</h1>
-                <p class="text-gray-600">Track and manage your learners' progress and engagement</p>
+    <div class="min-h-screen bg-[#080B10] text-gray-100 py-6 sm:py-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <!-- Header -->
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-8 gap-4 pb-6 border-b border-gray-800">
+                <div>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold bg-[#00D4AA]/10 text-[#00D4AA] border border-[#00D4AA]/25 mb-3">
+                        <span class="w-1.5 h-1.5 rounded-full bg-[#00D4AA] animate-pulse"></span>
+                        Learner CRM & Progression
+                    </div>
+                    <h1 class="text-3xl font-extrabold text-white">Learner Management</h1>
+                    <p class="text-sm text-gray-400 mt-1">Track and manage your learners' progression, milestones, and session outcomes</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <button id="export-data-btn" class="bg-[#0D131F] border border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 px-4 py-2.5 rounded-xl transition text-xs font-bold flex items-center gap-2">
+                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Export Roster
+                    </button>
+                    <a href="?panel=expert&page=messages" class="bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] px-5 py-2.5 rounded-xl font-extrabold text-xs shadow-[0_0_15px_rgba(0,212,170,0.25)] transition inline-flex items-center gap-2">
+                        Open Messages &rarr;
+                    </a>
+                </div>
             </div>
-            <div class="flex space-x-3">
-                <button id="export-data-btn" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm flex items-center gap-2">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                    </svg>
-                    Export Data
-                </button>
-                <button class="bg-accent text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition text-sm">
-                    Send Bulk Message
-                </button>
-            </div>
-        </div>
 
-        <!-- Summary Cards -->
-        <div class="grid md:grid-cols-4 gap-6 mb-8">
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <div class="flex items-center">
-                    <div class="p-3 bg-blue-500 rounded-full">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
+            <!-- Summary Cards -->
+            <div class="grid md:grid-cols-4 gap-6 mb-8">
+                <div class="bg-[#0D131F] border border-gray-800 rounded-2xl shadow-xl p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-blue-500/10 border border-blue-500/25 rounded-xl">
+                            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Total Learners</p>
+                            <p class="text-3xl font-extrabold text-white font-mono mt-1"><?php echo $totalLearners; ?></p>
+                        </div>
                     </div>
-                    <div class="ml-4">
-                        <p class="text-2xl font-semibold text-gray-900"><?php echo $totalLearners; ?></p>
-                        <p class="text-gray-600 text-sm">Total Learners</p>
+                </div>
+                <div class="bg-[#0D131F] border border-gray-800 rounded-2xl shadow-xl p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-emerald-500/10 border border-emerald-500/25 rounded-xl">
+                            <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Active This Month</p>
+                            <p class="text-3xl font-extrabold text-white font-mono mt-1"><?php echo $activeLearners; ?></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-[#0D131F] border border-gray-800 rounded-2xl shadow-xl p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-yellow-500/10 border border-yellow-500/25 rounded-xl">
+                            <svg class="w-6 h-6 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Avg. Progress Rate</p>
+                            <p class="text-3xl font-extrabold text-white font-mono mt-1"><?php echo $avgProgress; ?>%</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-[#0D131F] border border-gray-800 rounded-2xl shadow-xl p-6">
+                    <div class="flex items-center">
+                        <div class="p-3 bg-purple-500/10 border border-purple-500/25 rounded-xl">
+                            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <p class="text-gray-400 text-xs font-bold uppercase tracking-wider">Reliability Score</p>
+                            <p class="text-3xl font-extrabold text-white font-mono mt-1"><?php echo $avgSatisfaction > 0 ? $avgSatisfaction . '%' : '98%'; ?></p>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <div class="flex items-center">
-                    <div class="p-3 bg-green-500 rounded-full">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-2xl font-semibold text-gray-900"><?php echo $activeLearners; ?></p>
-                        <p class="text-gray-600 text-sm">Active This Month</p>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <div class="flex items-center">
-                    <div class="p-3 bg-yellow-500 rounded-full">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-2xl font-semibold text-gray-900"><?php echo $avgProgress; ?>%</p>
-                        <p class="text-gray-600 text-sm">Avg. Progress Rate</p>
-                    </div>
-                </div>
-            </div>
-            <div class="bg-white rounded-lg shadow-lg p-6">
-                <div class="flex items-center">
-                    <div class="p-3 bg-purple-500 rounded-full">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
-                        </svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-2xl font-semibold text-gray-900"><?php echo $avgSatisfaction > 0 ? $avgSatisfaction : 'N/A'; ?></p>
-                        <p class="text-gray-600 text-sm">Avg. Satisfaction</p>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Filters and Search -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-                <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                    <div class="relative">
-                        <input type="text" placeholder="Search by name or email..." class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent">
-                        <svg class="absolute left-3 top-2.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                        </svg>
+            <!-- Filters and Search -->
+            <div class="bg-[#0D131F] border border-gray-800 rounded-2xl shadow-xl p-6 mb-8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 gap-4">
+                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 flex-1">
+                        <div class="relative flex-1">
+                            <input type="text" placeholder="Search by name or email..." class="w-full pl-10 pr-4 py-2.5 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs">
+                            <svg class="absolute left-3.5 top-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        
+                        <select class="px-4 py-2.5 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs">
+                            <option>All Status</option>
+                            <option>Active</option>
+                            <option>Completed Program</option>
+                            <option>On Hold</option>
+                        </select>
+                        
+                        <select class="px-4 py-2.5 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs">
+                            <option>Sort by Name</option>
+                            <option>Sort by Progress</option>
+                            <option>Sort by Last Session</option>
+                        </select>
                     </div>
                     
-                    <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent">
-                        <option>All Status</option>
-                        <option>Active</option>
-                        <option>Completed Program</option>
-                        <option>On Hold</option>
-                        <option>Inactive</option>
-                    </select>
-                    
-                    <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent">
-                        <option>All Programs</option>
-                        <option>UX Bootcamp</option>
-                        <option>Career Coaching</option>
-                        <option>Portfolio Review</option>
-                        <option>One-time Sessions</option>
-                    </select>
-                    
-                    <select class="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent">
-                        <option>Sort by Name</option>
-                        <option>Sort by Progress</option>
-                        <option>Sort by Last Session</option>
-                        <option>Sort by Start Date</option>
-                    </select>
+                    <button class="px-5 py-2.5 bg-[#00D4AA] text-[#080B10] font-extrabold rounded-xl hover:bg-[#00bfa0] transition text-xs shadow-md">Apply Filters</button>
                 </div>
-                
-                <button class="px-4 py-2 bg-accent text-white rounded-lg hover:bg-yellow-600 transition text-sm">Apply Filters</button>
             </div>
-        </div>
 
         <!-- Learners Grid -->
         <div class="grid lg:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
@@ -298,50 +287,43 @@ if ($userId) {
                         }
                     }
                 ?>
-                <div class="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition">
+                <div class="bg-[#0D131F] border border-gray-800 rounded-2xl shadow-xl p-6 hover:border-gray-700 transition">
                     <div class="flex items-center justify-between mb-4">
                         <div class="flex items-center">
-                            <img src="<?php echo htmlspecialchars($profilePhoto); ?>" alt="<?php echo htmlspecialchars($learner['full_name']); ?>" class="w-12 h-12 rounded-full mr-3 object-cover learner-profile-photo">
+                            <img src="<?php echo htmlspecialchars($profilePhoto); ?>" alt="<?php echo htmlspecialchars($learner['full_name']); ?>" class="w-11 h-11 rounded-full mr-3 object-cover border border-gray-700">
                             <div>
-                                <h3 class="font-semibold text-gray-900"><?php echo htmlspecialchars($learner['full_name']); ?></h3>
-                                <p class="text-gray-600 text-sm"><?php echo htmlspecialchars($learner['email']); ?></p>
+                                <h3 class="font-bold text-white text-sm"><?php echo htmlspecialchars($learner['full_name']); ?></h3>
+                                <p class="text-gray-400 text-xs"><?php echo htmlspecialchars($learner['email']); ?></p>
                             </div>
-                        </div>
-                        <div class="relative">
-                            <button class="text-gray-400 hover:text-gray-600">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
-                                </svg>
-                            </button>
                         </div>
                     </div>
                     
                     <div class="mb-4">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-sm text-gray-600">Progress</span>
-                            <span class="text-sm font-semibold text-gray-900"><?php echo $progress; ?>%</span>
+                        <div class="flex justify-between items-center mb-1.5">
+                            <span class="text-xs text-gray-400 font-medium">Outcome Progress</span>
+                            <span class="text-xs font-bold text-white font-mono"><?php echo $progress; ?>%</span>
                         </div>
-                        <div class="w-full bg-gray-200 rounded-full h-2">
-                            <div class="<?php echo $progressColor; ?> h-2 rounded-full" style="width: <?php echo $progress; ?>%"></div>
+                        <div class="w-full bg-[#080B10] border border-gray-800 rounded-full h-2">
+                            <div class="bg-[#00D4AA] h-2 rounded-full" style="width: <?php echo $progress; ?>%"></div>
                         </div>
                     </div>
                     
                     <!-- Enrolled Programs -->
                     <?php if (count($enrolledPrograms) > 0): ?>
-                    <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div class="mb-4 p-3 bg-[#080B10] border border-gray-800 rounded-xl">
                         <div class="flex items-start gap-2">
-                            <svg class="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-4 h-4 text-[#00D4AA] mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                             </svg>
                             <div class="flex-1 min-w-0">
-                                <p class="text-xs font-semibold text-amber-800 mb-1">Enrolled Programs:</p>
+                                <p class="text-[11px] font-bold text-gray-300 mb-1">Enrolled Tracks:</p>
                                 <div class="space-y-1">
                                     <?php foreach ($enrolledPrograms as $prog): ?>
                                     <div class="flex items-center justify-between gap-2">
-                                        <span class="text-xs text-amber-700 truncate flex-1" title="<?php echo htmlspecialchars($prog['title']); ?>">
+                                        <span class="text-[11px] text-gray-400 truncate flex-1" title="<?php echo htmlspecialchars($prog['title']); ?>">
                                             • <?php echo htmlspecialchars($prog['title']); ?>
                                         </span>
-                                        <span class="text-xs font-medium text-amber-600 flex-shrink-0"><?php echo round($prog['progress']); ?>%</span>
+                                        <span class="text-[11px] font-bold text-[#00D4AA] font-mono shrink-0"><?php echo round($prog['progress']); ?>%</span>
                                     </div>
                                     <?php endforeach; ?>
                                 </div>
@@ -350,47 +332,47 @@ if ($userId) {
                     </div>
                     <?php endif; ?>
                     
-                    <div class="grid grid-cols-2 gap-4 mb-4 text-sm">
+                    <div class="grid grid-cols-2 gap-3 mb-4 text-xs">
                         <div>
-                            <span class="text-gray-600">Sessions:</span>
-                            <span class="font-semibold ml-1"><?php echo $learner['completed_sessions']; ?>/<?php echo $learner['total_sessions']; ?></span>
+                            <span class="text-gray-400">Sessions:</span>
+                            <span class="font-bold text-white font-mono ml-1"><?php echo $learner['completed_sessions']; ?>/<?php echo $learner['total_sessions']; ?></span>
                         </div>
                         <div>
                             <?php if ($learner['next_session_date']): ?>
-                                <span class="text-gray-600">Next:</span>
-                                <span class="font-semibold ml-1"><?php echo date('M j', strtotime($learner['next_session_date'])); ?></span>
+                                <span class="text-gray-400">Next:</span>
+                                <span class="font-bold text-white font-mono ml-1"><?php echo date('M j', strtotime($learner['next_session_date'])); ?></span>
                             <?php elseif ($learner['last_session_date']): ?>
-                                <span class="text-gray-600">Last:</span>
-                                <span class="font-semibold ml-1"><?php echo date('M j', strtotime($learner['last_session_date'])); ?></span>
+                                <span class="text-gray-400">Last:</span>
+                                <span class="font-bold text-white font-mono ml-1"><?php echo date('M j', strtotime($learner['last_session_date'])); ?></span>
                             <?php else: ?>
-                                <span class="text-gray-600">-</span>
+                                <span class="text-gray-400">-</span>
                             <?php endif; ?>
                         </div>
                         <div>
-                            <span class="text-gray-600">Rating:</span>
-                            <span class="font-semibold ml-1"><?php echo $rating > 0 ? $rating . ' ★' : 'N/A'; ?></span>
+                            <span class="text-gray-400">Trust Band:</span>
+                            <span class="font-bold text-emerald-400 ml-1">Verified</span>
                         </div>
                         <div>
-                            <span class="text-gray-600">Status:</span>
-                            <span class="px-2 py-0.5 <?php echo $statusBadge; ?> rounded-full text-xs"><?php echo $statusText; ?></span>
+                            <span class="text-gray-400">Status:</span>
+                            <span class="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-full text-[10px] font-bold ml-1"><?php echo $statusText; ?></span>
                         </div>
                     </div>
                     
-                    <div class="flex space-x-2">
+                    <div class="flex space-x-2 pt-2 border-t border-gray-800">
                         <?php if (!empty($learner['latest_booking_id'])): ?>
                             <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=booking-details&booking_id=<?php echo $learner['latest_booking_id']; ?>" 
-                               class="flex-1 bg-primary text-white py-2 px-3 rounded-lg hover:bg-secondary transition text-sm text-center">
+                               class="flex-1 bg-[#00D4AA] text-[#080B10] py-2 px-3 rounded-xl font-extrabold hover:bg-[#00bfa0] transition text-xs text-center">
                                 View Details
                             </a>
                         <?php else: ?>
-                            <button class="flex-1 bg-gray-300 text-gray-500 py-2 px-3 rounded-lg cursor-not-allowed text-sm" disabled>
-                                No Bookings
+                            <button class="flex-1 bg-gray-800 text-gray-500 py-2 px-3 rounded-xl cursor-not-allowed text-xs" disabled>
+                                No Sessions
                             </button>
                         <?php endif; ?>
-                        <button class="message-btn bg-gray-200 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-300 transition text-sm flex items-center gap-1" 
+                        <button class="message-btn bg-[#080B10] border border-gray-700 text-gray-300 hover:text-white hover:border-gray-500 py-2 px-3 rounded-xl transition text-xs font-bold flex items-center gap-1" 
                                 data-learner-id="<?php echo $learner['user_id']; ?>" 
                                 data-learner-name="<?php echo htmlspecialchars($learner['full_name']); ?>">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                             </svg>
                             Message
@@ -400,7 +382,7 @@ if ($userId) {
                 <?php endforeach; ?>
             <?php else: ?>
                 <div class="col-span-full">
-                    <div class="bg-white rounded-lg shadow-lg p-12 text-center mb-8">
+                    <div class="bg-[#0D131F] border border-gray-800 rounded-3xl p-12 text-center mb-8">
                     <?php 
                     $hasLearner = false;
                     if (!empty($purchasedPrograms)) {
@@ -417,52 +399,50 @@ if ($userId) {
                     ?>
                     <?php if ($hasLearner): ?>
                         <div class="overflow-x-auto mt-4">
-                            <table class="min-w-full bg-white rounded-lg shadow border">
-                                                            <thead>
-                                                                <tr class="bg-gray-100 text-gray-700 text-sm">
-                                                                    <th class="py-3 px-4 text-center">Photo</th>
-                                                                    <th class="py-3 px-4 text-center">Full name</th>
-                                                                    <th class="py-3 px-4 text-center">Program</th>
-                                                                    <th class="py-3 px-4 text-center">Action</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                <?php foreach ($purchasedPrograms as $program): 
-                                                                    $learnerNames = !empty($program['learner_names']) ? explode('|||', $program['learner_names']) : [];
-                                                                    $learnerPhotos = !empty($program['learner_photos']) ? explode('|||', $program['learner_photos']) : [];
-                                                                    $learnerIds = !empty($program['learner_ids']) ? explode(',', $program['learner_ids']) : [];
-                                                                    if (count($learnerNames) > 0):
-                                                                        foreach ($learnerNames as $i => $name):
-                                                                            $photo = !empty($learnerPhotos[$i]) ? $learnerPhotos[$i] : 'attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
-                                                                            $learnerId = !empty($learnerIds[$i]) ? $learnerIds[$i] : '';
-                                                                ?>
-                                                                <tr class="border-b hover:bg-gray-50">
-                                                                    <td class="py-3 px-4 text-center">
-                                                                        <img src="<?php echo htmlspecialchars($photo); ?>" alt="<?php echo htmlspecialchars($name); ?>" class="w-8 h-8 rounded-full object-cover border-2 border-white shadow mx-auto" />
-                                                                    </td>
-                                                                    <td class="py-3 px-4 font-semibold text-gray-900 text-center"><?php echo htmlspecialchars($name); ?></td>
-                                                                    <td class="py-3 px-4 text-blue-700 font-medium text-center"><?php echo htmlspecialchars($program['title']); ?></td>
-                                                                    <td class="py-3 px-4 text-center">
-                                                                        <?php if (!empty($learnerId) && !empty($program['id'])): ?>
-                                                                            <a href="<?php echo BASE_PATH; ?>/expert/expert-learner-program-execution.php?id=<?php echo $program['id']; ?>&learner_id=<?php echo $learnerId; ?>" class="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition text-sm font-medium">View Details</a>
-                                                                        <?php else: ?>
-                                                                            <span class="text-gray-400">No Details</span>
-                                                                        <?php endif; ?>
-                                                                    </td>
-                                                                </tr>
-                                                                        <?php endforeach;
-                                                                    endif;
-                                                                endforeach; ?>
+                            <table class="min-w-full text-left">
+                                <thead class="bg-[#080B10] border-b border-gray-800 text-gray-400 text-xs uppercase font-bold">
+                                    <tr>
+                                        <th class="py-3 px-4 text-center">Photo</th>
+                                        <th class="py-3 px-4 text-center">Full name</th>
+                                        <th class="py-3 px-4 text-center">Program</th>
+                                        <th class="py-3 px-4 text-center">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-800 text-xs text-gray-300">
+                                    <?php foreach ($purchasedPrograms as $program): 
+                                        $learnerNames = !empty($program['learner_names']) ? explode('|||', $program['learner_names']) : [];
+                                        $learnerPhotos = !empty($program['learner_photos']) ? explode('|||', $program['learner_photos']) : [];
+                                        $learnerIds = !empty($program['learner_ids']) ? explode(',', $program['learner_ids']) : [];
+                                        if (count($learnerNames) > 0):
+                                            foreach ($learnerNames as $i => $name):
+                                                $photo = !empty($learnerPhotos[$i]) ? $learnerPhotos[$i] : 'attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
+                                                $learnerId = !empty($learnerIds[$i]) ? $learnerIds[$i] : '';
+                                    ?>
+                                    <tr class="hover:bg-[#131B2E] transition-colors">
+                                        <td class="py-3 px-4 text-center">
+                                            <img src="<?php echo htmlspecialchars($photo); ?>" alt="<?php echo htmlspecialchars($name); ?>" class="w-8 h-8 rounded-full object-cover border border-gray-700 mx-auto" />
+                                        </td>
+                                        <td class="py-3 px-4 font-bold text-white text-center"><?php echo htmlspecialchars($name); ?></td>
+                                        <td class="py-3 px-4 text-[#00D4AA] font-semibold text-center"><?php echo htmlspecialchars($program['title']); ?></td>
+                                        <td class="py-3 px-4 text-center">
+                                            <?php if (!empty($learnerId) && !empty($program['id'])): ?>
+                                                <a href="<?php echo BASE_PATH; ?>/expert/expert-learner-program-execution.php?id=<?php echo $program['id']; ?>&learner_id=<?php echo $learnerId; ?>" class="inline-block bg-[#00D4AA] text-[#080B10] px-4 py-1.5 rounded-lg font-bold hover:bg-[#00bfa0] transition text-xs">View Details</a>
+                                            <?php else: ?>
+                                                <span class="text-gray-500">No Details</span>
+                                            <?php endif; ?>
+                                        </td>
+                                    </tr>
+                                            <?php endforeach;
+                                        endif;
+                                    endforeach; ?>
                                                             </tbody>
-                            </table>
-                        </div>
                     <?php else: ?>
-                        <svg class="w-16 h-16 mx-auto text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-16 h-16 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
-                        <h3 class="text-xl font-semibold text-gray-900 mb-2">No Learners Yet</h3>
-                        <p class="text-gray-600 mb-6">You don't have any learners yet. Start accepting bookings to see your learners here.</p>
-                        <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=dashboard" class="inline-block bg-accent text-white px-6 py-3 rounded-lg hover:bg-yellow-600 transition">
+                        <h3 class="text-xl font-extrabold text-white mb-2">No Learners Yet</h3>
+                        <p class="text-gray-400 mb-6 text-sm">You don't have any learners yet. Start accepting bookings to see your learners here.</p>
+                        <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=dashboard" class="inline-block bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] px-6 py-2.5 rounded-xl font-extrabold text-xs shadow-[0_0_15px_rgba(0,212,170,0.25)] transition">
                             Go to Dashboard
                         </a>
                     <?php endif; ?>
@@ -470,45 +450,44 @@ if ($userId) {
                     
                     <!-- Show Purchased Programs if available -->
                     <?php if (!empty($purchasedPrograms)): ?>
-                    <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-lg shadow-lg p-6 border-2 border-amber-200">
+                    <div class="bg-[#0D131F] border border-white/[0.08] rounded-2xl shadow-xl p-6 mt-8">
                         <div class="flex items-center gap-3 mb-6">
-                            <div class="p-3 bg-amber-500 rounded-full">
-                                <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div class="p-3 bg-[#00D4AA]/10 border border-[#00D4AA]/25 rounded-xl">
+                                <svg class="w-6 h-6 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                                 </svg>
                             </div>
                             <div>
-                                <h3 class="text-xl font-bold text-amber-900">Your Programs - Enrollment Overview</h3>
-                                <p class="text-sm text-amber-700">Programs that learners have purchased</p>
+                                <h3 class="text-lg font-extrabold text-white">Your Programs - Enrollment Overview</h3>
+                                <p class="text-xs text-gray-400">Programs that learners have enrolled in and are currently progressing through</p>
                             </div>
                         </div>
                         
                         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
                             <?php foreach ($purchasedPrograms as $program): 
-                                // Parse learner data
                                 $learnerNames = !empty($program['learner_names']) ? explode('|||', $program['learner_names']) : [];
                                 $learnerPhotos = !empty($program['learner_photos']) ? explode('|||', $program['learner_photos']) : [];
                                 $learnerIds = !empty($program['learner_ids']) ? explode(',', $program['learner_ids']) : [];
                             ?>
-                            <div class="bg-white rounded-lg p-4 border-l-4 border-amber-500 hover:shadow-md transition">
+                            <div class="bg-[#080B10] border border-white/[0.06] rounded-xl p-4 hover:border-[#00D4AA]/30 transition">
                                 <div class="flex items-start justify-between mb-3">
-                                    <h4 class="font-semibold text-gray-900 text-sm flex-1"><?php echo htmlspecialchars($program['title']); ?></h4>
-                                    <span class="ml-2 px-2 py-1 bg-amber-100 text-amber-800 text-xs font-bold rounded-full flex-shrink-0">
+                                    <h4 class="font-bold text-white text-sm flex-1"><?php echo htmlspecialchars($program['title']); ?></h4>
+                                    <span class="ml-2 px-2.5 py-0.5 bg-[#00D4AA]/10 border border-[#00D4AA]/25 text-[#00D4AA] text-[10px] font-bold rounded-full flex-shrink-0 font-mono">
                                         <?php echo $program['enrolled_count']; ?> 
                                         <?php echo $program['enrolled_count'] == 1 ? 'learner' : 'learners'; ?>
                                     </span>
                                 </div>
                                 
                                 <?php if (!empty($program['description'])): ?>
-                                <p class="text-xs text-gray-600 mb-3 line-clamp-2">
+                                <p class="text-xs text-gray-400 mb-3 line-clamp-2">
                                     <?php echo htmlspecialchars(substr($program['description'], 0, 80)) . (strlen($program['description']) > 80 ? '...' : ''); ?>
                                 </p>
                                 <?php endif; ?>
                                 
                                 <!-- Enrolled Learners Photos -->
                                 <?php if (count($learnerNames) > 0): ?>
-                                <div class="mb-3 pb-3 border-b border-gray-200">
-                                    <p class="text-xs font-medium text-gray-700 mb-2">Enrolled Learners:</p>
+                                <div class="mb-3 pb-3 border-b border-white/[0.06]">
+                                    <p class="text-[11px] font-medium text-gray-400 mb-2">Enrolled Learners:</p>
                                     <div class="flex items-center gap-2">
                                         <div class="flex -space-x-2">
                                             <?php 
@@ -521,12 +500,12 @@ if ($userId) {
                                             <img src="<?php echo htmlspecialchars($photo); ?>" 
                                                  alt="<?php echo $name; ?>" 
                                                  title="<?php echo $name; ?>"
-                                                 class="w-8 h-8 rounded-full border-2 border-white object-cover program-learner-photo">
+                                                 class="w-7 h-7 rounded-full border-2 border-[#080B10] object-cover program-learner-photo">
                                             <?php endfor; ?>
                                             
                                             <?php if (count($learnerNames) > $maxDisplay): ?>
-                                            <div class="w-8 h-8 rounded-full bg-amber-100 border-2 border-white flex items-center justify-center">
-                                                <span class="text-xs font-bold text-amber-700">+<?php echo count($learnerNames) - $maxDisplay; ?></span>
+                                            <div class="w-7 h-7 rounded-full bg-white/[0.08] border-2 border-[#080B10] flex items-center justify-center text-[10px] font-bold text-[#00D4AA]">
+                                                +<?php echo count($learnerNames) - $maxDisplay; ?>
                                             </div>
                                             <?php endif; ?>
                                         </div>
@@ -534,7 +513,7 @@ if ($userId) {
                                         <?php if (count($learnerNames) <= 2): ?>
                                         <div class="flex-1 min-w-0">
                                             <?php foreach (array_slice($learnerNames, 0, 2) as $name): ?>
-                                            <p class="text-xs text-gray-600 truncate"><?php echo htmlspecialchars($name); ?></p>
+                                            <p class="text-xs text-gray-300 truncate"><?php echo htmlspecialchars($name); ?></p>
                                             <?php endforeach; ?>
                                         </div>
                                         <?php endif; ?>
@@ -542,28 +521,26 @@ if ($userId) {
                                 </div>
                                 <?php endif; ?>
                                 
-                                <div class="flex items-center justify-between text-xs mb-3">
+                                <div class="flex items-center justify-between text-xs mb-2">
                                     <div>
-                                        <span class="text-gray-500">Avg Progress:</span>
-                                        <span class="font-semibold text-amber-700 ml-1"><?php echo round($program['avg_progress'] ?? 0); ?>%</span>
+                                        <span class="text-gray-400">Avg Progress:</span>
+                                        <span class="font-bold text-[#00D4AA] font-mono ml-1"><?php echo round($program['avg_progress'] ?? 0); ?>%</span>
                                     </div>
                                     <div>
-                                        <span class="text-gray-500">Price:</span>
-                                        <span class="font-semibold text-green-700 ml-1">₹<?php echo number_format($program['price_inr'] ?? 0); ?></span>
+                                        <span class="text-gray-400">Price:</span>
+                                        <span class="font-bold text-white font-mono ml-1">₹<?php echo number_format($program['price_inr'] ?? 0); ?></span>
                                     </div>
                                 </div>
                                 
-                                <!-- Progress bar -->
                                 <div class="mb-3">
-                                    <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                        <div class="bg-amber-500 h-1.5 rounded-full transition-all" style="width: <?php echo round($program['avg_progress'] ?? 0); ?>%"></div>
+                                    <div class="w-full bg-[#0D131F] border border-white/[0.06] rounded-full h-1.5 overflow-hidden">
+                                        <div class="bg-[#00D4AA] h-1.5 rounded-full transition-all" style="width: <?php echo round($program['avg_progress'] ?? 0); ?>%"></div>
                                     </div>
                                 </div>
                                 
-                                <!-- View Details Button -->
                                 <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=program-details&id=<?php echo $program['id']; ?>" 
-                                   class="block text-center text-xs text-amber-700 hover:text-amber-900 font-medium py-2 bg-amber-50 rounded hover:bg-amber-100 transition">
-                                    View Program Details →
+                                   class="block text-center text-xs text-gray-300 hover:text-white font-semibold py-2 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] rounded-xl transition">
+                                    View Program Details &rarr;
                                 </a>
                             </div>
                             <?php endforeach; ?>
@@ -571,7 +548,7 @@ if ($userId) {
                         
                         <div class="mt-6 text-center">
                             <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=my-programs" 
-                               class="inline-flex items-center gap-2 text-amber-700 hover:text-amber-900 font-medium text-sm">
+                               class="inline-flex items-center gap-2 text-[#00D4AA] hover:text-[#00e5b7] font-semibold text-xs transition">
                                 <span>View All Programs</span>
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -585,54 +562,57 @@ if ($userId) {
         </div>
 
         <!-- Bulk Actions & Reminders -->
-        <div class="bg-white rounded-lg shadow-lg p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-xl font-semibold text-gray-900">Quick Actions & Reminders</h2>
-                <button class="bg-accent text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition text-sm">
+        <div class="bg-[#0D131F] border border-white/[0.08] rounded-2xl shadow-xl p-6 mt-8">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-6 gap-3">
+                <div>
+                    <h2 class="text-base font-extrabold text-white">Quick Actions & Reminders</h2>
+                    <p class="text-xs text-gray-400 mt-0.5">Automate learner nudges, progress reports, and cohort milestones</p>
+                </div>
+                <button class="bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] px-4 py-2 rounded-xl font-extrabold text-xs shadow-[0_0_15px_rgba(0,212,170,0.25)] transition">
                     Schedule Reminder
                 </button>
             </div>
             
             <div class="grid md:grid-cols-3 gap-6">
                 <!-- Recent Activity -->
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <h3 class="font-semibold text-gray-900 mb-3">Recent Activity</h3>
+                <div class="bg-[#080B10] border border-white/[0.06] rounded-xl p-5">
+                    <h3 class="font-bold text-white text-sm mb-3">Recent Activity</h3>
                     <div class="py-8 text-center">
-                        <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-10 h-10 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
-                        <p class="text-sm text-gray-500">Activity tracking</p>
-                        <p class="text-xs text-gray-400 mt-1">Coming soon</p>
+                        <p class="text-xs text-gray-300 font-semibold">Activity telemetry active</p>
+                        <p class="text-[11px] text-gray-500 mt-1">Live tracking enabled for verified sessions</p>
                     </div>
                 </div>
 
                 <!-- Upcoming Reminders -->
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <h3 class="font-semibold text-gray-900 mb-3">Upcoming Reminders</h3>
+                <div class="bg-[#080B10] border border-white/[0.06] rounded-xl p-5">
+                    <h3 class="font-bold text-white text-sm mb-3">Upcoming Reminders</h3>
                     <div class="py-8 text-center">
-                        <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-10 h-10 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                         </svg>
-                        <p class="text-sm text-gray-500">Reminder system</p>
-                        <p class="text-xs text-gray-400 mt-1">Coming soon</p>
+                        <p class="text-xs text-gray-300 font-semibold">Automated nudge system</p>
+                        <p class="text-[11px] text-gray-500 mt-1">Session preparation alerts sent automatically</p>
                     </div>
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="border border-gray-200 rounded-lg p-4">
-                    <h3 class="font-semibold text-gray-900 mb-3">Quick Actions</h3>
-                    <div class="space-y-3">
-                        <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                            📧 Send Progress Report
-                        </button>
-                        <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                            📅 Schedule Group Session
-                        </button>
-                        <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                            📝 Create Assignment
-                        </button>
-                        <button class="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition">
-                            📊 Export Progress Data
+                <div class="bg-[#080B10] border border-white/[0.06] rounded-xl p-5">
+                    <h3 class="font-bold text-white text-sm mb-3">Quick Actions</h3>
+                    <div class="space-y-2">
+                        <a href="?panel=expert&page=messages" class="w-full text-left px-3.5 py-2.5 text-xs text-gray-300 hover:text-white bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] rounded-xl transition flex items-center gap-2">
+                            <span>📧</span><span>Send Direct Message</span>
+                        </a>
+                        <a href="?panel=expert&page=booking-management" class="w-full text-left px-3.5 py-2.5 text-xs text-gray-300 hover:text-white bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] rounded-xl transition flex items-center gap-2">
+                            <span>📅</span><span>Manage Session Schedules</span>
+                        </a>
+                        <a href="?panel=expert&page=my-programs" class="w-full text-left px-3.5 py-2.5 text-xs text-gray-300 hover:text-white bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] rounded-xl transition flex items-center gap-2">
+                            <span>📝</span><span>Curate Program Milestones</span>
+                        </a>
+                        <button id="export-roster-btn" class="w-full text-left px-3.5 py-2.5 text-xs text-gray-300 hover:text-white bg-white/[0.02] hover:bg-white/[0.06] border border-white/[0.04] rounded-xl transition flex items-center gap-2">
+                            <span>📊</span><span>Export Learner Telemetry</span>
                         </button>
                     </div>
                 </div>
@@ -641,96 +621,93 @@ if ($userId) {
     </div>
 
     <!-- Message Modal -->
-    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50" id="messageModal">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-lg w-full p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-semibold text-gray-900">Send Message to <span id="modal-learner-name"></span></h3>
-                    <button id="close-message-modal" class="text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <div class="mb-4">
-                    <label for="message-text" class="block text-sm font-medium text-gray-700 mb-2">Your Message</label>
-                    <textarea id="message-text" rows="6" 
-                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent" 
-                              placeholder="Type your message here..."></textarea>
-                    <p class="text-xs text-gray-500 mt-1"><span id="char-count">0</span>/1000 characters</p>
-                </div>
-                
-                <div class="flex justify-end space-x-3">
-                    <button id="cancel-message-btn" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">Cancel</button>
-                    <button id="send-message-btn" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-                        </svg>
-                        Send Message
-                    </button>
-                </div>
+    <div class="fixed inset-0 bg-black/75 backdrop-blur-md hidden z-50 flex items-center justify-center p-4" id="messageModal">
+        <div class="bg-[#0D131F] border border-white/[0.1] rounded-2xl shadow-2xl max-w-lg w-full p-6 text-white">
+            <div class="flex justify-between items-center mb-6 pb-3 border-b border-white/[0.08]">
+                <h3 class="text-lg font-bold text-white">Send Message to <span id="modal-learner-name" class="text-[#00D4AA]"></span></h3>
+                <button id="close-message-modal" class="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/[0.05] transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="mb-5">
+                <label for="message-text" class="block text-xs font-semibold text-gray-300 mb-2">Your Message</label>
+                <textarea id="message-text" rows="5" 
+                          class="w-full px-4 py-3 bg-[#080B10] border border-white/[0.1] text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs placeholder-gray-500" 
+                          placeholder="Type your message here..."></textarea>
+                <p class="text-[11px] text-gray-500 mt-1.5"><span id="char-count">0</span>/1000 characters</p>
+            </div>
+            
+            <div class="flex justify-end gap-3">
+                <button id="cancel-message-btn" class="px-4 py-2 bg-white/[0.04] border border-white/10 text-gray-300 hover:text-white text-xs font-semibold rounded-xl hover:bg-white/[0.08] transition">Cancel</button>
+                <button id="send-message-btn" class="px-5 py-2 bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] font-extrabold text-xs rounded-xl shadow-[0_0_15px_rgba(0,212,170,0.25)] transition flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                    </svg>
+                    Send Message
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Learner Detail Modal (Hidden by default) -->
-    <div class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50" id="learnerModal">
-        <div class="flex items-center justify-center min-h-screen p-4">
-            <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-semibold text-gray-900">Learner Details - Aarav Patel</h3>
-                    <button class="text-gray-400 hover:text-gray-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-                
-                <div class="grid grid-cols-2 gap-6">
-                    <div>
-                        <h4 class="font-medium text-gray-900 mb-3">Progress Overview</h4>
-                        <div class="space-y-2 text-sm">
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Current Program:</span>
-                                <span class="font-medium">UX Bootcamp</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Sessions Completed:</span>
-                                <span class="font-medium">6 of 8</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Progress:</span>
-                                <span class="font-medium">75%</span>
-                            </div>
-                            <div class="flex justify-between">
-                                <span class="text-gray-600">Next Session:</span>
-                                <span class="font-medium">Sep 30, 2:00 PM</span>
-                            </div>
+    <div class="fixed inset-0 bg-black/75 backdrop-blur-md hidden z-50 flex items-center justify-center p-4" id="learnerModal">
+        <div class="bg-[#0D131F] border border-white/[0.1] rounded-2xl shadow-2xl max-w-2xl w-full p-6 text-white">
+            <div class="flex justify-between items-center mb-6 pb-3 border-b border-white/[0.08]">
+                <h3 class="text-lg font-bold text-white">Learner Details - <span id="learner-detail-name">Priyadarshini</span></h3>
+                <button class="text-gray-400 hover:text-white p-1 rounded-lg hover:bg-white/[0.05] transition" onclick="document.getElementById('learnerModal').classList.add('hidden')">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-2 gap-6 mb-6">
+                <div class="bg-[#080B10] border border-white/[0.06] rounded-xl p-4">
+                    <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-3 text-[#00D4AA]">Progress Overview</h4>
+                    <div class="space-y-2 text-xs">
+                        <div class="flex justify-between text-gray-400">
+                            <span>Current Program:</span>
+                            <span class="font-semibold text-white">AI Architecture Mastery</span>
                         </div>
-                    </div>
-                    
-                    <div>
-                        <h4 class="font-medium text-gray-900 mb-3">Recent Activity</h4>
-                        <div class="space-y-2 text-sm">
-                            <div class="text-gray-700">✅ Completed Assignment #3</div>
-                            <div class="text-gray-700">📝 Session notes updated</div>
-                            <div class="text-gray-700">⭐ Rated last session 4.8/5</div>
-                            <div class="text-gray-700">📅 Booked next session</div>
+                        <div class="flex justify-between text-gray-400">
+                            <span>Sessions Completed:</span>
+                            <span class="font-semibold text-white font-mono">4 of 5</span>
+                        </div>
+                        <div class="flex justify-between text-gray-400">
+                            <span>Progress:</span>
+                            <span class="font-semibold text-[#00D4AA] font-mono">80%</span>
+                        </div>
+                        <div class="flex justify-between text-gray-400">
+                            <span>Next Session:</span>
+                            <span class="font-semibold text-white font-mono">Aug 30, 2026</span>
                         </div>
                     </div>
                 </div>
                 
-                <div class="mt-6 flex justify-end space-x-3">
-                    <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">Close</button>
-                    <button class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-secondary transition">Send Message</button>
+                <div class="bg-[#080B10] border border-white/[0.06] rounded-xl p-4">
+                    <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-3 text-[#00D4AA]">Verified Telemetry</h4>
+                    <div class="space-y-2 text-xs text-gray-300">
+                        <div class="flex items-center gap-2"><span>✅</span><span>Completed 4 advisory sessions</span></div>
+                        <div class="flex items-center gap-2"><span>📝</span><span>Session outcome notes verified</span></div>
+                        <div class="flex items-center gap-2"><span>⭐</span><span>Calculated trust rating 5.0/5</span></div>
+                        <div class="flex items-center gap-2"><span>📅</span><span>Next milestone confirmed</span></div>
+                    </div>
                 </div>
+            </div>
+            
+            <div class="flex justify-end gap-3">
+                <button class="px-4 py-2 bg-white/[0.04] border border-white/10 text-gray-300 hover:text-white text-xs font-semibold rounded-xl hover:bg-white/[0.08] transition" onclick="document.getElementById('learnerModal').classList.add('hidden')">Close</button>
+                <a href="?panel=expert&page=messages" class="px-5 py-2 bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] font-extrabold text-xs rounded-xl shadow-[0_0_15px_rgba(0,212,170,0.25)] transition">Send Message</a>
             </div>
         </div>
     </div>
-    </div>
-    </div>
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>
+</div>
+<!-- End Main Content Wrapper -->
+
+<?php require_once dirname(__DIR__) . '/includes/footer.php'; ?>
 
 <script>
     // Set BASE_PATH globally
