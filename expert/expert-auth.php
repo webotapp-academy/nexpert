@@ -141,8 +141,12 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                     <a href="#" class="font-bold text-[#00D4AA] hover:underline">Forgot password?</a>
                 </div>
 
-                <button type="submit" class="w-full bg-[#00D4AA] text-[#080B10] py-3.5 px-4 rounded-xl hover:bg-[#00bfa0] transition duration-200 font-extrabold shadow-[0_0_20px_rgba(0,212,170,0.25)] mt-2">
-                    Sign In &rarr;
+                <button type="submit" id="expertSignInBtn" class="w-full bg-[#00D4AA] text-[#080B10] py-3.5 px-4 rounded-xl hover:bg-[#00bfa0] transition duration-200 font-extrabold flex items-center justify-center shadow-[0_0_20px_rgba(0,212,170,0.25)] mt-2">
+                    <span id="expertSignInBtnText">Sign In &rarr;</span>
+                    <svg id="expertSignInSpinner" class="hidden animate-spin ml-2 h-5 w-5 text-[#080B10]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
                 </button>
             </form>
 
@@ -273,6 +277,20 @@ document.getElementById('signInForm').addEventListener('submit', async function(
         });
         return;
     }
+
+    const signInBtn = document.getElementById('expertSignInBtn');
+    const btnText = document.getElementById('expertSignInBtnText');
+    const spinner = document.getElementById('expertSignInSpinner');
+
+    signInBtn.disabled = true;
+    btnText.textContent = 'Signing in...';
+    spinner.classList.remove('hidden');
+
+    function resetSignInBtn() {
+        signInBtn.disabled = false;
+        btnText.innerHTML = 'Sign In &rarr;';
+        spinner.classList.add('hidden');
+    }
     
     let redirectAfterLogin = sessionStorage.getItem('redirect_after_login');
     
@@ -310,6 +328,7 @@ document.getElementById('signInForm').addEventListener('submit', async function(
             }
             window.location.href = redirectUrl;
         } else {
+            resetSignInBtn();
             Swal.fire({
                 icon: 'error',
                 title: 'Login Failed',
@@ -318,6 +337,7 @@ document.getElementById('signInForm').addEventListener('submit', async function(
             });
         }
     } catch (error) {
+        resetSignInBtn();
         console.error('Error:', error);
         Swal.fire({
             icon: 'error',
