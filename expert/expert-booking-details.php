@@ -105,6 +105,34 @@ $hasLearnerData = !empty($booking['learner_goals']) || !empty($booking['learner_
             </div>
             <?php endif; ?>
             
+            <?php
+            $isAccepted = in_array(strtolower((string)($booking['accept_booking'] ?? 'no')), ['yes', '1', 'true'], true);
+            ?>
+
+            <?php if (!$isAccepted && in_array($booking['status'], ['pending', 'confirmed'])): ?>
+            <!-- Accept Booking Action Banner -->
+            <div class="mb-8 p-5 rounded-2xl border bg-amber-500/10 border-amber-500/30 text-amber-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-10 h-10 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="font-bold text-sm text-white">Booking Awaiting Your Acceptance</p>
+                        <p class="text-xs text-gray-300">Accept this session to generate your Zoom meeting room and send automated invites to the learner.</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2.5 shrink-0 w-full sm:w-auto">
+                    <button onclick="handleBookingAction(<?php echo $bookingId; ?>, 'accept')" class="flex-1 sm:flex-none px-5 py-2.5 bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] rounded-xl text-xs font-extrabold shadow-[0_0_15px_rgba(0,212,170,0.3)] transition flex items-center justify-center gap-1.5">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        Accept Booking
+                    </button>
+                    <button onclick="handleBookingAction(<?php echo $bookingId; ?>, 'reject')" class="px-4 py-2.5 bg-[#080B10] border border-red-500/30 text-red-400 hover:bg-red-500/10 rounded-xl text-xs font-bold transition">
+                        Decline
+                    </button>
+                </div>
+            </div>
+            <?php endif; ?>
+            
             <!-- Header Row -->
             <div class="flex items-start justify-between mb-8 pb-6 border-b border-gray-800">
                 <div class="flex items-center gap-4">
@@ -237,7 +265,7 @@ $hasLearnerData = !empty($booking['learner_goals']) || !empty($booking['learner_
                     <!-- Session Status -->
                     <div class="border border-gray-800 bg-[#080B10] rounded-2xl p-5">
                         <h3 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Session Status</h3>
-                        <div class="flex items-center justify-between">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
                             <div class="flex items-center gap-3">
                                 <?php
                                 $statusBadge = [
@@ -251,19 +279,27 @@ $hasLearnerData = !empty($booking['learner_goals']) || !empty($booking['learner_
                                 <span class="px-3 py-1 <?php echo $badge; ?> rounded-full text-xs font-mono font-bold border capitalize">
                                     <?php echo htmlspecialchars($booking['status']); ?>
                                 </span>
-                                <?php if ($booking['accept_booking'] === 'yes'): ?>
+                                <?php if ($isAccepted): ?>
                                     <span class="px-3 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 rounded-full text-xs font-bold">Accepted</span>
                                 <?php else: ?>
-                                    <span class="px-3 py-1 bg-gray-800 text-gray-400 border border-gray-700 rounded-full text-xs font-bold">Pending Acceptance</span>
+                                    <span class="px-3 py-1 bg-amber-500/10 text-amber-400 border border-amber-500/25 rounded-full text-xs font-bold">Pending Acceptance</span>
                                 <?php endif; ?>
                             </div>
                             
-                            <?php if (in_array($booking['status'], ['pending', 'confirmed'])): ?>
-                            <button onclick="openRescheduleModal()" class="text-xs font-bold text-[#00D4AA] hover:underline flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                Reschedule
-                            </button>
-                            <?php endif; ?>
+                            <div class="flex items-center gap-3">
+                                <?php if (!$isAccepted && in_array($booking['status'], ['pending', 'confirmed'])): ?>
+                                    <button onclick="handleBookingAction(<?php echo $bookingId; ?>, 'accept')" class="px-3.5 py-1.5 bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] rounded-xl text-xs font-extrabold transition flex items-center gap-1 shadow-sm">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                        Accept Booking
+                                    </button>
+                                <?php endif; ?>
+                                <?php if (in_array($booking['status'], ['pending', 'confirmed'])): ?>
+                                <button onclick="openRescheduleModal()" class="text-xs font-bold text-[#00D4AA] hover:underline flex items-center gap-1">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    Reschedule
+                                </button>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
 
@@ -694,6 +730,131 @@ async function rescheduleAction(action) {
             icon: 'error',
             title: 'Connection Error',
             text: 'Failed to process reschedule request.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+    }
+}
+
+async function handleBookingAction(bookingId, action) {
+    if (action === 'accept') {
+        const confirmResult = await Swal.fire({
+            title: 'Accept Booking Request?',
+            html: '<p class="text-gray-300 text-sm">Accepting will generate your secure Zoom video room and automatically send meeting invitations to you and the learner.</p>',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#00D4AA',
+            cancelButtonColor: '#374151',
+            confirmButtonText: '✓ Yes, Accept & Create Zoom',
+            cancelButtonText: 'Cancel',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+        
+        if (!confirmResult.isConfirmed) return;
+
+        Swal.fire({
+            title: 'Creating Zoom Meeting...',
+            html: '<div class="flex flex-col items-center py-3"><div class="w-10 h-10 border-4 border-gray-800 border-t-[#00D4AA] rounded-full animate-spin mb-3"></div><p class="text-xs text-gray-400">Generating video room & sending email invitations...</p></div>',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+    } else {
+        const confirmResult = await Swal.fire({
+            title: 'Decline Booking Request?',
+            text: 'Are you sure you want to decline this booking request?',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            cancelButtonColor: '#374151',
+            confirmButtonText: 'Decline Booking',
+            cancelButtonText: 'Keep Booking',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+        
+        if (!confirmResult.isConfirmed) return;
+
+        Swal.fire({
+            title: 'Processing...',
+            html: '<div class="flex flex-col items-center py-3"><div class="w-10 h-10 border-4 border-gray-800 border-t-red-500 rounded-full animate-spin mb-3"></div><p class="text-xs text-gray-400">Updating booking status...</p></div>',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+    }
+    
+    try {
+        const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/expert/booking-action.php`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                booking_id: bookingId,
+                action: action
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (action === 'accept') {
+                const zoomLink = result.zoom_link ? `<div class="mt-3 p-3 bg-[#080B10] rounded-xl border border-gray-800 text-left"><p class="text-xs font-semibold text-gray-400 mb-1">Session Meeting Link:</p><a href="${result.zoom_link}" target="_blank" class="text-[#00D4AA] text-xs font-mono break-all hover:underline">${result.zoom_link}</a></div>` : '';
+                await Swal.fire({
+                    icon: 'success',
+                    title: '🎉 Booking Confirmed!',
+                    html: `
+                        <p class="text-gray-300 text-sm mb-2">${result.message || 'Booking accepted successfully!'}</p>
+                        ${zoomLink}
+                        <p class="text-[11px] text-gray-400 mt-3">Meeting invitations and join links have been sent to you and the learner.</p>
+                    `,
+                    confirmButtonText: 'Great, Done!',
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: { popup: 'border border-gray-800 rounded-2xl' }
+                });
+            } else {
+                await Swal.fire({
+                    icon: 'info',
+                    title: 'Booking Declined',
+                    text: result.message || 'The booking request was rejected.',
+                    confirmButtonColor: '#374151',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: { popup: 'border border-gray-800 rounded-2xl' }
+                });
+            }
+            location.reload();
+        } else {
+            let errorMessage = result.error || 'Failed to update booking.';
+            if (result.details) errorMessage += ' (' + result.details + ')';
+            if (result.zoom_error) errorMessage += ' Zoom: ' + result.zoom_error;
+
+            Swal.fire({
+                icon: 'error',
+                title: 'Action Failed',
+                text: errorMessage,
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'An error occurred while connecting to the server. Please try again.',
             confirmButtonColor: '#00D4AA',
             background: '#0D131F',
             color: '#fff',
