@@ -10,7 +10,11 @@ if (!isset($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'expert') {
 
 $expertId = (int)$_SESSION['user_id'];
 
-// Fetch latest card for this expert
+// Always calculate latest live credibility card for expert
+require_once dirname(__DIR__) . '/cron/generate_credibility_cards.php';
+$generatedCard = generateExpertCard($pdo, $expertId);
+
+// Fetch fresh card from database
 $stmt = $pdo->prepare("
     SELECT c.*, ep.full_name as expert_name, ep.profile_photo, ep.tagline, ep.category,
            ts.overall_score, ts.band_name, ts.confidence_score, ts.structure_score, 
@@ -24,14 +28,6 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$expertId]);
 $cardRow = $stmt->fetch(PDO::FETCH_ASSOC);
-
-// If no card exists, generate one
-if (!$cardRow || empty($cardRow['card_data'])) {
-    require_once dirname(__DIR__) . '/cron/generate_credibility_cards.php';
-    generateExpertCard($pdo, $expertId);
-    $stmt->execute([$expertId]);
-    $cardRow = $stmt->fetch(PDO::FETCH_ASSOC);
-}
 
 $cardData = json_decode($cardRow['card_data'] ?? '{}', true);
 
@@ -57,6 +53,12 @@ if ($yesterdayPts >= $todayPts) $yesterdayPts = $todayPts - $pointGain;
 
 $trustScore = round((float)($cardRow['overall_score'] ?? ($cardData['metrics']['trust_score'] ?? 74.81)), 2);
 $shareText = $cardData['social']['share_text'] ?? "I just received my Daily Credibility Update on Nexpert: {$yesterdayPts} ➔ {$todayPts} (+{$pointGain} Credibility Points)! #TrustIntelligence #Nexpert #VerifiedExpert";
+
+$achievements = $cardData['achievements'] ?? [];
+$verifiedSessionsText = $achievements[0]['highlight'] ?? '1 verified sessions';
+$satisfactionScore = $achievements[1]['action'] ?? '4.9/5';
+$signalsCountText = $achievements[2]['highlight'] ?? '4 new expertise signals';
+$gainText = $achievements[3]['action'] ?? "+{$pointGain} credibility points";
 
 $rankingLabel = $cardData['ranking']['label'] ?? 'Top 8% of AI Experts on Nexpert';
 $domainDisplay = $cardData['cta']['domain_display'] ?? ('nexpert.ai/' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $expertName)));
@@ -269,7 +271,7 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                                     </div>
                                     <div>
                                         <div class="text-xs text-gray-400">Completed</div>
-                                        <div class="text-sm font-bold text-emerald-400">3 verified sessions</div>
+                                        <div class="text-sm font-bold text-emerald-400"><?= htmlspecialchars($verifiedSessionsText) ?></div>
                                     </div>
                                 </div>
                                 <span class="text-emerald-400 text-sm font-bold">↑</span>
@@ -282,7 +284,7 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                                         <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path></svg>
                                     </div>
                                     <div>
-                                        <div class="text-sm font-black text-blue-400">4.9/5</div>
+                                        <div class="text-sm font-black text-blue-400"><?= htmlspecialchars($satisfactionScore) ?></div>
                                         <div class="text-xs text-gray-400">learner satisfaction</div>
                                     </div>
                                 </div>
@@ -297,7 +299,7 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                                     </div>
                                     <div>
                                         <div class="text-xs text-gray-400">Added</div>
-                                        <div class="text-sm font-bold text-purple-300">2 new expertise signals</div>
+                                        <div class="text-sm font-bold text-purple-300"><?= htmlspecialchars($signalsCountText) ?></div>
                                     </div>
                                 </div>
                                 <span class="text-emerald-400 text-sm font-bold">↑</span>
@@ -310,7 +312,7 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
                                     </div>
                                     <div>
-                                        <div class="text-sm font-black text-amber-400">+<?= $pointGain ?> credibility points</div>
+                                        <div class="text-sm font-black text-amber-400"><?= htmlspecialchars($gainText) ?></div>
                                         <div class="text-xs text-gray-400">this week</div>
                                     </div>
                                 </div>
