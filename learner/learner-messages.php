@@ -38,6 +38,38 @@ $stmt = $pdo->prepare("
 ");
 $stmt->execute([$userId, $userId, $userId, $userId, $userId, $userId, $userId, $userId]);
 $conversations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Support direct link by expert_id or user_id
+$targetExpertId = isset($_GET['expert_id']) ? (int)$_GET['expert_id'] : (isset($_GET['user_id']) ? (int)$_GET['user_id'] : null);
+
+if ($targetExpertId) {
+    $found = false;
+    foreach ($conversations as $c) {
+        if ((int)$c['expert_id'] === $targetExpertId) {
+            $found = true;
+            break;
+        }
+    }
+    if (!$found) {
+        $eStmt = $pdo->prepare("
+            SELECT 
+                u.id as expert_id,
+                COALESCE(NULLIF(ep.full_name, ''), u.username, 'Expert') as expert_name,
+                ep.profile_photo,
+                0 as unread_count,
+                'Start a new conversation...' as last_message,
+                NOW() as last_message_time
+            FROM users u
+            LEFT JOIN expert_profiles ep ON u.id = ep.user_id
+            WHERE u.id = ? AND u.role = 'expert'
+        ");
+        $eStmt->execute([$targetExpertId]);
+        $newExpert = $eStmt->fetch(PDO::FETCH_ASSOC);
+        if ($newExpert) {
+            array_unshift($conversations, $newExpert);
+        }
+    }
+}
 ?>
 
 <script>
@@ -58,9 +90,18 @@ $conversations = $stmt->fetchAll(PDO::FETCH_ASSOC);
             </div>
             <div class="divide-y divide-gray-800 max-h-[600px] overflow-y-auto bg-[#131b2e]">
                 <?php foreach ($conversations as $index => $conv): ?>
-                <button class="conversation-item w-full text-left p-4 hover:bg-[#0e1322]/40 transition <?php echo $index === 0 ? 'bg-[#0e1322]' : ''; ?>"
+                <?php
+                $isSel = false;
+                if ($targetExpertId && (int)$conv['expert_id'] === $targetExpertId) {
+                    $isSel = true;
+                } elseif (!$targetExpertId && $index === 0) {
+                    $isSel = true;
+                }
+                ?>
+                <button class="conversation-item w-full text-left p-4 hover:bg-[#0e1322]/40 transition <?php echo $isSel ? 'bg-[#0e1322] border-l-2 border-[#00D4AA]' : ''; ?>"
                         data-expert-id="<?php echo $conv['expert_id']; ?>"
-                        data-expert-name="<?php echo htmlspecialchars($conv['expert_name']); ?>">
+                        data-expert-name="<?php echo htmlspecialchars($conv['expert_name']); ?>"
+                        data-expert-photo="<?php echo htmlspecialchars($conv['profile_photo'] ?? ''); ?>">
                     <div class="flex items-start gap-3">
                         <div class="w-12 h-12 rounded-full bg-gray-200 flex-shrink-0 overflow-hidden">
                             <?php if (!empty($conv['profile_photo'])): ?>

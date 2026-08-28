@@ -174,8 +174,11 @@ $hasLearnerData = !empty($booking['learner_goals']) || !empty($booking['learner_
                             </div>
                             <div>
                                 <h4 class="font-bold text-white text-sm"><?php echo htmlspecialchars($booking['learner_name']); ?></h4>
-                                <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=messages" 
-                                   class="text-xs text-[#00D4AA] hover:underline font-bold">Send Direct Message →</a>
+                                <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=messages&learner_id=<?php echo urlencode($booking['learner_id']); ?>" 
+                                   class="text-xs text-[#00D4AA] hover:underline font-bold flex items-center gap-1 mt-0.5">
+                                    Send Direct Message 
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                </a>
                             </div>
                         </div>
                         

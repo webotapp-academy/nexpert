@@ -24,20 +24,52 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 $stmt = $pdo->prepare("
     SELECT DISTINCT
         u.id as learner_id,
-        lp.full_name as learner_name,
+        COALESCE(NULLIF(lp.full_name, ''), u.username, 'Learner') as learner_name,
         lp.profile_photo,
         (SELECT COUNT(*) FROM messages WHERE sender_id = u.id AND recipient_id = ? AND is_read = 0) as unread_count,
         (SELECT message FROM messages WHERE (sender_id = u.id AND recipient_id = ?) OR (sender_id = ? AND recipient_id = u.id) ORDER BY created_at DESC LIMIT 1) as last_message,
         (SELECT created_at FROM messages WHERE (sender_id = u.id AND recipient_id = ?) OR (sender_id = ? AND recipient_id = u.id) ORDER BY created_at DESC LIMIT 1) as last_message_time
     FROM messages m
     JOIN users u ON (m.sender_id = u.id OR m.recipient_id = u.id)
-    JOIN learner_profiles lp ON u.id = lp.user_id
+    LEFT JOIN learner_profiles lp ON u.id = lp.user_id
     WHERE (m.sender_id = ? OR m.recipient_id = ?) AND u.id != ? AND u.role = 'learner'
     GROUP BY u.id, lp.full_name, lp.profile_photo
     ORDER BY last_message_time DESC
 ");
 $stmt->execute([$userId, $userId, $userId, $userId, $userId, $userId, $userId, $userId]);
 $conversations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Support direct link by learner_id or user_id
+$targetLearnerId = isset($_GET['learner_id']) ? (int)$_GET['learner_id'] : (isset($_GET['user_id']) ? (int)$_GET['user_id'] : null);
+
+if ($targetLearnerId) {
+    $found = false;
+    foreach ($conversations as $c) {
+        if ((int)$c['learner_id'] === $targetLearnerId) {
+            $found = true;
+            break;
+        }
+    }
+    if (!$found) {
+        $uStmt = $pdo->prepare("
+            SELECT 
+                u.id as learner_id,
+                COALESCE(NULLIF(lp.full_name, ''), u.username, 'Learner') as learner_name,
+                lp.profile_photo,
+                0 as unread_count,
+                'Start a new advisory conversation...' as last_message,
+                NOW() as last_message_time
+            FROM users u
+            LEFT JOIN learner_profiles lp ON u.id = lp.user_id
+            WHERE u.id = ? AND u.role = 'learner'
+        ");
+        $uStmt->execute([$targetLearnerId]);
+        $newTarget = $uStmt->fetch(PDO::FETCH_ASSOC);
+        if ($newTarget) {
+            array_unshift($conversations, $newTarget);
+        }
+    }
+}
 ?>
 
 <div class="min-h-screen bg-[#080B10] text-gray-100 py-6 sm:py-10">
@@ -58,11 +90,20 @@ $conversations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 <div class="p-4 border-b border-gray-800 bg-[#080B10]">
                     <h2 class="font-extrabold text-white text-xs uppercase tracking-wider">Conversations</h2>
                 </div>
-                <div class="divide-y divide-gray-800/60 max-h-[600px] overflow-y-auto">
+                <div class="divide-y divide-gray-800/60 max-h-[600px] overflow-y-auto" id="conversations-list">
                     <?php foreach ($conversations as $index => $conv): ?>
-                    <button class="conversation-item w-full text-left p-4 hover:bg-[#131B2E] transition <?php echo $index === 0 ? 'bg-[#131B2E] border-l-2 border-[#00D4AA]' : ''; ?>"
+                    <?php
+                    $isSel = false;
+                    if ($targetLearnerId && (int)$conv['learner_id'] === $targetLearnerId) {
+                        $isSel = true;
+                    } elseif (!$targetLearnerId && $index === 0) {
+                        $isSel = true;
+                    }
+                    ?>
+                    <button class="conversation-item w-full text-left p-4 hover:bg-[#131B2E] transition <?php echo $isSel ? 'bg-[#131B2E] border-l-2 border-[#00D4AA]' : ''; ?>"
                             data-learner-id="<?php echo $conv['learner_id']; ?>"
-                            data-learner-name="<?php echo htmlspecialchars($conv['learner_name']); ?>">
+                            data-learner-name="<?php echo htmlspecialchars($conv['learner_name']); ?>"
+                            data-learner-photo="<?php echo htmlspecialchars($conv['profile_photo'] ?? ''); ?>">
                         <div class="flex items-start gap-3">
                             <div class="w-11 h-11 rounded-full bg-[#080B10] border border-gray-700 shrink-0 overflow-hidden">
                                 <?php if (!empty($conv['profile_photo'])): ?>
@@ -82,8 +123,8 @@ $conversations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                         <span class="bg-[#00D4AA] text-[#080B10] text-[10px] font-extrabold rounded-full px-2 py-0.5"><?php echo $conv['unread_count']; ?></span>
                                     <?php endif; ?>
                                 </div>
-                                <p class="text-xs text-gray-400 truncate mt-1"><?php echo htmlspecialchars(substr($conv['last_message'], 0, 50)) . (strlen($conv['last_message']) > 50 ? '...' : ''); ?></p>
-                                <p class="text-[10px] text-gray-500 font-mono mt-1"><?php echo date('M j, g:i A', strtotime($conv['last_message_time'])); ?></p>
+                                <p class="text-xs text-gray-400 truncate mt-1"><?php echo htmlspecialchars(substr($conv['last_message'] ?? 'Start a conversation...', 0, 50)) . (strlen($conv['last_message'] ?? '') > 50 ? '...' : ''); ?></p>
+                                <p class="text-[10px] text-gray-500 font-mono mt-1"><?php echo !empty($conv['last_message_time']) ? date('M j, g:i A', strtotime($conv['last_message_time'])) : 'Just now'; ?></p>
                             </div>
                         </div>
                     </button>
@@ -94,8 +135,11 @@ $conversations = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <!-- Message Thread -->
             <div class="lg:col-span-2 bg-[#0D131F] border border-gray-800 rounded-3xl shadow-xl flex flex-col overflow-hidden" style="height: 700px;">
                 <div class="p-4 border-b border-gray-800 bg-[#080B10] flex items-center gap-3">
-                    <div class="w-9 h-9 rounded-full bg-gray-800 overflow-hidden border border-gray-700" id="current-learner-photo"></div>
-                    <h2 class="font-bold text-white text-xs" id="current-learner-name">Select a conversation</h2>
+                    <div class="w-9 h-9 rounded-full bg-gray-800 overflow-hidden border border-gray-700 shrink-0" id="current-learner-photo"></div>
+                    <div>
+                        <h2 class="font-bold text-white text-sm" id="current-learner-name">Select a conversation</h2>
+                        <p class="text-[11px] text-gray-400 font-mono">Learner Direct Message</p>
+                    </div>
                 </div>
                 
                 <div class="flex-1 overflow-y-auto p-5 space-y-4 bg-[#080B10]/50" id="messages-container">
@@ -107,12 +151,12 @@ $conversations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 </div>
                 
-                <div class="p-4 border-t border-gray-800 bg-[#080B10] hidden" id="message-input-area">
+                <div class="p-4 border-t border-gray-800 bg-[#080B10]" id="message-input-area">
                     <div class="flex gap-3">
                         <textarea id="message-input" 
                                   rows="2" 
                                   class="flex-1 px-4 py-2.5 bg-[#0D131F] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs resize-none placeholder-gray-500" 
-                                  placeholder="Type your response..."></textarea>
+                                  placeholder="Type your advisory response... (Press Enter to send)"></textarea>
                         <button id="send-message-btn" class="bg-[#00D4AA] text-[#080B10] px-5 py-2.5 rounded-xl hover:bg-[#00bfa0] transition font-extrabold self-end shadow-md">
                             <svg id="send-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
@@ -135,7 +179,7 @@ $conversations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </svg>
             </div>
             <h3 class="text-base font-bold text-white mb-1">No Messages Yet</h3>
-            <p class="text-xs text-gray-400 max-w-sm mx-auto">You don't have any direct messages yet. Learners who book your programs or advisory slots can message you here.</p>
+            <p class="text-xs text-gray-400 max-w-sm mx-auto">You don't have any active direct message conversations yet.</p>
         </div>
         <?php endif; ?>
     </div>
@@ -151,25 +195,55 @@ const sendBtn = document.getElementById('send-message-btn');
 const inputArea = document.getElementById('message-input-area');
 
 // Load messages for selected conversation
+function selectConversation(btn) {
+    document.querySelectorAll('.conversation-item').forEach(b => b.classList.remove('bg-[#131B2E]', 'border-l-2', 'border-[#00D4AA]'));
+    btn.classList.add('bg-[#131B2E]', 'border-l-2', 'border-[#00D4AA]');
+    
+    currentLearnerId = btn.dataset.learnerId;
+    const learnerName = btn.dataset.learnerName;
+    const learnerPhoto = btn.dataset.learnerPhoto;
+    
+    document.getElementById('current-learner-name').textContent = learnerName;
+    
+    const photoEl = document.getElementById('current-learner-photo');
+    if (photoEl) {
+        if (learnerPhoto) {
+            photoEl.innerHTML = `<img src="${window.BASE_PATH}/${learnerPhoto.replace(/^\/+/, '')}" alt="${escapeHtml(learnerName)}" class="w-full h-full object-cover">`;
+        } else {
+            photoEl.innerHTML = `<div class="w-full h-full flex items-center justify-center bg-[#00D4AA]/20 text-[#00D4AA] text-xs font-black">${getInitials(learnerName)}</div>`;
+        }
+    }
+    
+    if (inputArea) inputArea.classList.remove('hidden');
+    loadMessages(currentLearnerId);
+    
+    if (messageInput) {
+        setTimeout(() => messageInput.focus(), 150);
+    }
+}
+
 document.querySelectorAll('.conversation-item').forEach(btn => {
     btn.addEventListener('click', function() {
-        document.querySelectorAll('.conversation-item').forEach(b => b.classList.remove('bg-[#131B2E]', 'border-l-2', 'border-[#00D4AA]'));
-        this.classList.add('bg-[#131B2E]', 'border-l-2', 'border-[#00D4AA]');
-        
-        currentLearnerId = this.dataset.learnerId;
-        const learnerName = this.dataset.learnerName;
-        
-        document.getElementById('current-learner-name').textContent = learnerName;
-        inputArea.classList.remove('hidden');
-        
-        loadMessages(currentLearnerId);
+        selectConversation(this);
     });
 });
 
-// Load first conversation by default if exists
-if (document.querySelector('.conversation-item')) {
-    document.querySelector('.conversation-item').click();
-}
+// Auto-select target conversation or first conversation
+document.addEventListener('DOMContentLoaded', function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetLearnerId = urlParams.get('learner_id') || urlParams.get('user_id');
+    
+    let targetBtn = null;
+    if (targetLearnerId) {
+        targetBtn = document.querySelector(`.conversation-item[data-learner-id="${targetLearnerId}"]`);
+    }
+    if (!targetBtn) {
+        targetBtn = document.querySelector('.conversation-item');
+    }
+    if (targetBtn) {
+        selectConversation(targetBtn);
+    }
+});
 
 function loadMessages(learnerId) {
     fetch(`${window.BASE_PATH}/admin-panel/apis/expert/messages.php?learner_id=${learnerId}`)
