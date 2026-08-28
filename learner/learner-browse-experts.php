@@ -10,7 +10,7 @@ $categoriesStmt = $pdo->query("SELECT name, slug FROM categories WHERE is_active
 $activeCategories = $categoriesStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $page_title = "Browse Experts - Nexpert.ai";
-$panel_type = "learner";
+$panel_type = "home";
 
 require_once dirname(__DIR__) . '/includes/header.php';
 require_once dirname(__DIR__) . '/includes/navigation.php';
