@@ -177,7 +177,7 @@ $hasLearnerData = !empty($booking['learner_goals']) || !empty($booking['learner_
                         <!-- Summary Display -->
                         <div id="summary-display" class="mt-3">
                             <?php if (!empty($booking['session_summary'])): ?>
-                                <p class="text-xs text-gray-300 whitespace-pre-line leading-relaxed bg-[#0D131F] p-3.5 rounded-xl border border-gray-800"><?php echo htmlspecialchars($booking['session_summary']); ?></p>
+                                <p class="text-xs text-gray-100 whitespace-pre-line leading-relaxed bg-[#0D131F] p-3.5 rounded-xl border border-gray-800 font-medium"><?php echo htmlspecialchars($booking['session_summary']); ?></p>
                             <?php else: ?>
                                 <p class="text-xs text-gray-500 italic">No session summary added yet</p>
                             <?php endif; ?>
@@ -769,19 +769,19 @@ async function generateLearnerInsights(forceRefresh = false) {
 function displayInsights(insights) {
     const container = document.getElementById('ai-insights-container');
     container.innerHTML = `
-        <div class="border border-gray-100 rounded-lg p-4 bg-gray-50">
-            <h4 class="font-semibold text-gray-900 mb-2">Learner Overview</h4>
-            <p class="text-sm text-gray-600 leading-relaxed">${escapeHtml(insights.overview)}</p>
+        <div class="border border-gray-800 rounded-xl p-4 bg-[#0D131F]">
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-2 text-[#00D4AA]">Learner Overview</h4>
+            <p class="text-xs text-gray-300 leading-relaxed">${escapeHtml(insights.overview)}</p>
         </div>
         
-        <div class="border border-gray-100 rounded-lg p-4 bg-gray-50">
-            <h4 class="font-semibold text-gray-900 mb-2">Session Goal Summary</h4>
-            <p class="text-sm text-gray-600 leading-relaxed">${escapeHtml(insights.session_goals)}</p>
+        <div class="border border-gray-800 rounded-xl p-4 bg-[#0D131F]">
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-2 text-[#00D4AA]">Session Goal Summary</h4>
+            <p class="text-xs text-gray-300 leading-relaxed">${escapeHtml(insights.session_goals)}</p>
         </div>
         
-        <div class="border border-gray-100 rounded-lg p-4 bg-gray-50">
-            <h4 class="font-semibold text-gray-900 mb-2">Recommended Approach for Expert</h4>
-            <div class="text-sm text-gray-600 leading-relaxed">${formatApproach(insights.recommended_approach)}</div>
+        <div class="border border-gray-800 rounded-xl p-4 bg-[#0D131F]">
+            <h4 class="font-bold text-white text-xs uppercase tracking-wider mb-2 text-[#00D4AA]">Recommended Approach for Expert</h4>
+            <div class="text-xs text-gray-300 leading-relaxed">${formatApproach(insights.recommended_approach)}</div>
         </div>
     `;
 }
@@ -881,8 +881,8 @@ async function saveSummary() {
         
         if (data.success) {
             document.getElementById('summary-display').innerHTML = summary ? 
-                `<p class="text-gray-700 whitespace-pre-line">${summary}</p>` :
-                '<p class="text-gray-500 italic">No summary added yet</p>';
+                `<p class="text-xs text-gray-100 whitespace-pre-line leading-relaxed bg-[#0D131F] p-3.5 rounded-xl border border-gray-800 font-medium">${escapeHtml(summary)}</p>` :
+                '<p class="text-xs text-gray-500 italic">No session summary added yet</p>';
             closeSummaryModal();
             Swal.fire({
                 icon: 'success',
@@ -1204,7 +1204,7 @@ function refreshTasks(tasks) {
                    ${task.completed ? 'checked' : ''} 
                    onclick="toggleTask('${task.id}')"
                    class="w-4 h-4 text-primary rounded focus:ring-primary cursor-pointer">
-            <span class="flex-1 text-sm ${task.completed ? 'line-through text-gray-400' : 'text-gray-700'}">
+            <span class="flex-1 text-xs ${task.completed ? 'line-through text-gray-500' : 'text-gray-200 font-medium'}">
                 ${escapeHtml(task.title)}
             </span>
             <button onclick="deleteTask('${task.id}')" class="p-1 text-gray-400 hover:text-red-600">
@@ -1330,22 +1330,22 @@ function refreshResources(resources) {
         const isFile = resource.type === 'file';
         
         return `
-            <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg resource-item" data-resource-id="${resource.id}">
-                <svg class="w-4 h-4 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center gap-3 p-3 bg-[#0D131F] border border-gray-800 rounded-xl resource-item" data-resource-id="${resource.id}">
+                <svg class="w-4 h-4 text-[#00D4AA] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                 </svg>
                 <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-gray-900 truncate">${escapeHtml(resource.title)}</p>
+                    <p class="text-xs font-semibold text-gray-200 truncate">${escapeHtml(resource.title)}</p>
                 </div>
                 <div class="flex items-center gap-1">
                     ${resource.url ? `
-                    <a href="${BASE_PATH}${escapeHtml(resource.url)}" ${isFile ? 'download' : 'target="_blank"'} class="p-1 text-gray-400 hover:text-primary">
+                    <a href="${BASE_PATH}${escapeHtml(resource.url)}" ${isFile ? 'download' : 'target="_blank"'} class="p-1.5 text-gray-400 hover:text-[#00D4AA] transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
                         </svg>
                     </a>
                     ` : ''}
-                    <button onclick="deleteResource('${resource.id}')" class="p-1 text-gray-400 hover:text-red-600">
+                    <button onclick="deleteResource('${resource.id}')" class="p-1.5 text-gray-400 hover:text-red-400 transition">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                         </svg>
