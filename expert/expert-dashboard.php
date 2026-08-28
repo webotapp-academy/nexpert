@@ -478,6 +478,75 @@ function getScoreLabel($score) {
         </div>
     </div>
 
+    <!-- Getting Started Guide (TOP) -->
+    <div class="bg-[#0b0f19] border border-white/[0.08] rounded-2xl p-5 sm:p-7 shadow-[0_10px_35px_-10px_rgba(0,0,0,0.8)]">
+        <h2 class="text-lg sm:text-xl font-bold text-white mb-4 sm:mb-5 flex items-center gap-2">
+            <span>🚀</span>
+            <span>Getting Started as an Expert</span>
+        </h2>
+        <div class="space-y-4">
+            <!-- Step 1: Profile Setup -->
+            <div class="flex items-start space-x-3.5 group">
+                <div class="w-6 h-6 <?php echo $profileComplete ? 'bg-[#10b981] text-white' : 'bg-white/10 text-gray-400'; ?> rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 shadow-sm">
+                    <?php echo $profileComplete ? '✓' : '1'; ?>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm sm:text-base">
+                        <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=settings#profile" class="<?php echo $profileComplete ? 'text-[#10b981] hover:text-emerald-300' : 'text-[#00D4AA] hover:text-[#00bda0]'; ?> transition">
+                            <?php echo $profileComplete ? 'Profile Setup Complete' : 'Complete Your Profile →'; ?>
+                        </a>
+                    </h3>
+                    <p class="text-xs sm:text-sm text-gray-400 mt-0.5"><?php echo $profileComplete ? 'Great! Your profile is set up' : 'Add your expertise and details'; ?></p>
+                </div>
+            </div>
+            
+            <!-- Step 2: KYC Verification -->
+            <div class="flex items-start space-x-3.5 group">
+                <div class="w-6 h-6 <?php echo $kycComplete ? 'bg-[#10b981] text-white' : 'bg-white/10 text-gray-400'; ?> rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 shadow-sm">
+                    <?php echo $kycComplete ? '✓' : '2'; ?>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm sm:text-base">
+                        <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=settings#kyc" class="<?php echo $kycComplete ? 'text-[#10b981] hover:text-emerald-300' : 'text-[#00D4AA] hover:text-[#00bda0]'; ?> transition">
+                            <?php echo $kycComplete ? 'KYC Verification Complete' : 'Complete KYC Verification →'; ?>
+                        </a>
+                    </h3>
+                    <p class="text-xs sm:text-sm text-gray-400 mt-0.5"><?php echo $kycComplete ? 'You are verified to earn' : 'Verify your identity to start earning'; ?></p>
+                </div>
+            </div>
+            
+            <!-- Step 3: Set Availability -->
+            <div class="flex items-start space-x-3.5 group">
+                <div class="w-6 h-6 <?php echo $availabilitySet ? 'bg-[#10b981] text-white' : 'bg-white/10 text-gray-400'; ?> rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 shadow-sm">
+                    <?php echo $availabilitySet ? '✓' : '3'; ?>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm sm:text-base">
+                        <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=settings#availability" class="<?php echo $availabilitySet ? 'text-[#10b981] hover:text-emerald-300' : 'text-[#00D4AA] hover:text-[#00bda0]'; ?> transition">
+                            <?php echo $availabilitySet ? 'Availability Set' : 'Set Your Availability →'; ?>
+                        </a>
+                    </h3>
+                    <p class="text-xs sm:text-sm text-gray-400 mt-0.5"><?php echo $availabilitySet ? 'Learners can see when you\'re free' : 'Let learners know when you\'re available'; ?></p>
+                </div>
+            </div>
+            
+            <!-- Step 4: First Booking -->
+            <div class="flex items-start space-x-3.5 group">
+                <div class="w-6 h-6 <?php echo $firstBooking ? 'bg-[#10b981] text-white' : 'bg-white/10 text-gray-400'; ?> rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 shadow-sm">
+                    <?php echo $firstBooking ? '✓' : '4'; ?>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm sm:text-base">
+                        <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=booking-management" class="<?php echo $firstBooking ? 'text-[#10b981] hover:text-emerald-300' : 'text-[#00D4AA] hover:text-[#00bda0]'; ?> transition">
+                            <?php echo $firstBooking ? 'First Booking Completed' : 'Accept Your First Booking →'; ?>
+                        </a>
+                    </h3>
+                    <p class="text-xs sm:text-sm text-gray-400 mt-0.5"><?php echo $firstBooking ? 'You\'ve started helping learners!' : 'Start helping learners achieve their goals'; ?></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- DAILY CREDIBILITY UPDATE HERO CARD -->
     <?php if ($latestCard && !empty($latestCard['card_data'])): 
         $cData = $latestCard['card_data'];
@@ -971,72 +1040,6 @@ function getScoreLabel($score) {
             
         </div>
         
-    </div>
-
-    <!-- Getting Started Guide -->
-    <div class="bg-gradient-to-r from-yellow-950/20 to-amber-950/20 border border-amber-900/40 rounded-lg p-4 sm:p-6 mb-6 sm:mb-8">
-        <h2 class="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">🚀 Getting Started as an Expert</h2>
-        <div class="space-y-3">
-            <!-- Step 1: Profile Setup -->
-            <div class="flex items-start space-x-3">
-                <div class="w-6 h-6 <?php echo $profileComplete ? 'bg-green-500' : 'bg-gray-700'; ?> text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                    <?php echo $profileComplete ? '✓' : '1'; ?>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-white">
-                        <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=settings#profile" class="<?php echo $profileComplete ? 'text-green-400 hover:text-green-300' : 'text-[#00D4AA] hover:text-[#00bda0]'; ?>">
-                            <?php echo $profileComplete ? 'Profile Setup Complete' : 'Complete Your Profile →'; ?>
-                        </a>
-                    </h3>
-                    <p class="text-sm text-gray-400"><?php echo $profileComplete ? 'Great! Your profile is set up' : 'Add your expertise and details'; ?></p>
-                </div>
-            </div>
-            
-            <!-- Step 2: KYC Verification -->
-            <div class="flex items-start space-x-3">
-                <div class="w-6 h-6 <?php echo $kycComplete ? 'bg-green-500' : 'bg-gray-700'; ?> text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                    <?php echo $kycComplete ? '✓' : '2'; ?>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-white">
-                        <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=settings#kyc" class="<?php echo $kycComplete ? 'text-green-400 hover:text-green-300' : 'text-[#00D4AA] hover:text-[#00bda0]'; ?>">
-                            <?php echo $kycComplete ? 'KYC Verification Complete' : 'Complete KYC Verification →'; ?>
-                        </a>
-                    </h3>
-                    <p class="text-sm text-gray-400"><?php echo $kycComplete ? 'You are verified to earn' : 'Verify your identity to start earning'; ?></p>
-                </div>
-            </div>
-            
-            <!-- Step 3: Set Availability -->
-            <div class="flex items-start space-x-3">
-                <div class="w-6 h-6 <?php echo $availabilitySet ? 'bg-green-500' : 'bg-gray-700'; ?> text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                    <?php echo $availabilitySet ? '✓' : '3'; ?>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-white">
-                        <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=settings#availability" class="<?php echo $availabilitySet ? 'text-green-400 hover:text-green-300' : 'text-[#00D4AA] hover:text-[#00bda0]'; ?>">
-                            <?php echo $availabilitySet ? 'Availability Set' : 'Set Your Availability →'; ?>
-                        </a>
-                    </h3>
-                    <p class="text-sm text-gray-400"><?php echo $availabilitySet ? 'Learners can see when you\'re free' : 'Let learners know when you\'re available'; ?></p>
-                </div>
-            </div>
-            
-            <!-- Step 4: First Booking -->
-            <div class="flex items-start space-x-3">
-                <div class="w-6 h-6 <?php echo $firstBooking ? 'bg-green-500' : 'bg-gray-700'; ?> text-white rounded-full flex items-center justify-center text-sm font-semibold flex-shrink-0">
-                    <?php echo $firstBooking ? '✓' : '4'; ?>
-                </div>
-                <div>
-                    <h3 class="font-semibold text-white">
-                        <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=booking-management" class="<?php echo $firstBooking ? 'text-green-400 hover:text-green-300' : 'text-[#00D4AA] hover:text-[#00bda0]'; ?>">
-                            <?php echo $firstBooking ? 'First Booking Completed' : 'Accept Your First Booking →'; ?>
-                        </a>
-                    </h3>
-                    <p class="text-sm text-gray-400"><?php echo $firstBooking ? 'You\'ve started helping learners!' : 'Start helping learners achieve their goals'; ?></p>
-                </div>
-            </div>
-        </div>
     </div>
 
     <!-- Recent Activity -->
