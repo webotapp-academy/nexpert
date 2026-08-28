@@ -1,12 +1,7 @@
 <?php
-// Load domain path configuration
-$base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
-
-// Include session configuration and path setup
+// Central session + config (defines BASE_PATH / BASE_URL and starts session)
 require_once dirname(__DIR__) . '/includes/session-config.php';
-
-// Use the BASE_PATH constant from session-config
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
+require_once dirname(__DIR__) . '/admin-panel/apis/connection/pdo.php';
 
 // Check if user is logged in as expert
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {
@@ -18,8 +13,8 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
 
 $page_title = "Booking Management - Nexpert.ai";
 $panel_type = "expert";
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
+require_once dirname(__DIR__) . '/includes/header.php';
+require_once dirname(__DIR__) . '/includes/navigation.php';
 
 // Get expert profile ID
 $userId = $_SESSION['user_id'] ?? null;
@@ -85,10 +80,53 @@ if ($expertProfileId && $userId) {
     $stmt->execute([$userId]);
     $thisMonthEarnings = $stmt->fetch(PDO::FETCH_ASSOC)['total'] ?? 0;
     
-    // Get total count for pagination (only confirmed bookings)
-    $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM bookings WHERE expert_id = ? AND status = 'confirmed'");
-    $stmt->execute([$userId]);
-    $totalBookings = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+    // Filter parameters
+    $filterStatus = $_GET['status_filter'] ?? 'all';
+    $filterTime = $_GET['time_filter'] ?? 'all';
+    $filterSearch = trim($_GET['search'] ?? '');
+
+    $whereConditions = ["b.expert_id = ?"];
+    $queryParams = [$userId];
+
+    // Status filter
+    if ($filterStatus && $filterStatus !== 'all' && $filterStatus !== 'All Statuses') {
+        $whereConditions[] = "b.status = ?";
+        $queryParams[] = strtolower($filterStatus);
+    } else {
+        // By default show all non-cancelled sessions in main table
+        $whereConditions[] = "b.status != 'cancelled'";
+    }
+
+    // Search filter
+    if ($filterSearch !== '') {
+        $whereConditions[] = "(lp.full_name LIKE ? OR b.session_topic LIKE ? OR u.email LIKE ?)";
+        $searchWildcard = "%{$filterSearch}%";
+        $queryParams[] = $searchWildcard;
+        $queryParams[] = $searchWildcard;
+        $queryParams[] = $searchWildcard;
+    }
+
+    // Time filter
+    if ($filterTime === 'today') {
+        $whereConditions[] = "DATE(b.session_datetime) = CURRENT_DATE()";
+    } elseif ($filterTime === 'this_week') {
+        $whereConditions[] = "WEEK(b.session_datetime) = WEEK(CURRENT_DATE()) AND YEAR(b.session_datetime) = YEAR(CURRENT_DATE())";
+    } elseif ($filterTime === 'this_month') {
+        $whereConditions[] = "MONTH(b.session_datetime) = MONTH(CURRENT_DATE()) AND YEAR(b.session_datetime) = YEAR(CURRENT_DATE())";
+    }
+
+    $whereSql = implode(' AND ', $whereConditions);
+
+    // Get total count for pagination
+    $countStmt = $pdo->prepare("
+        SELECT COUNT(*) as count 
+        FROM bookings b
+        LEFT JOIN users u ON b.learner_id = u.id
+        LEFT JOIN learner_profiles lp ON u.id = lp.user_id
+        WHERE {$whereSql}
+    ");
+    $countStmt->execute($queryParams);
+    $totalBookings = $countStmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
     
     // Get reschedule requests
     $rescheduleRequests = [];
@@ -109,7 +147,7 @@ if ($expertProfileId && $userId) {
     $rescheduleRequests = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $rescheduleCount = count($rescheduleRequests);
     
-    // Get bookings with learner info (only confirmed bookings)
+    // Get bookings with learner info
     $stmt = $pdo->prepare("
         SELECT b.*, 
                lp.full_name as learner_name, u.email as learner_email, 
@@ -120,11 +158,12 @@ if ($expertProfileId && $userId) {
         LEFT JOIN users u ON b.learner_id = u.id
         LEFT JOIN learner_profiles lp ON u.id = lp.user_id
         LEFT JOIN payments p ON b.id = p.booking_id
-        WHERE b.expert_id = ? AND b.status = 'confirmed'
+        WHERE {$whereSql}
         ORDER BY b.session_datetime DESC
         LIMIT ? OFFSET ?
     ");
-    $stmt->execute([$userId, $limit, $offset]);
+    $execParams = array_merge($queryParams, [$limit, $offset]);
+    $stmt->execute($execParams);
     $bookings = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
     // Get cancelled bookings
@@ -231,25 +270,25 @@ $totalPages = ceil($totalBookings / $limit);
 
         <!-- Reschedule Requests Section -->
         <?php if (!empty($rescheduleRequests)): ?>
-        <div class="bg-yellow-50 border border-yellow-200 rounded-lg shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
-            <div class="flex items-center justify-between mb-4">
+        <div class="bg-[#0D131F] border border-amber-500/20 rounded-2xl shadow-xl p-4 sm:p-6 mb-6 sm:mb-8">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-800">
                 <div class="flex items-center">
-                    <div class="p-2 bg-yellow-500 rounded-full mr-3">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 bg-amber-500/10 border border-amber-500/25 rounded-xl mr-3">
+                        <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
-                    <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Reschedule Requests <span class="bg-yellow-500 text-white text-xs px-2 py-1 rounded-full ml-2"><?php echo $rescheduleCount; ?></span></h2>
+                    <h2 class="text-base sm:text-lg font-bold text-white">Reschedule Requests <span class="bg-amber-500/20 border border-amber-500/30 text-amber-300 text-xs px-2.5 py-0.5 rounded-full ml-2 font-mono"><?php echo $rescheduleCount; ?></span></h2>
                 </div>
             </div>
             
-            <div class="space-y-4">
+            <div class="space-y-3">
                 <?php foreach ($rescheduleRequests as $request): 
                     $originalDate = new DateTime($request['session_datetime']);
                     $newDate = new DateTime($request['reschedule_new_datetime']);
                     $requestedAt = new DateTime($request['reschedule_requested_at']);
                 ?>
-                <div class="bg-white rounded-lg p-4 border border-yellow-200">
+                <div class="bg-[#080B10] border border-gray-800 rounded-xl p-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div class="flex items-start gap-3">
                             <?php 
@@ -263,45 +302,45 @@ $totalPages = ceil($totalBookings / $limit);
                             <?php if ($learnerImageSrc): ?>
                                 <img src="<?php echo htmlspecialchars($learnerImageSrc); ?>" 
                                      alt="<?php echo htmlspecialchars($request['learner_name'] ?? 'Learner'); ?>" 
-                                     class="w-12 h-12 rounded-full object-cover">
+                                     class="w-10 h-10 rounded-full object-cover border border-gray-700">
                             <?php else: ?>
-                                <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                                    <span class="text-gray-600 font-semibold text-lg"><?php echo strtoupper(substr($request['learner_name'] ?? 'U', 0, 1)); ?></span>
+                                <div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs font-bold text-gray-300">
+                                    <?php echo strtoupper(substr($request['learner_name'] ?? 'U', 0, 1)); ?>
                                 </div>
                             <?php endif; ?>
                             
                             <div>
-                                <h3 class="font-semibold text-gray-900"><?php echo htmlspecialchars($request['learner_name'] ?? 'Unknown Learner'); ?></h3>
-                                <p class="text-sm text-gray-600">Requested <?php echo $requestedAt->format('M j, Y \a\t g:i A'); ?></p>
+                                <h3 class="font-bold text-white text-sm"><?php echo htmlspecialchars($request['learner_name'] ?? 'Unknown Learner'); ?></h3>
+                                <p class="text-xs text-gray-400">Requested <?php echo $requestedAt->format('M j, Y \a\t g:i A'); ?></p>
                                 
-                                <div class="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 text-sm">
-                                    <div class="flex items-center text-red-600">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <div class="mt-2 flex flex-col sm:flex-row gap-2 sm:gap-4 text-xs">
+                                    <div class="flex items-center text-red-400">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                                         </svg>
                                         <span class="line-through"><?php echo $originalDate->format('M j, Y g:i A'); ?></span>
                                     </div>
-                                    <div class="flex items-center text-green-600">
-                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <div class="flex items-center text-emerald-400 font-mono">
+                                        <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
                                         </svg>
-                                        <span class="font-medium"><?php echo $newDate->format('M j, Y g:i A'); ?></span>
+                                        <span class="font-bold"><?php echo $newDate->format('M j, Y g:i A'); ?></span>
                                     </div>
                                 </div>
                                 
                                 <?php if (!empty($request['reschedule_reason'])): ?>
-                                <p class="mt-2 text-sm text-gray-500 italic">"<?php echo htmlspecialchars($request['reschedule_reason']); ?>"</p>
+                                <p class="mt-2 text-xs text-gray-400 italic">"<?php echo htmlspecialchars($request['reschedule_reason']); ?>"</p>
                                 <?php endif; ?>
                             </div>
                         </div>
                         
-                        <div class="flex gap-2 sm:flex-col">
+                        <div class="flex gap-2">
                             <button onclick="handleReschedule(<?php echo $request['id']; ?>, 'accept')" 
-                                    class="flex-1 sm:flex-none px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition text-sm font-medium">
+                                    class="px-4 py-2 bg-[#00D4AA] text-[#080B10] font-extrabold rounded-xl hover:bg-[#00bfa0] transition text-xs shadow-md">
                                 Accept
                             </button>
                             <button onclick="handleReschedule(<?php echo $request['id']; ?>, 'decline')" 
-                                    class="flex-1 sm:flex-none px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium">
+                                    class="px-4 py-2 bg-red-500/10 border border-red-500/25 text-red-400 hover:bg-red-500/20 rounded-xl transition text-xs font-semibold">
                                 Decline
                             </button>
                         </div>
@@ -314,24 +353,24 @@ $totalPages = ceil($totalBookings / $limit);
 
         <!-- Cancelled Sessions Section -->
         <?php if (!empty($cancelledBookings)): ?>
-        <div class="bg-red-50 border border-red-200 rounded-lg shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
-            <div class="flex items-center justify-between mb-4">
+        <div class="bg-[#0D131F] border border-red-500/20 rounded-2xl shadow-xl p-4 sm:p-6 mb-6 sm:mb-8">
+            <div class="flex items-center justify-between mb-4 pb-3 border-b border-gray-800">
                 <div class="flex items-center">
-                    <div class="p-2 bg-red-500 rounded-full mr-3">
-                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="p-2 bg-red-500/10 border border-red-500/25 rounded-xl mr-3">
+                        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                         </svg>
                     </div>
-                    <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Cancelled Sessions <span class="bg-red-500 text-white text-xs px-2 py-1 rounded-full ml-2"><?php echo $cancelledCount; ?></span></h2>
+                    <h2 class="text-base sm:text-lg font-bold text-white">Cancelled Sessions <span class="bg-red-500/20 border border-red-500/30 text-red-300 text-xs px-2.5 py-0.5 rounded-full ml-2 font-mono"><?php echo $cancelledCount; ?></span></h2>
                 </div>
             </div>
             
-            <div class="space-y-4">
+            <div class="space-y-3">
                 <?php foreach ($cancelledBookings as $cancelled): 
                     $sessionDate = new DateTime($cancelled['session_datetime']);
                     $cancelledAt = $cancelled['cancelled_at'] ? new DateTime($cancelled['cancelled_at']) : null;
                 ?>
-                <div class="bg-white rounded-lg p-4 border border-red-200">
+                <div class="bg-[#080B10] border border-gray-800 rounded-xl p-4">
                     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div class="flex items-start gap-3">
                             <?php 
@@ -345,33 +384,33 @@ $totalPages = ceil($totalBookings / $limit);
                             <?php if ($learnerImageSrc): ?>
                                 <img src="<?php echo htmlspecialchars($learnerImageSrc); ?>" 
                                      alt="<?php echo htmlspecialchars($cancelled['learner_name'] ?? 'Learner'); ?>" 
-                                     class="w-12 h-12 rounded-full object-cover">
+                                     class="w-10 h-10 rounded-full object-cover border border-gray-700">
                             <?php else: ?>
-                                <div class="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                                    <span class="text-gray-600 font-semibold text-lg"><?php echo strtoupper(substr($cancelled['learner_name'] ?? 'U', 0, 1)); ?></span>
+                                <div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs font-bold text-gray-300">
+                                    <?php echo strtoupper(substr($cancelled['learner_name'] ?? 'U', 0, 1)); ?>
                                 </div>
                             <?php endif; ?>
                             
                             <div>
-                                <h3 class="font-semibold text-gray-900"><?php echo htmlspecialchars($cancelled['learner_name'] ?? 'Unknown Learner'); ?></h3>
-                                <p class="text-sm text-gray-600">
-                                    Session was scheduled for: <span class="font-medium"><?php echo $sessionDate->format('M j, Y \a\t g:i A'); ?></span>
+                                <h3 class="font-bold text-white text-sm"><?php echo htmlspecialchars($cancelled['learner_name'] ?? 'Unknown Learner'); ?></h3>
+                                <p class="text-xs text-gray-400">
+                                    Session was scheduled for: <span class="font-semibold text-gray-200"><?php echo $sessionDate->format('M j, Y \a\t g:i A'); ?></span>
                                 </p>
                                 <?php if ($cancelledAt): ?>
-                                <p class="text-sm text-red-600">
+                                <p class="text-xs text-red-400 mt-1">
                                     Cancelled <?php echo $cancelledAt->format('M j, Y \a\t g:i A'); ?> 
                                     by <?php echo ucfirst($cancelled['cancelled_by'] ?? 'unknown'); ?>
                                 </p>
                                 <?php endif; ?>
                                 
                                 <?php if (!empty($cancelled['cancellation_reason'])): ?>
-                                <p class="mt-2 text-sm text-gray-500 italic">"<?php echo htmlspecialchars($cancelled['cancellation_reason']); ?>"</p>
+                                <p class="mt-2 text-xs text-gray-400 italic">"<?php echo htmlspecialchars($cancelled['cancellation_reason']); ?>"</p>
                                 <?php endif; ?>
                             </div>
                         </div>
                         
                         <div class="flex items-center">
-                            <span class="px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">Cancelled</span>
+                            <span class="px-2.5 py-1 bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold rounded-full">Cancelled</span>
                         </div>
                     </div>
                 </div>
@@ -382,43 +421,38 @@ $totalPages = ceil($totalBookings / $limit);
 
         <!-- Filters and Search -->
         <div class="bg-[#0D131F] border border-gray-800 rounded-2xl shadow-xl p-6 mb-8">
-            <div class="flex flex-col space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div class="relative sm:col-span-2 lg:col-span-1">
-                        <input type="text" placeholder="Search by learner name..." class="w-full pl-10 pr-4 py-2.5 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs">
+            <form method="GET" action="" class="flex flex-col space-y-4">
+                <input type="hidden" name="panel" value="expert">
+                <input type="hidden" name="page" value="booking-management">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="relative">
+                        <input type="text" name="search" value="<?php echo htmlspecialchars($filterSearch); ?>" placeholder="Search by learner name or topic..." class="w-full pl-10 pr-4 py-2.5 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs">
                         <svg class="absolute left-3 top-3 h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
                     
-                    <select class="w-full px-4 py-2.5 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs">
-                        <option>All Statuses</option>
-                        <option>Pending Approval</option>
-                        <option>Confirmed</option>
-                        <option>Completed</option>
-                        <option>Cancelled</option>
+                    <select name="status_filter" class="w-full px-4 py-2.5 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs">
+                        <option value="all" <?php echo $filterStatus === 'all' ? 'selected' : ''; ?>>All Statuses</option>
+                        <option value="confirmed" <?php echo $filterStatus === 'confirmed' ? 'selected' : ''; ?>>Confirmed (Upcoming)</option>
+                        <option value="completed" <?php echo $filterStatus === 'completed' ? 'selected' : ''; ?>>Completed</option>
+                        <option value="pending" <?php echo $filterStatus === 'pending' ? 'selected' : ''; ?>>Pending Approval</option>
+                        <option value="cancelled" <?php echo $filterStatus === 'cancelled' ? 'selected' : ''; ?>>Cancelled</option>
                     </select>
                     
-                    <select class="w-full px-4 py-2.5 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs">
-                        <option>All Time</option>
-                        <option>Today</option>
-                        <option>This Week</option>
-                        <option>This Month</option>
-                    </select>
-                    
-                    <select class="w-full px-4 py-2.5 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs">
-                        <option>All Session Types</option>
-                        <option>1-on-1 Strategy</option>
-                        <option>Code Review</option>
-                        <option>Career Guidance</option>
+                    <select name="time_filter" class="w-full px-4 py-2.5 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-xs">
+                        <option value="all" <?php echo $filterTime === 'all' ? 'selected' : ''; ?>>All Time</option>
+                        <option value="today" <?php echo $filterTime === 'today' ? 'selected' : ''; ?>>Today</option>
+                        <option value="this_week" <?php echo $filterTime === 'this_week' ? 'selected' : ''; ?>>This Week</option>
+                        <option value="this_month" <?php echo $filterTime === 'this_month' ? 'selected' : ''; ?>>This Month</option>
                     </select>
                 </div>
                 
                 <div class="flex flex-col sm:flex-row gap-3">
-                    <button class="w-full sm:w-auto px-5 py-2.5 bg-[#00D4AA] text-[#080B10] font-extrabold rounded-xl hover:bg-[#00bfa0] transition text-xs shadow-md">Apply Filters</button>
-                    <button class="w-full sm:w-auto px-5 py-2.5 bg-[#080B10] border border-gray-700 text-gray-300 rounded-xl hover:border-gray-500 transition text-xs font-semibold">Reset</button>
+                    <button type="submit" class="w-full sm:w-auto px-5 py-2.5 bg-[#00D4AA] text-[#080B10] font-extrabold rounded-xl hover:bg-[#00bfa0] transition text-xs shadow-md">Apply Filters</button>
+                    <a href="?panel=expert&page=booking-management" class="w-full sm:w-auto px-5 py-2.5 bg-[#080B10] border border-gray-700 text-gray-300 rounded-xl hover:border-gray-500 transition text-xs font-semibold text-center">Reset</a>
                 </div>
-            </div>
+            </form>
         </div>
 
         <!-- Bookings Table -->
@@ -723,4 +757,4 @@ $totalPages = ceil($totalBookings / $limit);
     });
 </script>
 
-<?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>
+<?php require_once dirname(__DIR__) . '/includes/footer.php'; ?>
