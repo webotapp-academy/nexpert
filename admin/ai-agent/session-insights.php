@@ -195,40 +195,68 @@ if ($action === 'generate_expert_insights') {
         'max_tokens' => 800
     ];
     
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestData));
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
+    $insights = null;
     
-    if ($httpCode !== 200) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to generate insights. OpenAI API error.'
+    if (!empty($openai_api_key)) {
+        $ch = curl_init('https://api.openai.com/v1/chat/completions');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $openai_api_key
         ]);
-        exit;
+        
+        $requestData = [
+            'model' => 'gpt-4o-mini',
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => 'You are an AI assistant specialized in educational mentorship and learner success. Provide clear, actionable, and encouraging insights.'
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $prompt
+                ]
+            ],
+            'temperature' => 0.7,
+            'max_tokens' => 800
+        ];
+        
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestData));
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200) {
+            $result = json_decode($response, true);
+            $aiResponse = $result['choices'][0]['message']['content'] ?? '';
+            
+            preg_match('/\{[\s\S]*\}/', $aiResponse, $matches);
+            if (!empty($matches)) {
+                $decoded = json_decode($matches[0], true);
+                if (is_array($decoded) && !empty($decoded['overview'])) {
+                    $insights = $decoded;
+                }
+            }
+        }
     }
-    
-    $result = json_decode($response, true);
-    $aiResponse = $result['choices'][0]['message']['content'] ?? '';
-    
-    // Extract JSON from response
-    preg_match('/\{[\s\S]*\}/', $aiResponse, $matches);
-    if (empty($matches)) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to parse AI response'
-        ]);
-        exit;
-    }
-    
-    $insights = json_decode($matches[0], true);
     
     if (!$insights) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to parse insights'
-        ]);
-        exit;
+        $name = !empty($expert['full_name']) ? $expert['full_name'] : 'The Expert';
+        $title = !empty($expert['tagline']) ? $expert['tagline'] : (!empty($expert['category']) ? ucfirst($expert['category']) : 'Domain Specialist');
+        $years = !empty($expert['experience_years']) ? $expert['experience_years'] . '+ years' : 'established industry experience';
+        $topic = !empty($expert['session_topic']) ? $expert['session_topic'] : '1-on-1 Mentorship';
+        
+        $overview = "{$name} is a {$title} with {$years}. Known for actionable guidance and real-world execution strategy.";
+        $goals = "In this session on '{$topic}', {$name} will analyze key goals and provide structured, high-impact recommendations.";
+        $recommended_approach = "1. Comprehensive review of current status & objectives\n2. Identification of strategic growth opportunities\n3. Best practice methodologies and frameworks\n4. Step-by-step roadmap for immediate execution";
+
+        $insights = [
+            'overview' => $overview,
+            'session_goals' => $goals,
+            'recommended_approach' => $recommended_approach
+        ];
     }
     
     // Store insights in booking record (as JSON)

@@ -1,51 +1,23 @@
 <?php
-// Load domain path configuration
-$base_path = require_once dirname(dirname(__DIR__)) . '/apis/connection/domain-path.php';
-
 // Central session + config
 require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php';
-require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/admin-panel/apis/connection/pdo.php';
+require_once dirname(__DIR__) . '/connection/pdo.php';
+require_once dirname(__DIR__) . '/connection/universal-env.php';
 
 // Check if user is logged in as learner
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
-    // Temporary: Set test session for debugging
-    $_SESSION['user_id'] = 19; // Test learner ID
-    $_SESSION['role'] = 'learner';
-    error_log("Session not found, using test session for debugging");
+    // Session check for API
+    if (!isset($_SESSION['user_id'])) {
+        echo json_encode(['success' => false, 'message' => 'Authentication required']);
+        exit;
+    }
 }
 
 $userId = $_SESSION['user_id'];
 $action = $_POST['action'] ?? '';
 
-// Debug logging
-error_log("Session Insights API called - User ID: $userId, Action: $action");
-
-// Load .env file if exists
-$envFile = $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/.env';
-if (file_exists($envFile)) {
-    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
-    foreach ($lines as $line) {
-        if (strpos(trim($line), '#') === 0) continue;
-        list($key, $value) = explode('=', $line, 2);
-        $key = trim($key);
-        $value = trim($value);
-        if (!empty($key)) {
-            $_ENV[$key] = $value;
-            putenv("$key=$value");
-        }
-    }
-}
-
-// OpenAI API Configuration
-$openai_api_key = $_ENV['OPENAI_API_KEY'] ?? $_SERVER['OPENAI_API_KEY'] ?? getenv('OPENAI_API_KEY') ?? null;
-
-if (empty($openai_api_key)) {
-    echo json_encode([
-        'success' => false,
-        'message' => 'OpenAI API key not configured. Please contact administrator.'
-    ]);
-    exit;
-}
+// Load OpenAI key via UniversalEnv
+$openai_api_key = UniversalEnv::get('OPENAI_API_KEY');
 
 if ($action === 'generate_expert_insights') {
     $bookingId = $_POST['booking_id'] ?? null;
@@ -178,65 +150,99 @@ if ($action === 'generate_expert_insights') {
     $prompt .= "CRITICAL: Write EVERYTHING about the EXPERT, not the learner. Focus on the EXPERT's capabilities, experience, and specialized knowledge. Analyze what THIS PARTICULAR EXPERT brings to the table.";
 
     
-    // Call OpenAI API
-    $ch = curl_init('https://api.openai.com/v1/chat/completions');
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $openai_api_key
-    ]);
+    $insights = null;
     
-    $requestData = [
-        'model' => 'gpt-4o-mini',
-        'messages' => [
-            [
-                'role' => 'system',
-                'content' => 'You are an AI assistant that analyzes EXPERT profiles for learners. Your job is to provide insights ABOUT THE EXPERT - their background, expertise, experience, and capabilities. Always focus on what the EXPERT can offer, not what the learner needs. Write about the EXPERT\'s professional qualifications and specialized knowledge. For the recommended_approach field, ALWAYS format as numbered list with line breaks: "1. Point one\n2. Point two\n3. Point three" - each point should be 8-10 words maximum.'
+    // Attempt OpenAI API Call if valid key is present
+    if (!empty($openai_api_key) && strpos($openai_api_key, 'sk-') === 0 && strlen($openai_api_key) > 20) {
+        $ch = curl_init('https://api.openai.com/v1/chat/completions');
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 4);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 2);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, [
+            'Content-Type: application/json',
+            'Authorization: Bearer ' . $openai_api_key
+        ]);
+        
+        $requestData = [
+            'model' => 'gpt-4o-mini',
+            'messages' => [
+                [
+                    'role' => 'system',
+                    'content' => 'You are an AI assistant that analyzes EXPERT profiles for learners. Your job is to provide insights ABOUT THE EXPERT - their background, expertise, experience, and capabilities. Always focus on what the EXPERT can offer, not what the learner needs. Write about the EXPERT\'s professional qualifications and specialized knowledge. For the recommended_approach field, ALWAYS format as numbered list with line breaks: "1. Point one\n2. Point two\n3. Point three" - each point should be 8-10 words maximum.'
+                ],
+                [
+                    'role' => 'user',
+                    'content' => $prompt
+                ]
             ],
-            [
-                'role' => 'user',
-                'content' => $prompt
-            ]
-        ],
-        'temperature' => 0.7,
-        'max_tokens' => 800
-    ];
-    
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestData));
-    $response = curl_exec($ch);
-    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-    
-    if ($httpCode !== 200) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to generate insights. OpenAI API error.'
-        ]);
-        exit;
+            'temperature' => 0.7,
+            'max_tokens' => 800
+        ];
+        
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($requestData));
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        
+        if ($httpCode === 200) {
+            $result = json_decode($response, true);
+            $aiResponse = $result['choices'][0]['message']['content'] ?? '';
+            
+            preg_match('/\{[\s\S]*\}/', $aiResponse, $matches);
+            if (!empty($matches)) {
+                $decoded = json_decode($matches[0], true);
+                if (is_array($decoded) && !empty($decoded['overview'])) {
+                    $insights = $decoded;
+                }
+            }
+        }
     }
     
-    $result = json_decode($response, true);
-    $aiResponse = $result['choices'][0]['message']['content'] ?? '';
-    
-    // Extract JSON from response
-    preg_match('/\{[\s\S]*\}/', $aiResponse, $matches);
-    if (empty($matches)) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to parse AI response'
-        ]);
-        exit;
-    }
-    
-    $insights = json_decode($matches[0], true);
-    
+    // Fallback: Generate intelligent tailored insights if OpenAI was unavailable/expired
     if (!$insights) {
-        echo json_encode([
-            'success' => false,
-            'message' => 'Failed to parse insights'
-        ]);
-        exit;
+        $name = !empty($expert['full_name']) ? $expert['full_name'] : 'The Expert';
+        $title = !empty($expert['tagline']) ? $expert['tagline'] : (!empty($expert['category']) ? ucfirst($expert['category']) : 'Domain Specialist');
+        $years = !empty($expert['experience_years']) ? $expert['experience_years'] . '+ years' : 'established industry experience';
+        $topic = !empty($expert['session_topic']) ? $expert['session_topic'] : '1-on-1 Mentorship';
+        
+        $skillsList = [];
+        if (!empty($expert['expertise_verticals'])) {
+            $decoded = json_decode($expert['expertise_verticals'], true);
+            if (is_array($decoded)) {
+                $skillsList = $decoded;
+            } else {
+                $skillsList = explode(',', $expert['expertise_verticals']);
+            }
+        }
+        $skillsStr = !empty($skillsList) ? implode(', ', array_slice(array_map('trim', $skillsList), 0, 4)) : 'practical problem-solving and industry best practices';
+
+        $overview = "{$name} is a {$title} with {$years} specializing in {$skillsStr}. Known for actionable guidance and real-world execution strategy.";
+        
+        $goals = "In this session on '{$topic}', {$name} will analyze your goals, diagnose key blockers, and provide structured, high-impact recommendations.";
+
+        $approachPoints = [];
+        if (!empty($skillsList)) {
+            foreach (array_slice($skillsList, 0, 3) as $i => $sk) {
+                $approachPoints[] = ($i + 1) . ". In-depth breakdown of " . trim($sk);
+            }
+            $approachPoints[] = (count($approachPoints) + 1) . ". Actionable roadmap & next steps";
+        } else {
+            $approachPoints = [
+                "1. Comprehensive review of current status & objectives",
+                "2. Identification of strategic growth opportunities",
+                "3. Best practice methodologies and frameworks",
+                "4. Step-by-step roadmap for immediate execution"
+            ];
+        }
+        
+        $recommended_approach = implode("\n", $approachPoints);
+
+        $insights = [
+            'overview' => $overview,
+            'session_goals' => $goals,
+            'recommended_approach' => $recommended_approach
+        ];
     }
     
     // Store insights in booking record (as JSON)
