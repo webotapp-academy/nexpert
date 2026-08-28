@@ -53,8 +53,10 @@ try {
                 ep.strengths,
                 ep.expected_outcomes,
                 (SELECT COUNT(*) FROM bookings WHERE expert_id = u.id 
-                 AND MONTH(created_at) = MONTH(CURRENT_DATE()) 
-                 AND YEAR(created_at) = YEAR(CURRENT_DATE())
+                 AND (
+                     (MONTH(session_datetime) = MONTH(CURRENT_DATE()) AND YEAR(session_datetime) = YEAR(CURRENT_DATE()))
+                     OR (MONTH(created_at) = MONTH(CURRENT_DATE()) AND YEAR(created_at) = YEAR(CURRENT_DATE()))
+                 )
                  AND status IN ('confirmed', 'completed')) as bookings_this_month,
                 ep.satisfaction_percent,
                 MIN(pricing.amount) as hourly_rate,

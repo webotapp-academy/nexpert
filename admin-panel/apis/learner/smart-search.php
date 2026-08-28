@@ -263,6 +263,12 @@ function searchExperts($pdo, $searchTerms, $originalQuery)
             ep.rating_average as avg_rating,
             ep.total_reviews as review_count,
             ep.total_sessions,
+            (SELECT COUNT(*) FROM bookings WHERE expert_id = u.id 
+             AND (
+                 (MONTH(session_datetime) = MONTH(CURRENT_DATE()) AND YEAR(session_datetime) = YEAR(CURRENT_DATE()))
+                 OR (MONTH(created_at) = MONTH(CURRENT_DATE()) AND YEAR(created_at) = YEAR(CURRENT_DATE()))
+             )
+             AND status IN ('confirmed', 'completed')) as bookings_this_month,
             ep.expertise_verticals,
             ep.category,
             ep.strengths,
