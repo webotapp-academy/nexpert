@@ -18,9 +18,6 @@ $panel_type = "learner";
 require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
 require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 ?>
-    <script>
-        document.body.className = "bg-[#080B10] min-h-screen text-white";
-    </script>
     <div class="max-w-7xl mx-auto px-4 py-8">
         <!-- Header -->
         <div class="mb-8">
@@ -305,6 +302,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
     // Set BASE_PATH globally
     window.BASE_PATH = '<?php echo BASE_PATH; ?>';
@@ -647,7 +645,15 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
     async function submitReview() {
         if (selectedRating === 0) {
-            alert('Please select a rating (1-5 stars)');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Rating Required',
+                text: 'Please select a rating (1-5 stars).',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
             return;
         }
 
@@ -686,14 +692,38 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
                 closeReviewModal();
                 
-                // Show success message
-                alert('✅ Thank you for your review! Your feedback helps others find great experts.');
+                // Show sweet success message
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Review Submitted!',
+                    text: 'Thank you for your review! Your feedback helps others find great experts.',
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: { popup: 'border border-gray-800 rounded-2xl' }
+                });
             } else {
-                alert('Error: ' + (result.message || 'Failed to submit review'));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Submission Failed',
+                    text: result.message || 'Failed to submit review.',
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: { popup: 'border border-gray-800 rounded-2xl' }
+                });
             }
         } catch (error) {
             console.error('Error submitting review:', error);
-            alert('An error occurred while submitting your review. Please try again.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'An error occurred while submitting your review. Please try again.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = originalText;
@@ -722,7 +752,15 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
         const reason = document.getElementById('cancel-reason').value.trim();
         
         if (!reason) {
-            alert('Please provide a reason for cancellation.');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Reason Required',
+                text: 'Please provide a reason for cancellation.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
             return;
         }
         
@@ -747,15 +785,39 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
             const result = await response.json();
             
             if (result.success) {
-                alert('Session cancelled successfully!');
-                closeCancelModal();
-                location.reload(); // Reload dashboard
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Session Cancelled',
+                    text: 'Your session has been cancelled successfully.',
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: { popup: 'border border-gray-800 rounded-2xl' }
+                }).then(() => {
+                    closeCancelModal();
+                    location.reload();
+                });
             } else {
-                alert(result.message || 'Failed to cancel session.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Cancellation Failed',
+                    text: result.message || 'Failed to cancel session.',
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: { popup: 'border border-gray-800 rounded-2xl' }
+                });
             }
         } catch (error) {
             console.error('Error cancelling session:', error);
-            alert('Error cancelling session. Please try again.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error cancelling session. Please try again.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff'
+            });
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Cancel Session';
@@ -910,7 +972,15 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
         const reason = document.getElementById('reschedule-reason').value;
         
         if (!newDate || !newTime) {
-            alert('Please select both date and time for rescheduling.');
+            Swal.fire({
+                icon: 'warning',
+                title: 'Select Date & Time',
+                text: 'Please select both date and time for rescheduling.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
             return;
         }
         
@@ -937,15 +1007,39 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
             const result = await response.json();
             
             if (result.success) {
-                alert('Reschedule request submitted successfully!');
-                closeRescheduleModal();
-                location.reload();
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Reschedule Requested',
+                    text: 'Reschedule request submitted successfully! The expert will be notified.',
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: { popup: 'border border-gray-800 rounded-2xl' }
+                }).then(() => {
+                    closeRescheduleModal();
+                    location.reload();
+                });
             } else {
-                alert(result.message || 'Failed to reschedule session.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Reschedule Failed',
+                    text: result.message || 'Failed to reschedule session.',
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: { popup: 'border border-gray-800 rounded-2xl' }
+                });
             }
         } catch (error) {
             console.error('Error rescheduling session:', error);
-            alert('Error rescheduling session. Please try again.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error rescheduling session. Please try again.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff'
+            });
         } finally {
             submitBtn.disabled = false;
             submitBtn.textContent = 'Submit Reschedule Request';
