@@ -33,8 +33,9 @@ try {
             throw new Exception('Invalid email or password');
         }
         
-        // Verify password
-        if (!password_verify($password, $user['password_hash'])) {
+        // Verify password against password_hash or password column
+        $hashToVerify = !empty($user['password_hash']) ? $user['password_hash'] : ($user['password'] ?? '');
+        if (!password_verify($password, $hashToVerify) && !password_verify($password, $user['password'] ?? '')) {
             throw new Exception('Invalid email or password');
         }
         

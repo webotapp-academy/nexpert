@@ -35,7 +35,10 @@ try {
         
         error_log("Auth API - User found: " . ($user ? "Yes" : "No"));
         
-        if (!$user || !password_verify($password, $user['password_hash'])) {
+        $hashToVerify = !empty($user['password_hash']) ? $user['password_hash'] : ($user['password'] ?? '');
+        $passwordValid = password_verify($password, $hashToVerify) || password_verify($password, $user['password'] ?? '');
+        
+        if (!$user || !$passwordValid) {
             error_log("Auth API - Invalid credentials");
             http_response_code(401);
             echo json_encode(['success' => false, 'message' => 'Invalid email or password']);
