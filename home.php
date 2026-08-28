@@ -185,54 +185,31 @@ require_once 'includes/navigation.php';
         </div>
         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             <?php 
-            $categoriesList = [
-                [
-                    'name' => 'AI & Technology',
-                    'cat' => 'AI+%26+Technology',
-                    'desc' => 'Machine learning, software development, cloud computing',
-                    'svg' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" stroke-width="2"/><rect x="9" y="9" width="6" height="6" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>'
-                ],
-                [
-                    'name' => 'Leadership',
-                    'cat' => 'Leadership',
-                    'desc' => 'Executive coaching, management, team leadership',
-                    'svg' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>'
-                ],
-                [
-                    'name' => 'Career Growth',
-                    'cat' => 'Career+Growth',
-                    'desc' => 'Resume, interview prep, career transitions',
-                    'svg' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>'
-                ],
-                [
-                    'name' => 'Entrepreneurship',
-                    'cat' => 'Entrepreneurship',
-                    'desc' => 'Startup advice, fundraising, product-market fit',
-                    'svg' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>'
-                ],
-                [
-                    'name' => 'Product & Strategy',
-                    'cat' => 'Product+%26+Strategy',
-                    'desc' => 'Product management, positioning, user research',
-                    'svg' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>'
-                ],
-                [
-                    'name' => 'All Categories',
-                    'cat' => '',
-                    'desc' => 'Browse every expert domain',
-                    'svg' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>'
-                ]
+            require_once 'admin-panel/apis/connection/pdo.php';
+            $homeCatsStmt = $pdo->query("SELECT name, slug, description, icon_url FROM categories WHERE is_active = 1 ORDER BY display_order ASC, name ASC LIMIT 6");
+            $dbCategories = $homeCatsStmt->fetchAll(PDO::FETCH_ASSOC);
+
+            $iconSvgMap = [
+                'cpu' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2" stroke-width="2"/><rect x="9" y="9" width="6" height="6" stroke-width="2"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/></svg>',
+                'award' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>',
+                'trending-up' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>',
+                'zap' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>',
+                'layers' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>',
+                'default' => '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>'
             ];
-            foreach ($categoriesList as $item):
-                $href = $item['cat'] ? "?panel=learner&page=browse-experts&category={$item['cat']}" : "?panel=learner&page=browse-experts";
+
+            foreach ($dbCategories as $item):
+                $catEncoded = urlencode($item['name']);
+                $href = "?panel=learner&page=browse-experts&category={$catEncoded}";
+                $svgIcon = $iconSvgMap[$item['icon_url']] ?? $iconSvgMap['default'];
             ?>
             <a href="<?= $href ?>" class="group bg-[#0d131f] border border-gray-800 rounded-2xl p-6 hover:border-[#00D4AA]/30 hover:shadow-xl transition block">
                 <div class="flex items-start justify-between mb-4">
-                    <div class="w-12 h-12 bg-[#00D4AA]/10 border border-[#00D4AA]/20 text-[#00D4AA] rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform"><?= $item['svg'] ?></div>
+                    <div class="w-12 h-12 bg-[#00D4AA]/10 border border-[#00D4AA]/20 text-[#00D4AA] rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform"><?= $svgIcon ?></div>
                     <span class="text-xs font-semibold text-[#00D4AA] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">Explore <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></span>
                 </div>
-                <h4 class="text-base font-bold text-white mb-2 group-hover:text-[#00D4AA] transition"><?= $item['name'] ?></h4>
-                <p class="text-gray-500 text-xs leading-relaxed"><?= $item['desc'] ?></p>
+                <h4 class="text-base font-bold text-white mb-2 group-hover:text-[#00D4AA] transition"><?= htmlspecialchars($item['name']) ?></h4>
+                <p class="text-gray-500 text-xs leading-relaxed"><?= htmlspecialchars($item['description'] ?? 'Browse expert sessions and advisory') ?></p>
             </a>
             <?php endforeach; ?>
         </div>

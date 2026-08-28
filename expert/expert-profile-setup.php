@@ -9,6 +9,12 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role
     exit;
 }
 
+require_once dirname(__DIR__) . '/admin-panel/apis/connection/pdo.php';
+
+// Fetch active categories from database
+$categoriesStmt = $pdo->query("SELECT name, slug FROM categories WHERE is_active = 1 ORDER BY display_order ASC, name ASC");
+$activeCategories = $categoriesStmt->fetchAll(PDO::FETCH_ASSOC);
+
 $page_title = "Profile Setup - Nexpert.ai";
 $panel_type = "expert";
 require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/header.php';
@@ -17,8 +23,8 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
     <div class="max-w-4xl mx-auto px-4 py-8">
         <!-- Header -->
         <div class="mb-8 text-center">
-            <h1 class="text-3xl font-bold text-gray-900 mb-2">Complete Your Expert Profile</h1>
-            <p class="text-gray-600">Set up your profile to start connecting with learners worldwide</p>
+            <h1 class="text-3xl font-extrabold text-white mb-2 tracking-tight">Complete Your Expert Profile</h1>
+            <p class="text-gray-400 text-sm">Set up your profile, pricing, and availability to start connecting with learners</p>
         </div>
 
         <!-- Step Indicator -->
@@ -26,23 +32,23 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
             <div class="flex items-center justify-center">
                 <!-- Step 1 -->
                 <div id="step1Indicator" class="flex items-center">
-                    <div class="w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div class="w-10 h-10 bg-[#00D4AA] text-[#080B10] font-extrabold rounded-full flex items-center justify-center text-sm shadow-md">
                         1
                     </div>
-                    <span class="ml-2 text-sm text-accent font-medium hidden sm:inline">Profile Info</span>
+                    <span class="ml-2 text-sm text-[#00D4AA] font-bold hidden sm:inline">Profile Info</span>
                 </div>
-                <div id="line1" class="w-16 h-1 bg-gray-300 mx-2"></div>
+                <div id="line1" class="w-16 h-1 bg-gray-800 mx-2"></div>
                 <!-- Step 2 -->
                 <div id="step2Indicator" class="flex items-center">
-                    <div class="w-10 h-10 bg-gray-300 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div class="w-10 h-10 bg-gray-800 text-gray-400 font-bold rounded-full flex items-center justify-center text-sm">
                         2
                     </div>
                     <span class="ml-2 text-sm text-gray-500 font-medium hidden sm:inline">Pricing</span>
                 </div>
-                <div id="line2" class="w-16 h-1 bg-gray-300 mx-2"></div>
+                <div id="line2" class="w-16 h-1 bg-gray-800 mx-2"></div>
                 <!-- Step 3 -->
                 <div id="step3Indicator" class="flex items-center">
-                    <div class="w-10 h-10 bg-gray-300 text-white rounded-full flex items-center justify-center text-sm font-semibold">
+                    <div class="w-10 h-10 bg-gray-800 text-gray-400 font-bold rounded-full flex items-center justify-center text-sm">
                         3
                     </div>
                     <span class="ml-2 text-sm text-gray-500 font-medium hidden sm:inline">Availability</span>
@@ -51,43 +57,46 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
         </div>
 
         <!-- Step Content -->
-        <div class="bg-white rounded-lg shadow-lg p-6 md:p-8">
+        <div class="bg-[#0D131F] border border-gray-800 rounded-2xl shadow-xl p-6 md:p-10">
             <!-- Step 1: Profile Information -->
             <div id="step1Content" class="step-content">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Profile Information</h2>
+                <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#00D4AA]"></span>
+                    Profile Information
+                </h2>
                 
                 <!-- Profile Photo -->
-                <div class="flex items-center space-x-6 mb-6">
-                    <div id="profilePhotoPreview" class="w-24 h-24 rounded-full bg-gray-200 flex items-center justify-center text-gray-400">
-                        <svg class="w-12 h-12" fill="currentColor" viewBox="0 0 24 24">
+                <div class="flex items-center space-x-6 mb-6 p-4 rounded-xl bg-[#080B10] border border-gray-800/80">
+                    <div id="profilePhotoPreview" class="w-20 h-20 rounded-2xl bg-[#131B2E] border-2 border-gray-800 flex items-center justify-center text-gray-500 overflow-hidden">
+                        <svg class="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                         </svg>
                     </div>
                     <div>
                         <input type="file" id="profilePhotoInput" accept="image/*" class="hidden">
-                        <button type="button" id="uploadPhotoBtn" class="bg-accent text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition">
+                        <button type="button" id="uploadPhotoBtn" class="bg-[#00D4AA] text-[#080B10] px-4 py-2 rounded-xl text-xs font-bold hover:bg-[#00bfa0] transition shadow-md">
                             Upload Photo
                         </button>
-                        <p class="text-gray-600 text-sm mt-2">JPG, PNG up to 5MB</p>
+                        <p class="text-gray-500 text-xs mt-1.5">JPG or PNG, recommended 500x500px</p>
                     </div>
                 </div>
 
                 <!-- Basic Info -->
-                <div class="space-y-4">
+                <div class="space-y-5">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                        <input type="text" id="fullName" placeholder="Enter your full name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Full Name *</label>
+                        <input type="text" id="fullName" placeholder="Enter your full name" class="w-full px-4 py-3 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-sm transition">
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Professional Title *</label>
-                        <input type="text" id="tagline" placeholder="e.g., Senior UX Designer, Business Coach" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Professional Title *</label>
+                        <input type="text" id="tagline" placeholder="e.g., Senior UX Designer, Distributed Systems Architect" class="w-full px-4 py-3 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-sm transition">
                     </div>
 
                     <div class="grid md:grid-cols-2 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Years of Experience *</label>
-                            <select id="experience" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Years of Experience *</label>
+                            <select id="experience" class="w-full px-4 py-3 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-sm transition">
                                 <option value="">Select years</option>
                                 <option value="2">1-2 years</option>
                                 <option value="4">3-5 years</option>
@@ -97,130 +106,112 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-                            <input type="text" id="location" placeholder="City, Country" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                            <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Location *</label>
+                            <input type="text" id="location" placeholder="City, Country" class="w-full px-4 py-3 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-sm transition">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Professional Bio *</label>
-                        <textarea rows="4" id="bioText" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Tell learners about your background, experience, and what makes you unique..."></textarea>
-                        <p class="text-gray-500 text-sm mt-1">Minimum 100 characters</p>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Professional Bio *</label>
+                        <textarea rows="4" id="bioText" class="w-full px-4 py-3 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-sm transition resize-none" placeholder="Tell learners about your background, experience, and what makes your mentorship unique..."></textarea>
+                        <p class="text-gray-500 text-xs mt-1">Minimum 100 characters</p>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Primary Expert Category *</label>
-                        <select id="category" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Primary Expert Category *</label>
+                        <select id="category" class="w-full px-4 py-3 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-sm transition">
                             <option value="">Select category</option>
-                            <option value="AI & Technology">AI & Technology</option>
-                            <option value="Leadership">Leadership</option>
-                            <option value="career Growth">career Growth</option>
-                            <option value="Entrepreneurship">Entrepreneurship</option>
-                            <option value="Product&Strategy">Product&Strategy</option>
+                            <?php foreach ($activeCategories as $cat): ?>
+                                <option value="<?php echo htmlspecialchars($cat['name']); ?>"><?php echo htmlspecialchars($cat['name']); ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Expertise Tags *</label>
+                        <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Expertise Tags *</label>
                         <div id="expertiseTags" class="flex flex-wrap gap-2 mb-3"></div>
-                        <input type="text" id="expertiseInput" placeholder="Add expertise tags (press Enter)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                        <p class="text-gray-500 text-sm mt-1">Add skills, tools, or areas of expertise. Max 10 tags.</p>
+                        <input type="text" id="expertiseInput" placeholder="Add expertise tags (press Enter)" class="w-full px-4 py-3 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-sm transition">
+                        <p class="text-gray-500 text-xs mt-1">Add skills, tools, or domain focus areas. Max 10 tags.</p>
                     </div>
                 </div>
             </div>
 
             <!-- Step 2: Pricing Models -->
             <div id="step2Content" class="step-content hidden">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Pricing Models</h2>
+                <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#00D4AA]"></span>
+                    Pricing & Rates
+                </h2>
                 
                 <div class="space-y-6">
                     <!-- Per Session -->
-                    <div class="border border-gray-200 rounded-lg p-5">
+                    <div class="bg-[#080B10] border border-gray-800 rounded-xl p-5">
                         <div class="flex items-center justify-between mb-4">
                             <div>
-                                <h3 class="font-semibold text-gray-900">Per Session</h3>
-                                <p class="text-gray-600 text-sm">One-time sessions</p>
+                                <h3 class="font-bold text-white text-sm">Hourly Session Rate</h3>
+                                <p class="text-gray-400 text-xs">Standard one-on-one video call sessions</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
-                                <input type="checkbox" id="enablePerSession" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                                <input type="checkbox" id="enablePerSession" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00D4AA]"></div>
                             </label>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">60 minutes</label>
-                                <div class="flex">
-                                    <span class="inline-flex items-center px-3 py-2 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500">₹</span>
-                                    <input type="number" id="price60" placeholder="0" class="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                                </div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">60 minutes (₹)</label>
+                                <input type="number" id="price60" placeholder="1500" class="w-full px-3 py-2 bg-[#131B2E] border border-gray-700 rounded-lg focus:outline-none focus:border-[#00D4AA] text-white text-sm">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">30 minutes</label>
-                                <div class="flex">
-                                    <span class="inline-flex items-center px-3 py-2 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500">₹</span>
-                                    <input type="number" id="price30" placeholder="0" class="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                                </div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">30 minutes (₹)</label>
+                                <input type="number" id="price30" placeholder="800" class="w-full px-3 py-2 bg-[#131B2E] border border-gray-700 rounded-lg focus:outline-none focus:border-[#00D4AA] text-white text-sm">
                             </div>
                         </div>
                     </div>
 
                     <!-- Package Deal -->
-                    <div class="border border-gray-200 rounded-lg p-5">
+                    <div class="bg-[#080B10] border border-gray-800 rounded-xl p-5">
                         <div class="flex items-center justify-between mb-4">
                             <div>
-                                <h3 class="font-semibold text-gray-900">Package Deal</h3>
-                                <p class="text-gray-600 text-sm">Multiple sessions with discount</p>
+                                <h3 class="font-bold text-white text-sm">Multi-Session Package</h3>
+                                <p class="text-gray-400 text-xs">Bundle packages for outcome-driven mentorship</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="enablePackage" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                                <div class="w-11 h-6 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00D4AA]"></div>
                             </label>
                         </div>
                         <div class="grid grid-cols-3 gap-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">4 Sessions</label>
-                                <div class="flex">
-                                    <span class="inline-flex items-center px-3 py-2 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500">₹</span>
-                                    <input type="number" id="package4" placeholder="0" class="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                                </div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">4 Sessions (₹)</label>
+                                <input type="number" id="package4" placeholder="5000" class="w-full px-3 py-2 bg-[#131B2E] border border-gray-700 rounded-lg focus:outline-none focus:border-[#00D4AA] text-white text-sm">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">8 Sessions</label>
-                                <div class="flex">
-                                    <span class="inline-flex items-center px-3 py-2 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500">₹</span>
-                                    <input type="number" id="package8" placeholder="0" class="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                                </div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">8 Sessions (₹)</label>
+                                <input type="number" id="package8" placeholder="9500" class="w-full px-3 py-2 bg-[#131B2E] border border-gray-700 rounded-lg focus:outline-none focus:border-[#00D4AA] text-white text-sm">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-1">12 Sessions</label>
-                                <div class="flex">
-                                    <span class="inline-flex items-center px-3 py-2 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500">₹</span>
-                                    <input type="number" id="package12" placeholder="0" class="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                                </div>
+                                <label class="block text-xs font-semibold text-gray-400 mb-1">12 Sessions (₹)</label>
+                                <input type="number" id="package12" placeholder="13500" class="w-full px-3 py-2 bg-[#131B2E] border border-gray-700 rounded-lg focus:outline-none focus:border-[#00D4AA] text-white text-sm">
                             </div>
                         </div>
                     </div>
 
                     <!-- Subscription -->
-                    <div class="border border-gray-200 rounded-lg p-5">
+                    <div class="bg-[#080B10] border border-gray-800 rounded-xl p-5">
                         <div class="flex items-center justify-between mb-4">
                             <div>
-                                <h3 class="font-semibold text-gray-900">Monthly Subscription</h3>
-                                <p class="text-gray-600 text-sm">Ongoing mentorship</p>
+                                <h3 class="font-bold text-white text-sm">Monthly Retainer</h3>
+                                <p class="text-gray-400 text-xs">Ongoing monthly mentorship</p>
                             </div>
                             <label class="relative inline-flex items-center cursor-pointer">
                                 <input type="checkbox" id="enableSubscription" class="sr-only peer">
-                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-accent/20 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
+                                <div class="w-11 h-6 bg-gray-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00D4AA]"></div>
                             </label>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-1">Monthly Price</label>
-                            <div class="flex">
-                                <span class="inline-flex items-center px-3 py-2 rounded-l-lg border border-r-0 border-gray-300 bg-gray-50 text-gray-500">₹</span>
-                                <input type="number" id="subscriptionPrice" placeholder="0" class="flex-1 px-3 py-2 border border-gray-300 rounded-r-lg focus:outline-none focus:ring-2 focus:ring-accent">
-                                <span class="inline-flex items-center px-3 py-2 rounded-r-lg border border-l-0 border-gray-300 bg-gray-50 text-gray-500">/month</span>
-                            </div>
-                            <p class="text-gray-500 text-sm mt-1">Includes 4 sessions + unlimited chat support</p>
+                            <label class="block text-xs font-semibold text-gray-400 mb-1">Monthly Retainer Price (₹)</label>
+                            <input type="number" id="subscriptionPrice" placeholder="12000" class="w-full px-3 py-2 bg-[#131B2E] border border-gray-700 rounded-lg focus:outline-none focus:border-[#00D4AA] text-white text-sm">
+                            <p class="text-gray-500 text-xs mt-1">Suggested: Includes 4 sessions + async chat guidance</p>
                         </div>
                     </div>
                 </div>
@@ -228,252 +219,52 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
 
             <!-- Step 3: Availability -->
             <div id="step3Content" class="step-content hidden">
-                <h2 class="text-2xl font-semibold text-gray-900 mb-6">Availability Schedule</h2>
+                <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#00D4AA]"></span>
+                    Availability Schedule
+                </h2>
                 
                 <div class="mb-6">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
-                    <select id="timezone" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-accent">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-gray-400 mb-2">Timezone</label>
+                    <select id="timezone" class="w-full px-4 py-3 bg-[#080B10] border border-gray-700 text-white rounded-xl focus:outline-none focus:border-[#00D4AA] text-sm transition">
+                        <option>IST (India Standard Time — UTC+05:30)</option>
                         <option>UTC (Coordinated Universal Time)</option>
                         <option>EST (Eastern Standard Time)</option>
                         <option>PST (Pacific Standard Time)</option>
-                        <option>IST (India Standard Time)</option>
                         <option>GMT (Greenwich Mean Time)</option>
                     </select>
                 </div>
 
-                <div class="space-y-3">
-                    <!-- Monday -->
-                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
+                <div class="space-y-3 bg-[#080B10] p-4 rounded-xl border border-gray-800">
+                    <?php
+                    $days = ['monday'=>'Monday', 'tuesday'=>'Tuesday', 'wednesday'=>'Wednesday', 'thursday'=>'Thursday', 'friday'=>'Friday', 'saturday'=>'Saturday', 'sunday'=>'Sunday'];
+                    foreach ($days as $id=>$d):
+                    ?>
+                    <div class="flex items-center justify-between py-2.5 border-b border-gray-800/80 last:border-0">
                         <div class="flex items-center">
-                            <input type="checkbox" id="monday" class="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded mr-3">
-                            <label for="monday" class="font-medium text-gray-700">Monday</label>
+                            <input type="checkbox" id="<?= $id ?>" class="h-4 w-4 text-[#00D4AA] focus:ring-[#00D4AA] bg-gray-900 border-gray-700 rounded mr-3" <?= in_array($id, ['monday','tuesday','wednesday','thursday','friday']) ? 'checked' : '' ?>>
+                            <label for="<?= $id ?>" class="font-semibold text-sm text-gray-200"><?= $d ?></label>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <select id="mondayStart" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>9:00 AM</option>
-                                <option>10:00 AM</option>
-                                <option>11:00 AM</option>
-                                <option>12:00 PM</option>
-                                <option>1:00 PM</option>
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <select id="<?= $id ?>Start" class="px-2.5 py-1.5 bg-[#131B2E] border border-gray-700 rounded-lg text-white">
+                                <option>09:00 AM</option><option>10:00 AM</option><option>11:00 AM</option><option>12:00 PM</option><option>02:00 PM</option><option>04:00 PM</option><option>06:00 PM</option>
                             </select>
                             <span class="text-gray-500">to</span>
-                            <select id="mondayEnd" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                                <option>6:00 PM</option>
-                                <option>7:00 PM</option>
-                                <option>8:00 PM</option>
-                                <option>9:00 PM</option>
+                            <select id="<?= $id ?>End" class="px-2.5 py-1.5 bg-[#131B2E] border border-gray-700 rounded-lg text-white">
+                                <option>05:00 PM</option><option>06:00 PM</option><option>07:00 PM</option><option>08:00 PM</option><option>09:00 PM</option><option>10:00 PM</option>
                             </select>
                         </div>
                     </div>
-
-                    <!-- Tuesday -->
-                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="tuesday" class="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded mr-3">
-                            <label for="tuesday" class="font-medium text-gray-700">Tuesday</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <select id="tuesdayStart" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>9:00 AM</option>
-                                <option>10:00 AM</option>
-                                <option>11:00 AM</option>
-                                <option>12:00 PM</option>
-                                <option>1:00 PM</option>
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                            </select>
-                            <span class="text-gray-500">to</span>
-                            <select id="tuesdayEnd" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                                <option>6:00 PM</option>
-                                <option>7:00 PM</option>
-                                <option>8:00 PM</option>
-                                <option>9:00 PM</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Wednesday -->
-                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="wednesday" class="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded mr-3">
-                            <label for="wednesday" class="font-medium text-gray-700">Wednesday</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <select id="wednesdayStart" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>9:00 AM</option>
-                                <option>10:00 AM</option>
-                                <option>11:00 AM</option>
-                                <option>12:00 PM</option>
-                                <option>1:00 PM</option>
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                            </select>
-                            <span class="text-gray-500">to</span>
-                            <select id="wednesdayEnd" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                                <option>6:00 PM</option>
-                                <option>7:00 PM</option>
-                                <option>8:00 PM</option>
-                                <option>9:00 PM</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Thursday -->
-                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="thursday" class="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded mr-3">
-                            <label for="thursday" class="font-medium text-gray-700">Thursday</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <select id="thursdayStart" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>9:00 AM</option>
-                                <option>10:00 AM</option>
-                                <option>11:00 AM</option>
-                                <option>12:00 PM</option>
-                                <option>1:00 PM</option>
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                            </select>
-                            <span class="text-gray-500">to</span>
-                            <select id="thursdayEnd" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                                <option>6:00 PM</option>
-                                <option>7:00 PM</option>
-                                <option>8:00 PM</option>
-                                <option>9:00 PM</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Friday -->
-                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="friday" class="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded mr-3">
-                            <label for="friday" class="font-medium text-gray-700">Friday</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <select id="fridayStart" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>9:00 AM</option>
-                                <option>10:00 AM</option>
-                                <option>11:00 AM</option>
-                                <option>12:00 PM</option>
-                                <option>1:00 PM</option>
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                            </select>
-                            <span class="text-gray-500">to</span>
-                            <select id="fridayEnd" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                                <option>6:00 PM</option>
-                                <option>7:00 PM</option>
-                                <option>8:00 PM</option>
-                                <option>9:00 PM</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Saturday -->
-                    <div class="flex items-center justify-between py-3 border-b border-gray-100">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="saturday" class="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded mr-3">
-                            <label for="saturday" class="font-medium text-gray-700">Saturday</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <select id="saturdayStart" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>9:00 AM</option>
-                                <option>10:00 AM</option>
-                                <option>11:00 AM</option>
-                                <option>12:00 PM</option>
-                                <option>1:00 PM</option>
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                            </select>
-                            <span class="text-gray-500">to</span>
-                            <select id="saturdayEnd" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                                <option>6:00 PM</option>
-                                <option>7:00 PM</option>
-                                <option>8:00 PM</option>
-                                <option>9:00 PM</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Sunday -->
-                    <div class="flex items-center justify-between py-3">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="sunday" class="h-4 w-4 text-accent focus:ring-accent border-gray-300 rounded mr-3">
-                            <label for="sunday" class="font-medium text-gray-700">Sunday</label>
-                        </div>
-                        <div class="flex items-center space-x-2">
-                            <select id="sundayStart" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>9:00 AM</option>
-                                <option>10:00 AM</option>
-                                <option>11:00 AM</option>
-                                <option>12:00 PM</option>
-                                <option>1:00 PM</option>
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                            </select>
-                            <span class="text-gray-500">to</span>
-                            <select id="sundayEnd" class="px-3 py-1 border border-gray-300 rounded text-sm">
-                                <option>2:00 PM</option>
-                                <option>3:00 PM</option>
-                                <option>4:00 PM</option>
-                                <option>5:00 PM</option>
-                                <option>6:00 PM</option>
-                                <option>7:00 PM</option>
-                                <option>8:00 PM</option>
-                                <option>9:00 PM</option>
-                            </select>
-                        </div>
-                    </div>
+                    <?php endforeach; ?>
                 </div>
             </div>
 
             <!-- Navigation Buttons -->
-            <div class="flex justify-between mt-8 pt-6 border-t border-gray-200">
-                <button id="prevBtn" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+            <div class="flex justify-between mt-8 pt-6 border-t border-gray-800">
+                <button id="prevBtn" class="px-6 py-2.5 border border-gray-700 bg-[#080B10] text-gray-300 rounded-xl hover:text-white hover:border-gray-500 transition text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed" disabled>
                     Previous
                 </button>
-                <button id="nextBtn" class="px-6 py-3 bg-accent text-white rounded-lg hover:bg-yellow-600 transition">
+                <button id="nextBtn" class="px-7 py-2.5 bg-[#00D4AA] text-[#080B10] rounded-xl hover:bg-[#00bfa0] transition text-sm font-extrabold shadow-md">
                     Next Step
                 </button>
             </div>
@@ -506,19 +297,20 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                 const line = document.getElementById(`line${i}`);
                 
                 if (i < step) {
-                    indicator.className = 'w-10 h-10 bg-green-500 text-white rounded-full flex items-center justify-center text-sm font-semibold';
+                    indicator.className = 'w-10 h-10 bg-emerald-500 text-[#080B10] font-extrabold rounded-full flex items-center justify-center text-sm shadow-md';
                     indicator.textContent = '✓';
-                    label.className = 'ml-2 text-sm text-green-600 font-medium hidden sm:inline';
-                    if (line) line.className = 'w-16 h-1 bg-green-500 mx-2';
+                    label.className = 'ml-2 text-sm text-emerald-400 font-bold hidden sm:inline';
+                    if (line) line.className = 'w-16 h-1 bg-emerald-500 mx-2';
                 } else if (i === step) {
-                    indicator.className = 'w-10 h-10 bg-accent text-white rounded-full flex items-center justify-center text-sm font-semibold';
+                    indicator.className = 'w-10 h-10 bg-[#00D4AA] text-[#080B10] font-extrabold rounded-full flex items-center justify-center text-sm shadow-md';
                     indicator.textContent = i;
-                    label.className = 'ml-2 text-sm text-accent font-medium hidden sm:inline';
+                    label.className = 'ml-2 text-sm text-[#00D4AA] font-bold hidden sm:inline';
+                    if (line) line.className = 'w-16 h-1 bg-gray-800 mx-2';
                 } else {
-                    indicator.className = 'w-10 h-10 bg-gray-300 text-white rounded-full flex items-center justify-center text-sm font-semibold';
+                    indicator.className = 'w-10 h-10 bg-gray-800 text-gray-400 font-bold rounded-full flex items-center justify-center text-sm';
                     indicator.textContent = i;
                     label.className = 'ml-2 text-sm text-gray-500 font-medium hidden sm:inline';
-                    if (line) line.className = 'w-16 h-1 bg-gray-300 mx-2';
+                    if (line) line.className = 'w-16 h-1 bg-gray-800 mx-2';
                 }
             }
             

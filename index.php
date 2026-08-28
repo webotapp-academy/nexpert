@@ -47,7 +47,7 @@ $expert_pages = [
 
 $admin_pages = [
     'auth', 'dashboard', 'experts', 'users', 'payouts', 'bookings', 
-    'payments', 'kyc-verification', 'settings', 'credibility', 'enterprise-leads'
+    'payments', 'kyc-verification', 'settings', 'credibility', 'enterprise-leads', 'categories'
 ];
 
 // Function to render 404 page

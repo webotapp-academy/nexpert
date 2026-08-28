@@ -3,6 +3,11 @@
 $base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
 
 require_once dirname(__DIR__) . '/includes/session-config.php';
+require_once dirname(__DIR__) . '/admin-panel/apis/connection/pdo.php';
+
+// Fetch active categories from database
+$categoriesStmt = $pdo->query("SELECT name, slug FROM categories WHERE is_active = 1 ORDER BY display_order ASC, name ASC");
+$activeCategories = $categoriesStmt->fetchAll(PDO::FETCH_ASSOC);
 
 $page_title = "Browse Experts - Nexpert.ai";
 $panel_type = "learner";
@@ -10,14 +15,11 @@ $panel_type = "learner";
 require_once dirname(__DIR__) . '/includes/header.php';
 require_once dirname(__DIR__) . '/includes/navigation.php';
 ?>
-    <script>
-        document.body.className = "bg-[#080B10] min-h-screen text-white";
-    </script>
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <!-- Header -->
         <div class="mb-6 sm:mb-8">
             <h1 class="text-3xl sm:text-4xl font-extrabold text-white mb-2 tracking-tight">Browse Experts</h1>
-            <p class="text-sm sm:text-base text-gray-400">Find the perfect expert to accelerate your learning journey</p>
+            <p class="text-sm sm:text-base text-gray-400">Discover vetted experts with verified behavioral track records</p>
         </div>
 
         <!-- Mobile Search Bar -->
@@ -72,11 +74,9 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                     <label class="block text-sm font-medium text-gray-400 mb-2">Category</label>
                     <select id="category-select" class="w-full px-3 py-2 bg-[#131b2e] border border-gray-800 rounded-lg focus:outline-none focus:border-gray-700 text-sm text-white">
                         <option value="">All Categories</option>
-                        <option value="AI & Technology">AI & Technology</option>
-                        <option value="Leadership">Leadership</option>
-                        <option value="Career Growth">Career Growth</option>
-                        <option value="Entrepreneurship">Entrepreneurship</option>
-                        <option value="Product & Strategy">Product &amp; Strategy</option>
+                        <?php foreach ($activeCategories as $cat): ?>
+                            <option value="<?php echo htmlspecialchars($cat['name']); ?>"><?php echo htmlspecialchars($cat['name']); ?></option>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
@@ -217,11 +217,9 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                         <label class="block text-sm font-medium text-gray-400 mb-2">Category</label>
                         <select id="mobile-category-select" class="w-full px-3 py-3 bg-[#131b2e] border border-gray-800 rounded-lg text-white focus:outline-none focus:border-gray-700">
                             <option value="">All Categories</option>
-                            <option value="AI & Technology">AI & Technology</option>
-                            <option value="Leadership">Leadership</option>
-                            <option value="career Growth">career Growth</option>
-                            <option value="Entrepreneurship">Entrepreneurship</option>
-                            <option value="Product&Strategy">Product&Strategy</option>
+                            <?php foreach ($activeCategories as $cat): ?>
+                                <option value="<?php echo htmlspecialchars($cat['name']); ?>"><?php echo htmlspecialchars($cat['name']); ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 

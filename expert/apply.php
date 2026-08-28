@@ -8,6 +8,10 @@ $base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domai
 require_once dirname(__DIR__) . '/includes/session-config.php';
 require_once dirname(__DIR__) . '/admin-panel/apis/connection/pdo.php';
 
+// Fetch active categories from database
+$categoriesStmt = $pdo->query("SELECT name, slug FROM categories WHERE is_active = 1 ORDER BY display_order ASC, name ASC");
+$activeCategories = $categoriesStmt->fetchAll(PDO::FETCH_ASSOC);
+
 // If already logged in as expert, redirect directly to dashboard
 if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'expert') {
     header('Location: ' . BASE_PATH . '/index.php?panel=expert&page=dashboard');
@@ -22,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email      = trim($_POST['email'] ?? '');
     $password   = $_POST['password'] ?? '';
     $title      = trim($_POST['professional_title'] ?? '');
-    $category   = trim($_POST['category'] ?? 'Leadership');
+    $category   = trim($_POST['category'] ?? '');
     $experience = (int)($_POST['experience_years'] ?? 0);
     $linkedin   = trim($_POST['linkedin_url'] ?? '');
     $hourlyRate = (float)($_POST['hourly_rate'] ?? 1500);
@@ -179,13 +183,11 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                 <div class="grid sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-semibold text-gray-400 mb-1">Primary Domain Category *</label>
-                        <select name="category" class="w-full bg-[#080B10] border border-gray-800 text-white rounded-xl p-3 text-sm focus:outline-none focus:border-[#00D4AA]">
-                            <option value="AI & ML">AI & Machine Learning</option>
-                            <option value="Leadership">Executive & Tech Leadership</option>
-                            <option value="Product & Strategy">Product Management & Strategy</option>
-                            <option value="Data Science">Data Science & Analytics</option>
-                            <option value="Career Growth">Career Growth & Coaching</option>
-                            <option value="Software Engineering">Software Engineering</option>
+                        <select name="category" required class="w-full bg-[#080B10] border border-gray-800 text-white rounded-xl p-3 text-sm focus:outline-none focus:border-[#00D4AA]">
+                            <option value="">Select Category</option>
+                            <?php foreach ($activeCategories as $cat): ?>
+                                <option value="<?php echo htmlspecialchars($cat['name']); ?>"><?php echo htmlspecialchars($cat['name']); ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
                     <div>
