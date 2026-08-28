@@ -577,11 +577,11 @@ function getScoreLabel($score) {
                     <?php if (!empty($dashPhotoSrc)): ?>
                         <img src="<?= htmlspecialchars($dashPhotoSrc) ?>" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <div class="w-full h-full hidden items-center justify-center font-black text-xl text-purple-300 bg-indigo-950">
-                            <?= strtoupper(substr($expertProfile['full_name'] ?? 'E', 0, 1)) ?>
+                            <?= getInitials($expertProfile['full_name'] ?? 'Expert') ?>
                         </div>
                     <?php else: ?>
                         <div class="w-full h-full flex items-center justify-center font-black text-xl text-purple-300 bg-indigo-950">
-                            <?= strtoupper(substr($expertProfile['full_name'] ?? 'E', 0, 1)) ?>
+                            <?= getInitials($expertProfile['full_name'] ?? 'Expert') ?>
                         </div>
                     <?php endif; ?>
                 </div>

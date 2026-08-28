@@ -68,8 +68,8 @@ $conversations = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                      alt="<?php echo htmlspecialchars($conv['expert_name']); ?>"
                                      class="w-full h-full object-cover">
                             <?php else: ?>
-                                <div class="w-full h-full flex items-center justify-center bg-primary text-white text-lg font-bold">
-                                    <?php echo strtoupper(substr($conv['expert_name'], 0, 1)); ?>
+                                <div class="w-full h-full flex items-center justify-center bg-[#00D4AA]/20 text-[#00D4AA] text-base font-black">
+                                    <?php echo getInitials($conv['expert_name']); ?>
                                 </div>
                             <?php endif; ?>
                         </div>

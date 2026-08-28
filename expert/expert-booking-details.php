@@ -139,8 +139,8 @@ $hasLearnerData = !empty($booking['learner_goals']) || !empty($booking['learner_
                                          alt="<?php echo htmlspecialchars($booking['learner_name']); ?>"
                                          class="w-full h-full object-cover">
                                 <?php else: ?>
-                                    <div class="w-full h-full flex items-center justify-center bg-[#00D4AA]/20 text-[#00D4AA] text-sm font-bold">
-                                        <?php echo strtoupper(substr($booking['learner_name'], 0, 1)); ?>
+                                    <div class="w-full h-full flex items-center justify-center bg-[#00D4AA]/20 text-[#00D4AA] text-sm font-black">
+                                        <?php echo getInitials($booking['learner_name']); ?>
                                     </div>
                                 <?php endif; ?>
                             </div>

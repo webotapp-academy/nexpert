@@ -178,11 +178,11 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                                     <?php if (!empty($profilePhoto)): ?>
                                         <img src="<?= htmlspecialchars($profilePhoto) ?>" alt="<?= htmlspecialchars($expertName) ?>" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                                         <div class="w-full h-full hidden items-center justify-center font-black text-2xl text-purple-300 bg-gradient-to-br from-indigo-950 to-purple-900">
-                                            <?= strtoupper(substr($expertName, 0, 1)) ?>
+                                            <?= getInitials($expertName) ?>
                                         </div>
                                     <?php else: ?>
                                         <div class="w-full h-full flex items-center justify-center font-black text-2xl text-purple-300 bg-gradient-to-br from-indigo-950 to-purple-900">
-                                            <?= strtoupper(substr($expertName, 0, 1)) ?>
+                                            <?= getInitials($expertName) ?>
                                         </div>
                                     <?php endif; ?>
                                 </div>

@@ -45,3 +45,15 @@ $_SESSION['last_activity'] = time();
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
+
+// Global Avatar Monogram / Initials Generator
+if (!function_exists('getInitials')) {
+    function getInitials($name) {
+        if (empty($name)) return 'EX';
+        $words = preg_split('/\s+/', trim($name));
+        if (count($words) >= 2) {
+            return strtoupper(mb_substr($words[0], 0, 1) . mb_substr($words[1], 0, 1));
+        }
+        return strtoupper(mb_substr($name, 0, 2));
+    }
+}

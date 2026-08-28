@@ -44,6 +44,15 @@
         const BASE_URL = '<?php echo BASE_URL; ?>';
         const BASE_PATH = '<?php echo BASE_PATH; ?>';
         
+        window.getInitials = function(name) {
+            if (!name) return 'EX';
+            var words = name.trim().split(/\s+/);
+            if (words.length >= 2) {
+                return (words[0].charAt(0) + words[1].charAt(0)).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+        };
+        
         tailwind.config = {
             theme: {
                 extend: {

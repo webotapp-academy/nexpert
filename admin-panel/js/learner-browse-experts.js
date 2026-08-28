@@ -1,23 +1,27 @@
 (function() {
     'use strict';
 
+    // Global / Local Initials Generator
+    function getInitials(name) {
+        if (!name) return 'EX';
+        const parts = name.trim().split(/\s+/);
+        if (parts.length >= 2) {
+            return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+        }
+        return name.substring(0, 2).toUpperCase();
+    }
+
     // Utility function to resolve image paths
     function resolveImagePath(imagePath) {
-        // If it's a full URL or a data URI, return as-is
+        if (!imagePath || imagePath === 'null' || imagePath === 'undefined') {
+            return '';
+        }
         if (/^(https?:\/\/|data:)/.test(imagePath)) {
             return imagePath;
         }
-        
-        // If no image path, return default
-        if (!imagePath) {
-            return BASE_PATH + '/attached_assets/stock_images/diverse_professional_1d96e39f.jpg';
-        }
-        
-        // Normalize the image path - remove leading slashes
         const normalizedPath = imagePath.replace(/^\/+/, '');
-        
-        // Construct the full path with BASE_PATH
-        return BASE_PATH + '/' + normalizedPath;
+        const basePath = typeof BASE_PATH !== 'undefined' ? BASE_PATH : '';
+        return basePath + '/' + normalizedPath;
     }
 
     let experts = [];
@@ -285,10 +289,20 @@
                 <div class="bg-[#131b2e] p-5">
                     <div class="flex items-start justify-between mb-3">
                         <div class="flex items-center gap-3 flex-1">
-                            <div class="relative rounded-2xl overflow-hidden border-2 border-gray-800 shadow-md" style="width: 80px; height: 80px; min-width: 80px;">
-                                <img src="${escapeHtml(resolveImagePath(expert.profile_photo || 'attached_assets/stock_images/diverse_professional_1d96e39f.jpg'))}" 
-                                     alt="${escapeHtml(expert.name)}" 
-                                     class="w-full h-full object-cover">
+                            <div class="relative rounded-2xl overflow-hidden border border-white/10 shadow-md flex items-center justify-center shrink-0 bg-[#0c1222]" style="width: 80px; height: 80px; min-width: 80px;">
+                                ${expert.profile_photo && expert.profile_photo.trim() !== '' && expert.profile_photo !== 'null' ? `
+                                    <img src="${escapeHtml(resolveImagePath(expert.profile_photo))}" 
+                                         alt="${escapeHtml(expert.name)}" 
+                                         class="w-full h-full object-cover"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                    <div class="hidden w-full h-full items-center justify-center font-black text-2xl text-[#00D4AA] bg-gradient-to-br from-[#0c1222] to-[#131b2e] border border-[#00D4AA]/30">
+                                        ${escapeHtml(getInitials(expert.name))}
+                                    </div>
+                                ` : `
+                                    <div class="w-full h-full flex items-center justify-center font-black text-2xl text-[#00D4AA] bg-gradient-to-br from-[#0c1222] to-[#131b2e] border border-[#00D4AA]/30">
+                                        ${escapeHtml(getInitials(expert.name))}
+                                    </div>
+                                `}
                             </div>
                             <div class="flex-1 min-w-0">
                                 <div class="flex items-center gap-2 mb-1">

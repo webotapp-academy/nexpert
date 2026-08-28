@@ -304,8 +304,8 @@ $totalPages = ceil($totalBookings / $limit);
                                      alt="<?php echo htmlspecialchars($request['learner_name'] ?? 'Learner'); ?>" 
                                      class="w-10 h-10 rounded-full object-cover border border-gray-700">
                             <?php else: ?>
-                                <div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs font-bold text-gray-300">
-                                    <?php echo strtoupper(substr($request['learner_name'] ?? 'U', 0, 1)); ?>
+                                <div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs font-bold text-[#00D4AA]">
+                                    <?php echo getInitials($request['learner_name'] ?? 'Learner'); ?>
                                 </div>
                             <?php endif; ?>
                             
@@ -386,8 +386,8 @@ $totalPages = ceil($totalBookings / $limit);
                                      alt="<?php echo htmlspecialchars($cancelled['learner_name'] ?? 'Learner'); ?>" 
                                      class="w-10 h-10 rounded-full object-cover border border-gray-700">
                             <?php else: ?>
-                                <div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs font-bold text-gray-300">
-                                    <?php echo strtoupper(substr($cancelled['learner_name'] ?? 'U', 0, 1)); ?>
+                                <div class="w-10 h-10 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center text-xs font-bold text-[#00D4AA]">
+                                    <?php echo getInitials($cancelled['learner_name'] ?? 'Learner'); ?>
                                 </div>
                             <?php endif; ?>
                             
@@ -514,8 +514,8 @@ $totalPages = ceil($totalBookings / $limit);
                                                  alt="<?php echo htmlspecialchars($booking['learner_name'] ?? 'Learner'); ?>" 
                                                  class="w-9 h-9 rounded-full mr-3 object-cover border border-gray-700">
                                         <?php else: ?>
-                                            <div class="w-9 h-9 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center mr-3 text-xs font-bold text-gray-300">
-                                                <?php echo strtoupper(substr($booking['learner_name'] ?? 'U', 0, 1)); ?>
+                                            <div class="w-9 h-9 rounded-full bg-gray-800 border border-gray-700 flex items-center justify-center mr-3 text-xs font-bold text-[#00D4AA]">
+                                                <?php echo getInitials($booking['learner_name'] ?? 'Learner'); ?>
                                             </div>
                                         <?php endif; ?>
                                         <div>

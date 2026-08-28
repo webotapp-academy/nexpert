@@ -395,7 +395,9 @@ async function loadFeaturedExperts() {
 
             grid.innerHTML = res.data.slice(0, 6).map(e => {
                 const skills = Array.isArray(e.skills) ? e.skills : (typeof e.skills === 'string' ? e.skills.split(',').map(s => s.trim()) : []);
-                const avatar = e.profile_photo ? resolveImagePath(e.profile_photo) : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(e.name) + '&background=00D4AA&color=080B10&size=200');
+                const initials = window.getInitials ? window.getInitials(e.name) : (e.name ? e.name.substring(0, 2).toUpperCase() : 'EX');
+                const hasPhoto = e.profile_photo && e.profile_photo.trim() !== '' && e.profile_photo !== 'null';
+                const avatar = hasPhoto ? resolveImagePath(e.profile_photo) : '';
                 
                 const rawBand = (e.band_name || '').trim();
                 const score = Math.round(Number(e.overall_score) || 0);
@@ -416,8 +418,17 @@ async function loadFeaturedExperts() {
                 <div class="bg-[#0d131f] rounded-2xl border border-gray-800 hover:border-[#00D4AA]/25 hover:shadow-xl transition duration-300 overflow-hidden flex flex-col">
                     <div class="p-5 flex items-start gap-4">
                         <div class="relative w-16 h-16 flex-shrink-0">
-                            <img src="${avatar}" alt="${escapeHtml(e.name)}" class="w-16 h-16 rounded-xl object-cover border-2 border-gray-800">
-                            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-[#00D4AA] rounded-full flex items-center justify-center">
+                            ${hasPhoto ? `
+                                <img src="${avatar}" alt="${escapeHtml(e.name)}" class="w-16 h-16 rounded-xl object-cover border-2 border-gray-800" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                <div class="hidden w-16 h-16 rounded-xl items-center justify-center font-black text-xl text-[#00D4AA] bg-gradient-to-br from-[#0c1222] to-[#131b2e] border-2 border-[#00D4AA]/30">
+                                    ${initials}
+                                </div>
+                            ` : `
+                                <div class="w-16 h-16 rounded-xl flex items-center justify-center font-black text-xl text-[#00D4AA] bg-gradient-to-br from-[#0c1222] to-[#131b2e] border-2 border-[#00D4AA]/30 shadow-md">
+                                    ${initials}
+                                </div>
+                            `}
+                            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-[#00D4AA] rounded-full flex items-center justify-center shadow-md">
                                 <svg class="w-3 h-3" fill="none" stroke="#080B10" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             </div>
                         </div>

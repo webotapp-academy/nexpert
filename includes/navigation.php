@@ -210,9 +210,9 @@ if ($panel_type === 'home'):
                                 <div class="w-8 h-8 rounded-full overflow-hidden ring-2 ring-[#00D4AA]/40 flex items-center justify-center bg-gray-900 shrink-0">
                                     <?php if (!empty($learnerPhoto)): ?>
                                         <img src="<?php echo htmlspecialchars($learnerPhoto); ?>" alt="Profile" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                        <span class="hidden w-full h-full items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($learnerName ?: 'L', 0, 1)); ?></span>
+                                        <span class="hidden w-full h-full items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo getInitials($learnerName ?: 'Learner'); ?></span>
                                     <?php else: ?>
-                                        <span class="w-full h-full flex items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($learnerName ?: 'L', 0, 1)); ?></span>
+                                        <span class="w-full h-full flex items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo getInitials($learnerName ?: 'Learner'); ?></span>
                                     <?php endif; ?>
                                 </div>
                                 <span class="text-sm font-medium text-gray-200"><?php echo htmlspecialchars($learnerName); ?></span>
@@ -246,9 +246,9 @@ if ($panel_type === 'home'):
                             <div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#00D4AA]/40 flex items-center justify-center bg-gray-900 shrink-0">
                                 <?php if (!empty($learnerPhoto)): ?>
                                     <img src="<?php echo htmlspecialchars($learnerPhoto); ?>" alt="Profile" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                    <span class="hidden w-full h-full items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($learnerName ?: 'L', 0, 1)); ?></span>
+                                    <span class="hidden w-full h-full items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo getInitials($learnerName ?: 'Learner'); ?></span>
                                 <?php else: ?>
-                                    <span class="w-full h-full flex items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($learnerName ?: 'L', 0, 1)); ?></span>
+                                    <span class="w-full h-full flex items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo getInitials($learnerName ?: 'Learner'); ?></span>
                                 <?php endif; ?>
                             </div>
                             <div>
@@ -325,7 +325,7 @@ if ($panel_type === 'home'):
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path>
                             </svg>
-                            <span class="expert-unread-badge absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-bold hidden">0</span>
+                            <span class="expert-unread-badge absolute -top-1 -right-1 bg-red-500 text-white text-[10px] rounded-full h-4 w-4 flex items-center justify-center font-hidden hidden">0</span>
                         </a>
 
                         <div class="h-5 w-px bg-white/10 mx-2"></div>
@@ -335,9 +335,9 @@ if ($panel_type === 'home'):
                                 <div class="w-8 h-8 rounded-full overflow-hidden ring-2 ring-[#00D4AA]/40 group-hover/prof:ring-[#00D4AA] transition flex items-center justify-center bg-gray-900 shrink-0">
                                     <?php if (!empty($expertPhoto)): ?>
                                         <img id="expert-nav-photo" src="<?php echo htmlspecialchars($expertPhoto); ?>" alt="Profile" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                        <span class="hidden w-full h-full items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($expertName ?: 'E', 0, 1)); ?></span>
+                                        <span class="hidden w-full h-full items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo getInitials($expertName ?: 'Expert'); ?></span>
                                     <?php else: ?>
-                                        <span class="w-full h-full flex items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($expertName ?: 'E', 0, 1)); ?></span>
+                                        <span class="w-full h-full flex items-center justify-center font-bold text-xs text-[#00D4AA] bg-[#0c1222]"><?php echo getInitials($expertName ?: 'Expert'); ?></span>
                                     <?php endif; ?>
                                 </div>
                                 <span class="text-sm font-medium text-gray-200 group-hover/prof:text-white"><?php echo htmlspecialchars($expertName); ?></span>
@@ -369,9 +369,9 @@ if ($panel_type === 'home'):
                             <div class="w-10 h-10 rounded-full overflow-hidden ring-2 ring-[#00D4AA]/40 flex items-center justify-center bg-gray-900 shrink-0">
                                 <?php if (!empty($expertPhoto)): ?>
                                     <img src="<?php echo htmlspecialchars($expertPhoto); ?>" alt="Profile" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                    <span class="hidden w-full h-full items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($expertName ?: 'E', 0, 1)); ?></span>
+                                    <span class="hidden w-full h-full items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo getInitials($expertName ?: 'Expert'); ?></span>
                                 <?php else: ?>
-                                    <span class="w-full h-full flex items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo strtoupper(substr($expertName ?: 'E', 0, 1)); ?></span>
+                                    <span class="w-full h-full flex items-center justify-center font-bold text-sm text-[#00D4AA] bg-[#0c1222]"><?php echo getInitials($expertName ?: 'Expert'); ?></span>
                                 <?php endif; ?>
                             </div>
                             <div>
