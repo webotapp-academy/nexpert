@@ -401,7 +401,7 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
             <!-- Accordion Group -->
             <div class="space-y-4" id="credibility-accordions">
                 
-                <!-- ACCORDION 1: 5-DIMENSIONAL SCORING -->
+                <!-- ACCORDION 1: 4 CORE DIMENSIONS & CONFIDENCE GATE -->
                 <div class="border border-gray-800 bg-[#0c1020]/90 rounded-2xl overflow-hidden transition-all duration-200">
                     <button onclick="toggleAccordion('acc-scoring')" class="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 hover:bg-[#131b2e]/40 transition group">
                         <div class="flex items-center gap-3.5">
@@ -409,8 +409,8 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                                 1
                             </div>
                             <div>
-                                <h3 class="font-extrabold text-sm sm:text-base text-white group-hover:text-[#00D4AA] transition">The 5 Dimensions of Credibility</h3>
-                                <p class="text-xs text-gray-400 mt-0.5">How your daily points and trust metrics are computed across 5 mathematical vectors</p>
+                                <h3 class="font-extrabold text-sm sm:text-base text-white group-hover:text-[#00D4AA] transition">The 4 Core Telemetry Dimensions</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">How your trust score is calculated via the 4 behavioral dimensions & identity confidence gate</p>
                             </div>
                         </div>
                         <div class="w-8 h-8 rounded-xl bg-[#080B10] border border-gray-800 flex items-center justify-center text-gray-400 group-hover:text-white shrink-0 transition" id="icon-acc-scoring">
@@ -420,64 +420,55 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                     
                     <div id="acc-scoring" class="accordion-content hidden border-t border-gray-800/80 p-5 sm:p-6 bg-[#080B10]/80 space-y-4">
                         <p class="text-xs text-gray-300 leading-relaxed">
-                            Your credibility is not a subjective popularity contest. It is derived mathematically from 5 independent, weighted telemetry vectors evaluated each day:
+                            Your credibility is calculated across 4 weighted behavioral dimensions, with scores aggregated through an Exponential Moving Average (&alpha; = 0.3) and 90-day time decay:
                         </p>
                         
-                        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-2">
-                            <!-- Dimension 1 -->
-                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800 space-y-1.5">
+                        <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5 pt-2">
+                            <!-- Dimension 1: Outcome -->
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-emerald-500/30 space-y-1.5">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-bold text-white flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-cyan-400"></span> Confidence (20%)
+                                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Outcome (30%)
                                     </span>
-                                    <span class="text-[10px] font-mono text-cyan-300 font-bold">Identity & KYC</span>
                                 </div>
-                                <p class="text-[11px] text-gray-400 leading-relaxed">Verified government KYC, verified work history, portfolio authenticity, and complete expert onboarding.</p>
+                                <p class="text-[11px] text-gray-400 leading-relaxed">Verified learner milestone achievements, problem resolution rate, session feedback sentiment, and repeat mentorship bookings.</p>
                             </div>
 
-                            <!-- Dimension 2 -->
-                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800 space-y-1.5">
+                            <!-- Dimension 2: Consistency -->
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-[#00D4AA]/30 space-y-1.5">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-bold text-white flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-indigo-400"></span> Structure (20%)
+                                        <span class="w-2 h-2 rounded-full bg-[#00D4AA]"></span> Consistency (25%)
                                     </span>
-                                    <span class="text-[10px] font-mono text-indigo-300 font-bold">Deliverables</span>
                                 </div>
-                                <p class="text-[11px] text-gray-400 leading-relaxed">Publishing structured syllabi, providing concrete action items, uploading session attachments, and advisory notes.</p>
+                                <p class="text-[11px] text-gray-400 leading-relaxed">Longitudinal score stability across repeat sessions, on-time starts, low cancellation rates, and active schedule maintenance.</p>
                             </div>
 
-                            <!-- Dimension 3 -->
-                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800 space-y-1.5">
+                            <!-- Dimension 3: Structure -->
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-sky-500/30 space-y-1.5">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-bold text-white flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-emerald-400"></span> Outcome (25%)
+                                        <span class="w-2 h-2 rounded-full bg-sky-400"></span> Structure (25%)
                                     </span>
-                                    <span class="text-[10px] font-mono text-emerald-300 font-bold">Learner ROI</span>
                                 </div>
-                                <p class="text-[11px] text-gray-400 leading-relaxed">Learner milestone achievements, problem resolution rate, verified post-session ratings, and repeat mentorship.</p>
+                                <p class="text-[11px] text-gray-400 leading-relaxed">Publishing structured syllabi, providing concrete action items, uploading session notes, and actionable post-session resources.</p>
                             </div>
 
-                            <!-- Dimension 4 -->
-                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800 space-y-1.5">
+                            <!-- Dimension 4: Boundary & Ethics -->
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-indigo-500/30 space-y-1.5">
                                 <div class="flex items-center justify-between">
                                     <span class="text-xs font-bold text-white flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-amber-400"></span> Consistency (20%)
+                                        <span class="w-2 h-2 rounded-full bg-indigo-400"></span> Boundary (20%)
                                     </span>
-                                    <span class="text-[10px] font-mono text-amber-300 font-bold">Reliability</span>
                                 </div>
-                                <p class="text-[11px] text-gray-400 leading-relaxed">On-time session starts, zero unannounced cancellations, active availability maintenance, and fast response times.</p>
+                                <p class="text-[11px] text-gray-400 leading-relaxed">Professional communication, scope adherence, zero anti-harassment flags, punctuality, and sovereign privacy standards.</p>
                             </div>
+                        </div>
 
-                            <!-- Dimension 5 -->
-                            <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-800 space-y-1.5">
-                                <div class="flex items-center justify-between">
-                                    <span class="text-xs font-bold text-white flex items-center gap-1.5">
-                                        <span class="w-2 h-2 rounded-full bg-purple-400"></span> Ethics & Boundary (15%)
-                                    </span>
-                                    <span class="text-[10px] font-mono text-purple-300 font-bold">Integrity</span>
-                                </div>
-                                <p class="text-[11px] text-gray-400 leading-relaxed">Safe and professional environment, zero anti-harassment flags, encrypted messaging, and sovereign session execution.</p>
-                            </div>
+                        <!-- Confidence Gate -->
+                        <div class="p-3 bg-cyan-950/30 border border-cyan-500/30 rounded-xl flex items-center gap-3 text-xs text-gray-300">
+                            <span class="px-2.5 py-1 bg-cyan-500/20 text-cyan-300 font-mono font-bold rounded-lg shrink-0">Identity Gate</span>
+                            <span><strong>Confidence Score:</strong> Scales from 0% to 100% based on verified KYC credentials, sample session volume, and tenure to prevent score volatility.</span>
                         </div>
                     </div>
                 </div>
@@ -532,12 +523,12 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                             </div>
                         </div>
                         <p class="text-xs text-gray-400 italic">
-                            💡 Every midnight UTC, the cron automation recalculates your score and updates your shareable card image and verified telemetry URL.
+                            💡 Every midnight UTC, the autonomous cron recalculates your EMA telemetry curve and updates your shareable card image and verifiable proof URL.
                         </p>
                     </div>
                 </div>
 
-                <!-- ACCORDION 3: TRUST BANDS & RANKING TIERS -->
+                <!-- ACCORDION 3: 5-TIER TRUST BANDS & RANKINGS -->
                 <div class="border border-gray-800 bg-[#0c1020]/90 rounded-2xl overflow-hidden transition-all duration-200">
                     <button onclick="toggleAccordion('acc-bands')" class="w-full p-5 sm:p-6 text-left flex items-center justify-between gap-4 hover:bg-[#131B2E]/40 transition group">
                         <div class="flex items-center gap-3.5">
@@ -545,8 +536,8 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                                 3
                             </div>
                             <div>
-                                <h3 class="font-extrabold text-sm sm:text-base text-white group-hover:text-[#00D4AA] transition">Trust Bands & Ranking Percentiles</h3>
-                                <p class="text-xs text-gray-400 mt-0.5">Understand how points translate into official status tiers and platform ranking</p>
+                                <h3 class="font-extrabold text-sm sm:text-base text-white group-hover:text-[#00D4AA] transition">The 5 Official Trust Bands</h3>
+                                <p class="text-xs text-gray-400 mt-0.5">Matching the platform methodology from Sovereign to Emerging</p>
                             </div>
                         </div>
                         <div class="w-8 h-8 rounded-xl bg-[#080B10] border border-gray-800 flex items-center justify-center text-gray-400 group-hover:text-white shrink-0 transition" id="icon-acc-bands">
@@ -555,37 +546,45 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                     </button>
                     
                     <div id="acc-bands" class="accordion-content hidden border-t border-gray-800/80 p-5 sm:p-6 bg-[#080B10]/80 space-y-4">
-                        <div class="grid sm:grid-cols-2 gap-3.5">
+                        <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                             <div class="p-4 rounded-xl bg-[#0D131F] border border-purple-500/30 space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-black text-purple-300">👑 Master Sovereign</span>
-                                    <span class="text-xs font-mono font-bold text-purple-400">900+ Points</span>
+                                    <span class="text-xs font-black text-purple-300">👑 Sovereign</span>
+                                    <span class="text-xs font-mono font-bold text-purple-400">90.0 – 100.0</span>
                                 </div>
-                                <p class="text-[11px] text-gray-400">Top 1-3% of platform experts. Proven track record with over 50+ completed mentorship hours and zero infractions.</p>
+                                <p class="text-[11px] text-gray-400">Top 1-3% elite mastery. Minimum 70% confidence sample, 50+ completed hours, and industry-defining outcome rates.</p>
                             </div>
                             
                             <div class="p-4 rounded-xl bg-[#0D131F] border border-[#00D4AA]/30 space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-black text-[#00D4AA]">⭐ Verified Authority</span>
-                                    <span class="text-xs font-mono font-bold text-[#00D4AA]">800 - 899 Points</span>
+                                    <span class="text-xs font-black text-[#00D4AA]">⭐ Established</span>
+                                    <span class="text-xs font-mono font-bold text-[#00D4AA]">75.0 – 89.9</span>
                                 </div>
-                                <p class="text-[11px] text-gray-400">Top 8-15% benchmark. Consistently delivers structured advisory with high learner retention and verified outcomes.</p>
+                                <p class="text-[11px] text-gray-400">Top 8-15% benchmark. Proven track record with high learner retention, verified syllabus, and reliable feedback.</p>
                             </div>
 
                             <div class="p-4 rounded-xl bg-[#0D131F] border border-blue-500/30 space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-black text-blue-300">🔷 Certified Practitioner</span>
-                                    <span class="text-xs font-mono font-bold text-blue-400">700 - 799 Points</span>
+                                    <span class="text-xs font-black text-blue-300">🔷 Verified</span>
+                                    <span class="text-xs font-mono font-bold text-blue-400">60.0 – 74.9</span>
                                 </div>
-                                <p class="text-[11px] text-gray-400">Established expert with regular active sessions, verified identity, and reliable student feedback.</p>
+                                <p class="text-[11px] text-gray-400">Approved practitioner with verified identity KYC, active availability, and initial track record.</p>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-[#0D131F] border border-amber-500/30 space-y-1">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-xs font-black text-amber-300">📈 Building</span>
+                                    <span class="text-xs font-mono font-bold text-amber-400">40.0 – 59.9</span>
+                                </div>
+                                <p class="text-[11px] text-gray-400">Experts conducting early sessions and establishing initial longitudinal stability data.</p>
                             </div>
 
                             <div class="p-4 rounded-xl bg-[#0D131F] border border-gray-700 space-y-1">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs font-black text-gray-300">🌱 Emerging Guide</span>
-                                    <span class="text-xs font-mono font-bold text-gray-400">600 - 699 Points</span>
+                                    <span class="text-xs font-black text-gray-300">🌱 Emerging</span>
+                                    <span class="text-xs font-mono font-bold text-gray-400">0.0 – 39.9</span>
                                 </div>
-                                <p class="text-[11px] text-gray-400">Newly approved verified experts building momentum and conducting their initial coaching sessions.</p>
+                                <p class="text-[11px] text-gray-400">Newly onboarded profiles undergoing initial verification checks and profile calibration.</p>
                             </div>
                         </div>
                     </div>
