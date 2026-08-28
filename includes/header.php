@@ -31,7 +31,11 @@
     <meta property="twitter:image" content="<?php echo BASE_URL; ?>/attached_assets/og-image.jpg?v=<?php echo time(); ?>">
     
     <!-- Favicon -->
-    <link rel="icon" type="image/x-icon" href="<?php echo BASE_PATH; ?>/attached_assets/favicon.ico">
+    <link rel="icon" type="image/svg+xml" href="<?php echo BASE_PATH; ?>/assets/favicon.svg?v=<?php echo time(); ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="<?php echo BASE_PATH; ?>/assets/favicon-32x32.png?v=<?php echo time(); ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="<?php echo BASE_PATH; ?>/assets/favicon-16x16.png?v=<?php echo time(); ?>">
+    <link rel="apple-touch-icon" sizes="180x180" href="<?php echo BASE_PATH; ?>/assets/apple-touch-icon.png?v=<?php echo time(); ?>">
+    <link rel="shortcut icon" type="image/x-icon" href="<?php echo BASE_PATH; ?>/favicon.ico?v=<?php echo time(); ?>">
     
     <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
