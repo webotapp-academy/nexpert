@@ -15,29 +15,34 @@ class EmailHelper {
         
         // SMTP Configuration using universal env loader
         $this->mail->isSMTP();
-        $this->mail->Host = UniversalEnv::get('SMTP_HOST');
+        $this->mail->Host = UniversalEnv::get('SMTP_HOST', 'smtp.gmail.com');
         $this->mail->SMTPAuth = true;
         $this->mail->Username = UniversalEnv::get('SMTP_USERNAME');
         $this->mail->Password = UniversalEnv::get('SMTP_PASSWORD');
+        $this->mail->Timeout = 10;
+        
+        // SSL Options for local/production environments
+        $this->mail->SMTPOptions = [
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ];
         
         // Use SSL for port 465, STARTTLS for port 587
-        $port = UniversalEnv::get('SMTP_PORT', 587);
+        $port = (int)UniversalEnv::get('SMTP_PORT', 587);
         $this->mail->Port = $port;
-        if ($port == 465) {
+        if ($port === 465) {
             $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS; // SSL
         } else {
             $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS; // TLS
         }
         
         // From address
-        $this->mail->setFrom(
-            UniversalEnv::get('SMTP_FROM_EMAIL'), 
-            UniversalEnv::get('SMTP_FROM_NAME', 'Nexpert.ai')
-        );
-        
-        // Debug logging
-        error_log("SMTP Configuration - Host: " . ($this->mail->Host ? 'Set' : 'Missing'));
-        error_log("SMTP Configuration - Username: " . ($this->mail->Username ? 'Set' : 'Missing'));
+        $fromEmail = UniversalEnv::get('SMTP_FROM_EMAIL', 'support@nexpert.ai');
+        $fromName = UniversalEnv::get('SMTP_FROM_NAME', 'Nexpert.ai');
+        $this->mail->setFrom($fromEmail, $fromName);
     }
     
     // Generic send email method
@@ -87,14 +92,14 @@ class EmailHelper {
         }
     }
     
-    // Send booking confirmation email to expert
+    // Send booking confirmation email to expert (After Acceptance)
     public function sendExpertBookingEmail($expertEmail, $expertName, $learnerName, $sessionTopic, $sessionDate, $sessionTime, $duration, $zoomLink, $zoomPassword) {
         try {
             $this->mail->clearAddresses();
             $this->mail->addAddress($expertEmail, $expertName);
             
             $this->mail->isHTML(true);
-            $this->mail->Subject = "New Booking: {$sessionTopic} with {$learnerName}";
+            $this->mail->Subject = "Session Confirmed: {$sessionTopic} with {$learnerName}";
             
             $this->mail->Body = $this->getExpertEmailTemplate(
                 $expertName, 
@@ -111,6 +116,70 @@ class EmailHelper {
             return ['success' => true, 'message' => 'Email sent to expert'];
             
         } catch (Exception $e) {
+            return ['success' => false, 'error' => $this->mail->ErrorInfo];
+        }
+    }
+
+    // Send instant notification email to expert when a learner FIRST books a session
+    public function sendExpertNewBookingRequestAlert($expertEmail, $expertName, $learnerName, $sessionTopic, $sessionDate, $sessionTime, $duration, $amount) {
+        try {
+            $this->mail->clearAddresses();
+            $this->mail->addAddress($expertEmail, $expertName);
+            
+            $this->mail->isHTML(true);
+            $this->mail->Subject = "🔔 New Booking Request: {$learnerName} booked a session with you";
+            
+            $this->mail->Body = "
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #0f172a 0%, #00D4AA 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
+                    .detail-box { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #00D4AA; }
+                    .action-button { display: inline-block; background: #00D4AA; color: #080B10; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }
+                    .footer { text-align: center; color: #6b7280; margin-top: 30px; font-size: 14px; }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1>🚀 New Booking Request</h1>
+                    </div>
+                    <div class='content'>
+                        <p>Hi <strong>{$expertName}</strong>,</p>
+                        <p><strong>{$learnerName}</strong> has just scheduled a 1-on-1 session with you on Nexpert!</p>
+                        
+                        <div class='detail-box'>
+                            <h3 style='margin-top: 0;'>📅 Session Details</h3>
+                            <p><strong>Topic:</strong> {$sessionTopic}</p>
+                            <p><strong>Learner:</strong> {$learnerName}</p>
+                            <p><strong>Date:</strong> {$sessionDate}</p>
+                            <p><strong>Time:</strong> {$sessionTime}</p>
+                            <p><strong>Duration:</strong> {$duration} minutes</p>
+                            <p><strong>Session Fee:</strong> ₹{$amount}</p>
+                        </div>
+                        
+                        <p>Please log in to your expert dashboard to accept or manage this booking:</p>
+                        <div style='text-align: center;'>
+                            <a href='http://localhost/nexpert/index.php?panel=expert&page=booking-management' class='action-button'>Go to Booking Management</a>
+                        </div>
+                        
+                        <div class='footer'>
+                            <p>Best regards,<br>The Nexpert.ai Team</p>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            ";
+            
+            $this->mail->send();
+            return ['success' => true, 'message' => 'New booking alert sent to expert'];
+        } catch (Exception $e) {
+            error_log("Failed to send new booking alert to expert: " . $this->mail->ErrorInfo);
             return ['success' => false, 'error' => $this->mail->ErrorInfo];
         }
     }

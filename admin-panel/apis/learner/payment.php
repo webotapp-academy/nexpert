@@ -5,6 +5,49 @@ header('Content-Type: application/json');
 require_once __DIR__ . '/../connection/pdo.php';
 require_once __DIR__ . '/../../../includes/payment-config.php';
 require_once __DIR__ . '/../connection/trust-helper.php';
+require_once __DIR__ . '/../connection/email-helper.php';
+
+function notifyExpertOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount) {
+    try {
+        $stmt = $pdo->prepare("
+            SELECT b.session_datetime, b.duration_minutes, b.session_topic,
+                   lp.full_name as learner_name,
+                   ep.full_name as expert_name,
+                   eu.email as expert_email
+            FROM bookings b
+            LEFT JOIN users lu ON b.learner_id = lu.id
+            LEFT JOIN learner_profiles lp ON lu.id = lp.user_id
+            LEFT JOIN users eu ON b.expert_id = eu.id
+            LEFT JOIN expert_profiles ep ON eu.id = ep.user_id
+            WHERE b.id = ?
+        ");
+        $stmt->execute([$bookingId]);
+        $info = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($info && !empty($info['expert_email'])) {
+            $dt = new DateTime($info['session_datetime']);
+            $date = $dt->format('l, F j, Y');
+            $time = $dt->format('g:i A');
+            $topic = !empty($info['session_topic']) ? $info['session_topic'] : '1-on-1 Mentorship Session';
+            $learnerName = !empty($info['learner_name']) ? $info['learner_name'] : 'Learner';
+            $expertName = !empty($info['expert_name']) ? $info['expert_name'] : 'Expert';
+            $duration = (int)($info['duration_minutes'] ?? 60);
+
+            $emailHelper = new EmailHelper();
+            $emailHelper->sendExpertNewBookingRequestAlert(
+                $info['expert_email'],
+                $expertName,
+                $learnerName,
+                $topic,
+                $date,
+                $time,
+                $duration,
+                $amount
+            );
+        }
+    } catch (Exception $e) {
+        error_log("Error in notifyExpertOfNewBooking: " . $e->getMessage());
+    }
+}
 
 $method = $_SERVER['REQUEST_METHOD'];
 
@@ -95,6 +138,9 @@ try {
                             
                             $pdo->commit();
                             
+                            // Send instant notification email to expert
+                            notifyExpertOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount);
+                            
                             // Log trust event
                             TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
                                 'booking_id' => $bookingId,
@@ -110,7 +156,7 @@ try {
                             ]]);
                             exit;
                         } elseif ($paymentMethod === 'cod') {
-                            // Cash on Delivery - Create booking with success payment status
+                            // Cash on Delivery / Pay Later - Create booking with success payment status
                             $gatewayId = 'COD_' . time() . '_' . rand(1000, 9999);
                             $stmt = $pdo->prepare("
                                 INSERT INTO payments (booking_id, learner_id, expert_id, payment_gateway_id, amount, currency, payment_type, payment_method, status, payment_date, created_at, updated_at)
@@ -123,6 +169,9 @@ try {
                             $pdo->prepare("UPDATE bookings SET status='confirmed', updated_at=NOW() WHERE id=?")->execute([$bookingId]);
                             
                             $pdo->commit();
+                            
+                            // Send instant notification email to expert
+                            notifyExpertOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount);
                             
                             // Log trust event
                             TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
@@ -198,64 +247,69 @@ try {
 
     // -------- VERIFY PAYMENT --------
     if ($action === 'verify_payment') {
-                    if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
-                        http_response_code(401);
-                        echo json_encode(['success' => false, 'message' => 'Unauthorized. Please login as learner.']);
-                        exit;
-                    }
-                    $razorpayOrderId = $data['razorpay_order_id'] ?? null;
-                    $razorpayPaymentId = $data['razorpay_payment_id'] ?? null;
-                    $razorpaySignature = $data['razorpay_signature'] ?? null;
-                    $paymentId = $data['payment_id'] ?? null; // internal id
-                    if (!$razorpayOrderId || !$razorpayPaymentId || !$razorpaySignature || !$paymentId) {
-                        http_response_code(400);
-                        echo json_encode(['success' => false, 'message' => 'Missing verification data']);
-                        exit;
-                    }
-                    $generatedSignature = hash_hmac('sha256', $razorpayOrderId . '|' . $razorpayPaymentId, RAZORPAY_KEY_SECRET);
-                    if (!hash_equals($generatedSignature, $razorpaySignature)) {
-                        http_response_code(400);
-                        echo json_encode(['success' => false, 'message' => 'Signature verification failed']);
-                        exit;
-                    }
-                    $pdo->beginTransaction();
-                    try {
-                        $stmt = $pdo->prepare("SELECT booking_id, expert_id FROM payments WHERE id=? AND payment_gateway_id=? FOR UPDATE");
-                        $stmt->execute([$paymentId, $razorpayOrderId]);
-                        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-                        if (!$row) {
-                            $pdo->rollBack();
-                            http_response_code(404);
-                            echo json_encode(['success' => false, 'message' => 'Payment record not found']);
-                            exit;
-                        }
-                        $bookingId = $row['booking_id'];
-                        $expertId = $row['expert_id'];
-                        $pdo->prepare("UPDATE payments SET status='success', payment_date=NOW(), updated_at=NOW() WHERE id=?")->execute([$paymentId]);
-                        $pdo->prepare("UPDATE bookings SET status='confirmed', updated_at=NOW() WHERE id=?")->execute([$bookingId]);
-                        
-                        // Note: Removed global booking count increment
-                        // Pricing is now per-learner, not global
-                        
-                        $pdo->commit();
-                        
-                        // Log trust event
-                        TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
-                            'booking_id' => $bookingId,
-                            'payment_id' => $paymentId,
-                            'razorpay_payment_id' => $razorpayPaymentId
-                        ]);
+        if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
+            http_response_code(401);
+            echo json_encode(['success' => false, 'message' => 'Unauthorized. Please login as learner.']);
+            exit;
+        }
+        $learnerId = $_SESSION['user_id'];
+        $paymentId = $data['payment_id'] ?? null;
+        $razorpayPaymentId = $data['razorpay_payment_id'] ?? null;
+        $razorpayOrderId = $data['razorpay_order_id'] ?? null;
+        $razorpaySignature = $data['razorpay_signature'] ?? null;
+        if (!$paymentId || !$razorpayPaymentId || !$razorpayOrderId || !$razorpaySignature) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Missing verification parameters']);
+            exit;
+        }
 
-                        echo json_encode(['success' => true, 'action' => 'verify_payment', 'message' => 'Payment verified', 'data' => [
-                            'payment_id' => $paymentId,
-                            'booking_id' => $bookingId,
-                            'razorpay_payment_id' => $razorpayPaymentId
-                        ]]);
-                        exit;
-                    } catch (Exception $e) {
-                        $pdo->rollBack();
-                        throw $e;
-                    }
+        // Verify Razorpay signature
+        $expectedSignature = hash_hmac('sha256', $razorpayOrderId . '|' . $razorpayPaymentId, RAZORPAY_KEY_SECRET);
+        if (!hash_equals($expectedSignature, $razorpaySignature)) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid payment signature']);
+            exit;
+        }
+
+        $pdo->beginTransaction();
+        try {
+            $stmt = $pdo->prepare("SELECT booking_id, expert_id, amount FROM payments WHERE id = ? AND learner_id = ? AND status = 'pending' FOR UPDATE");
+            $stmt->execute([$paymentId, $learnerId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if (!$row) {
+                $pdo->rollBack();
+                http_response_code(404);
+                echo json_encode(['success' => false, 'message' => 'Payment record not found']);
+                exit;
+            }
+            $bookingId = $row['booking_id'];
+            $expertId = $row['expert_id'];
+            $amount = $row['amount'];
+            $pdo->prepare("UPDATE payments SET status='success', payment_date=NOW(), updated_at=NOW() WHERE id=?")->execute([$paymentId]);
+            $pdo->prepare("UPDATE bookings SET status='confirmed', updated_at=NOW() WHERE id=?")->execute([$bookingId]);
+            
+            $pdo->commit();
+            
+            // Send instant notification email to expert
+            notifyExpertOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount);
+            
+            // Log trust event
+            TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
+                'booking_id' => $bookingId,
+                'payment_id' => $paymentId,
+                'razorpay_payment_id' => $razorpayPaymentId
+            ]);
+
+            echo json_encode(['success' => true, 'action' => 'verify_payment', 'message' => 'Payment verified', 'data' => [
+                'payment_id' => $paymentId,
+                'booking_id' => $bookingId,
+                'razorpay_payment_id' => $razorpayPaymentId
+            ]]);
+            exit;
+        } catch (Exception $e) {
+            $pdo->rollBack();
+            throw $e;
+        }
     }
 
     // -------- LEGACY DIRECT (test) --------
