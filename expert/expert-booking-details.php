@@ -250,14 +250,22 @@ $hasLearnerData = !empty($booking['learner_goals']) || !empty($booking['learner_
                                 <span class="text-xs text-gray-400">Passcode</span>
                                 <span class="text-xs font-mono text-gray-300"><?php echo htmlspecialchars($callDetails['password'] ?? 'N/A'); ?></span>
                             </div>
-                            <div class="pt-3 border-t border-gray-800 flex gap-3">
+                            <div class="pt-3 border-t border-gray-800 flex flex-wrap gap-2.5">
                                 <a href="<?php echo htmlspecialchars($callDetails['start_url'] ?? '#'); ?>" 
                                    target="_blank"
-                                   class="flex-1 text-center bg-[#00D4AA] text-[#080B10] py-2.5 px-4 rounded-xl text-xs font-extrabold hover:bg-[#00bfa0] transition shadow-md">
+                                   class="flex-1 min-w-[120px] text-center bg-[#00D4AA] text-[#080B10] py-2.5 px-4 rounded-xl text-xs font-extrabold hover:bg-[#00bfa0] transition shadow-md flex items-center justify-center gap-1.5">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
                                     Start Session
                                 </a>
+                                <?php if ($booking['status'] === 'confirmed' && $isAccepted): ?>
+                                <button onclick="handleBookingAction(<?php echo $bookingId; ?>, 'complete')" 
+                                        class="px-3.5 py-2.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    Mark Completed
+                                </button>
+                                <?php endif; ?>
                                 <button onclick="copyToClipboard('<?php echo htmlspecialchars($callDetails['join_url'] ?? ''); ?>')" 
-                                        class="px-4 py-2 bg-[#0D131F] border border-gray-700 rounded-xl text-xs font-bold hover:border-gray-500 text-gray-300 hover:text-white transition">
+                                        class="px-3.5 py-2.5 bg-[#0D131F] border border-gray-700 rounded-xl text-xs font-bold hover:border-gray-500 text-gray-300 hover:text-white transition">
                                     Copy Link
                                 </button>
                             </div>
@@ -294,6 +302,11 @@ $hasLearnerData = !empty($booking['learner_goals']) || !empty($booking['learner_
                                     <button onclick="handleBookingAction(<?php echo $bookingId; ?>, 'accept')" class="px-3.5 py-1.5 bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] rounded-xl text-xs font-extrabold transition flex items-center gap-1 shadow-sm">
                                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
                                         Accept Booking
+                                    </button>
+                                <?php elseif ($isAccepted && $booking['status'] === 'confirmed'): ?>
+                                    <button onclick="handleBookingAction(<?php echo $bookingId; ?>, 'complete')" class="px-3.5 py-1.5 bg-blue-500/10 border border-blue-500/30 text-blue-400 hover:bg-blue-500 hover:text-white rounded-xl text-xs font-bold transition flex items-center gap-1">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        Mark Completed
                                     </button>
                                 <?php endif; ?>
                                 <?php if (in_array($booking['status'], ['pending', 'confirmed'])): ?>
@@ -768,6 +781,32 @@ async function handleBookingAction(bookingId, action) {
             color: '#fff',
             customClass: { popup: 'border border-gray-800 rounded-2xl' }
         });
+    } else if (action === 'complete') {
+        const confirmResult = await Swal.fire({
+            title: 'Mark Session as Completed?',
+            html: '<p class="text-gray-300 text-sm">This will complete the session lifecycle, update your stats, and invite the learner to leave a rating and review.</p>',
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#00D4AA',
+            cancelButtonColor: '#374151',
+            confirmButtonText: '✓ Yes, Mark Completed',
+            cancelButtonText: 'Cancel',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+        
+        if (!confirmResult.isConfirmed) return;
+
+        Swal.fire({
+            title: 'Finalizing Session...',
+            html: '<div class="flex flex-col items-center py-3"><div class="w-10 h-10 border-4 border-gray-800 border-t-[#00D4AA] rounded-full animate-spin mb-3"></div><p class="text-xs text-gray-400">Updating booking lifecycle & stats...</p></div>',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
     } else {
         const confirmResult = await Swal.fire({
             title: 'Decline Booking Request?',
@@ -820,6 +859,16 @@ async function handleBookingAction(bookingId, action) {
                         <p class="text-[11px] text-gray-400 mt-3">Meeting invitations and join links have been sent to you and the learner.</p>
                     `,
                     confirmButtonText: 'Great, Done!',
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: { popup: 'border border-gray-800 rounded-2xl' }
+                });
+            } else if (action === 'complete') {
+                await Swal.fire({
+                    icon: 'success',
+                    title: '🎉 Session Completed!',
+                    text: result.message || 'Session marked as completed successfully!',
                     confirmButtonColor: '#00D4AA',
                     background: '#0D131F',
                     color: '#fff',

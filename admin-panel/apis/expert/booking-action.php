@@ -194,6 +194,16 @@ try {
                 'zoom_link' => $meetingLink
             ]);
         }
+    } elseif ($action === 'complete') {
+        // Marking booking completed
+        $stmt = $pdo->prepare("UPDATE bookings SET status = 'completed', review_pending = 1, updated_at = NOW() WHERE id = ? AND expert_id = ?");
+        $stmt->execute([$bookingId, $userId]);
+        
+        echo json_encode([
+            'success' => true,
+            'message' => 'Session marked as completed successfully! The learner has been notified to leave a review.',
+            'status' => 'completed'
+        ]);
     } else {
         // Rejecting booking
         $stmt = $pdo->prepare("UPDATE bookings SET accept_booking = ? WHERE id = ?");
