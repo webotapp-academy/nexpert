@@ -559,7 +559,29 @@ function closeRescheduleModal() {
 async function submitRescheduleRequest() {
     const datetime = document.getElementById('reschedule-datetime').value;
     const reason = document.getElementById('reschedule-reason').value;
-    if (!datetime) { alert('Please select a new date and time'); return; }
+    if (!datetime) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Select Date & Time',
+            text: 'Please select a new date and time for the session.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Sending Request...',
+        html: '<div class="flex flex-col items-center py-3"><div class="w-10 h-10 border-4 border-gray-800 border-t-[#00D4AA] rounded-full animate-spin mb-3"></div><p class="text-xs text-gray-400">Notifying learner...</p></div>',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        background: '#0D131F',
+        color: '#fff',
+        customClass: { popup: 'border border-gray-800 rounded-2xl' }
+    });
+
     try {
         const response = await fetch(BASE_PATH + '/admin-panel/apis/common/reschedule-actions.php', {
             method: 'POST',
@@ -572,12 +594,69 @@ async function submitRescheduleRequest() {
             })
         });
         const data = await response.json();
-        if (data.success) location.reload(); else alert(data.message);
-    } catch (error) { alert('Failed to send request'); }
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Request Sent',
+                text: 'Reschedule request sent to learner.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
+            location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Request Failed',
+                text: data.message || 'Failed to send reschedule request',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'Failed to send reschedule request.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+    }
 }
 
 async function rescheduleAction(action) {
-    if (!confirm(`Are you sure you want to ${action} this reschedule request?`)) return;
+    const actionLabel = action === 'approve' ? 'approve' : 'decline';
+    const confirmResult = await Swal.fire({
+        title: `${action === 'approve' ? 'Approve' : 'Decline'} Reschedule Request?`,
+        text: `Are you sure you want to ${actionLabel} this reschedule request?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: action === 'approve' ? '#00D4AA' : '#EF4444',
+        cancelButtonColor: '#374151',
+        confirmButtonText: `Yes, ${action === 'approve' ? 'Approve' : 'Decline'}`,
+        cancelButtonText: 'Cancel',
+        background: '#0D131F',
+        color: '#fff',
+        customClass: { popup: 'border border-gray-800 rounded-2xl' }
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    Swal.fire({
+        title: 'Processing...',
+        html: '<div class="flex flex-col items-center py-3"><div class="w-10 h-10 border-4 border-gray-800 border-t-[#00D4AA] rounded-full animate-spin mb-3"></div><p class="text-xs text-gray-400">Updating booking schedule...</p></div>',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        background: '#0D131F',
+        color: '#fff',
+        customClass: { popup: 'border border-gray-800 rounded-2xl' }
+    });
+
     try {
         const response = await fetch(BASE_PATH + '/admin-panel/apis/common/reschedule-actions.php', {
             method: 'POST',
@@ -588,8 +667,39 @@ async function rescheduleAction(action) {
             })
         });
         const data = await response.json();
-        if (data.success) location.reload(); else alert(data.message);
-    } catch (error) { alert('Failed to process request'); }
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Schedule Updated',
+                text: 'Reschedule request has been processed.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
+            location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Update Failed',
+                text: data.message || 'Failed to process request',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'Failed to process reschedule request.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+    }
 }
 
 window.BASE_PATH = '<?php echo BASE_PATH; ?>';
@@ -708,7 +818,18 @@ function formatApproach(text) {
 
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-        alert('Link copied to clipboard!');
+        Swal.fire({
+            icon: 'success',
+            title: 'Link Copied!',
+            text: 'Meeting link copied to your clipboard',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 2500,
+            timerProgressBar: true,
+            background: '#0D131F',
+            color: '#fff'
+        });
     }).catch(err => {
         console.error('Failed to copy:', err);
     });
@@ -725,13 +846,9 @@ function closeSummaryModal() {
 
 async function saveSummary() {
     const summary = document.getElementById('summary-text').value;
-    console.log('Saving summary:', summary);
-    console.log('Booking ID:', bookingId);
-    console.log('BASE_PATH:', BASE_PATH);
     
     try {
         const url = BASE_PATH + '/admin-panel/apis/expert/session-management.php';
-        console.log('API URL:', url);
         
         const response = await fetch(url, {
             method: 'POST',
@@ -743,35 +860,62 @@ async function saveSummary() {
             })
         });
         
-        console.log('Response status:', response.status);
-        console.log('Response headers:', [...response.headers]);
-        
         const responseText = await response.text();
-        console.log('Raw response:', responseText);
         
         let data;
         try {
             data = JSON.parse(responseText);
         } catch (parseError) {
             console.error('JSON parse error:', parseError);
-            alert('Server response is not valid JSON: ' + responseText);
+            Swal.fire({
+                icon: 'error',
+                title: 'Invalid Server Response',
+                text: 'Server response is not valid JSON',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
             return;
         }
-        
-        console.log('Parsed response:', data);
         
         if (data.success) {
             document.getElementById('summary-display').innerHTML = summary ? 
                 `<p class="text-gray-700 whitespace-pre-line">${summary}</p>` :
                 '<p class="text-gray-500 italic">No summary added yet</p>';
             closeSummaryModal();
-            alert('Summary saved successfully!');
+            Swal.fire({
+                icon: 'success',
+                title: 'Summary Saved',
+                text: 'Session summary updated successfully!',
+                timer: 1800,
+                showConfirmButton: false,
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
         } else {
-            alert('Error: ' + (data.message || 'Unknown error'));
+            Swal.fire({
+                icon: 'error',
+                title: 'Save Failed',
+                text: data.message || 'Unknown error occurred',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
         }
     } catch (error) {
         console.error('Error details:', error);
-        alert('Failed to save summary: ' + error.message);
+        Swal.fire({
+            icon: 'error',
+            title: 'Save Failed',
+            text: error.message || 'Failed to save summary',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
     }
 }
 
@@ -779,7 +923,15 @@ document.getElementById('enhance-ai-btn')?.addEventListener('click', async () =>
     const summaryText = document.getElementById('summary-text').value.trim();
     
     if (!summaryText) {
-        alert('Please write at least 1-2 lines before using AI enhancement');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Write Initial Notes',
+            text: 'Please write at least 1-2 lines before using AI enhancement.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
         return;
     }
     
@@ -802,12 +954,38 @@ document.getElementById('enhance-ai-btn')?.addEventListener('click', async () =>
         const data = await response.json();
         if (data.success) {
             document.getElementById('summary-text').value = data.enhanced_summary;
+            Swal.fire({
+                icon: 'success',
+                title: '✨ AI Enhanced!',
+                text: 'Your summary has been polished and formatted.',
+                timer: 1800,
+                showConfirmButton: false,
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
         } else {
-            alert('Error: ' + data.message);
+            Swal.fire({
+                icon: 'error',
+                title: 'AI Enhancement Failed',
+                text: data.message || 'Unable to enhance summary.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Failed to enhance summary. Make sure OPENAI_API_KEY is configured.');
+        Swal.fire({
+            icon: 'error',
+            title: 'AI Enhancement Error',
+            text: 'Failed to enhance summary. Please try again.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
     } finally {
         btn.classList.remove('hidden');
         loader.classList.add('hidden');
@@ -837,7 +1015,15 @@ async function saveTasks() {
     const tasks = tasksText.split('\n').filter(line => line.trim()).map(line => line.trim());
     
     if (tasks.length === 0) {
-        alert('Please enter at least one task');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Enter Tasks',
+            text: 'Please enter at least one action item or task.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
         return;
     }
     
@@ -871,10 +1057,28 @@ async function saveTasks() {
         if (data.success) {
             refreshTasks(data.tasks);
             closeTaskModal();
+            Swal.fire({
+                icon: 'success',
+                title: 'Tasks Added',
+                text: 'Action items assigned successfully!',
+                timer: 1800,
+                showConfirmButton: false,
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Failed to add tasks');
+        Swal.fire({
+            icon: 'error',
+            title: 'Failed to Add Tasks',
+            text: 'An error occurred while adding tasks.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
     } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = originalText;
@@ -897,16 +1101,46 @@ async function toggleTask(taskId) {
         if (data.success) {
             refreshTasks(data.tasks);
         } else {
-            alert('Error: ' + data.message);
+            Swal.fire({
+                icon: 'error',
+                title: 'Toggle Failed',
+                text: data.message || 'Unable to update task status.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Failed to toggle task');
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'Failed to toggle task.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
     }
 }
 
 async function deleteTask(taskId) {
-    if (!confirm('Delete this task?')) return;
+    const confirmResult = await Swal.fire({
+        title: 'Delete Task?',
+        text: 'Are you sure you want to remove this action item?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#374151',
+        confirmButtonText: 'Yes, Delete',
+        cancelButtonText: 'Cancel',
+        background: '#0D131F',
+        color: '#fff',
+        customClass: { popup: 'border border-gray-800 rounded-2xl' }
+    });
+    
+    if (!confirmResult.isConfirmed) return;
     
     try {
         const response = await fetch(BASE_PATH + '/admin-panel/apis/expert/session-management.php', {
@@ -922,12 +1156,38 @@ async function deleteTask(taskId) {
         const data = await response.json();
         if (data.success) {
             refreshTasks(data.tasks);
+            Swal.fire({
+                icon: 'success',
+                title: 'Task Deleted',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                background: '#0D131F',
+                color: '#fff'
+            });
         } else {
-            alert('Error: ' + data.message);
+            Swal.fire({
+                icon: 'error',
+                title: 'Delete Failed',
+                text: data.message || 'Unable to delete task.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Failed to delete task');
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'Failed to delete task.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
     }
 }
 
@@ -994,7 +1254,21 @@ function toggleResourceType(type) {
 const saveResource = saveOrUpdateResource;
 
 async function deleteResource(resourceId) {
-    if (!confirm('Delete this resource?')) return;
+    const confirmResult = await Swal.fire({
+        title: 'Delete Resource?',
+        text: 'Are you sure you want to delete this resource?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#EF4444',
+        cancelButtonColor: '#374151',
+        confirmButtonText: 'Yes, Delete',
+        cancelButtonText: 'Cancel',
+        background: '#0D131F',
+        color: '#fff',
+        customClass: { popup: 'border border-gray-800 rounded-2xl' }
+    });
+    
+    if (!confirmResult.isConfirmed) return;
     
     try {
         const response = await fetch(BASE_PATH + '/admin-panel/apis/expert/session-management.php', {
@@ -1010,12 +1284,38 @@ async function deleteResource(resourceId) {
         const data = await response.json();
         if (data.success) {
             refreshResources(data.resources);
+            Swal.fire({
+                icon: 'success',
+                title: 'Resource Deleted',
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 2000,
+                background: '#0D131F',
+                color: '#fff'
+            });
         } else {
-            alert('Error: ' + data.message);
+            Swal.fire({
+                icon: 'error',
+                title: 'Delete Failed',
+                text: data.message || 'Unable to delete resource.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Failed to delete resource');
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'Failed to delete resource.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
     }
 }
 
@@ -1083,7 +1383,15 @@ async function saveOrUpdateResource() {
     const resourceType = document.querySelector('input[name="resource-type"]:checked').value;
     
     if (!title) {
-        alert('Please enter a resource title');
+        Swal.fire({
+            icon: 'warning',
+            title: 'Title Required',
+            text: 'Please enter a resource title.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
         return;
     }
     
@@ -1099,7 +1407,15 @@ async function saveOrUpdateResource() {
         if (resourceType === 'file') {
             const fileInput = document.getElementById('resource-file');
             if (!editingResourceId && (!fileInput.files || !fileInput.files[0])) {
-                alert('Please select a file to upload');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'File Required',
+                    text: 'Please select a file to upload.',
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: { popup: 'border border-gray-800 rounded-2xl' }
+                });
                 saveBtn.disabled = false;
                 saveBtn.textContent = originalText;
                 return;
@@ -1128,7 +1444,15 @@ async function saveOrUpdateResource() {
         } else {
             const url = document.getElementById('resource-url').value.trim();
             if (!url) {
-                alert('Please enter a URL');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'URL Required',
+                    text: 'Please enter a valid link/URL.',
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: { popup: 'border border-gray-800 rounded-2xl' }
+                });
                 saveBtn.disabled = false;
                 saveBtn.textContent = originalText;
                 return;
@@ -1158,12 +1482,38 @@ async function saveOrUpdateResource() {
             refreshResources(data.resources);
             closeResourceModal();
             editingResourceId = null;
+            Swal.fire({
+                icon: 'success',
+                title: editingResourceId ? 'Resource Updated' : 'Resource Uploaded',
+                text: 'Attachment saved successfully!',
+                timer: 1800,
+                showConfirmButton: false,
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
         } else {
-            alert('Error: ' + data.message);
+            Swal.fire({
+                icon: 'error',
+                title: 'Save Failed',
+                text: data.message || 'Failed to save resource.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Failed to save resource');
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'Failed to save resource.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
     } finally {
         saveBtn.disabled = false;
         saveBtn.textContent = originalText;

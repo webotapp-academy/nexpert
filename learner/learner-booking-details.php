@@ -534,7 +534,29 @@ function closeRescheduleModal() {
 async function submitRescheduleRequest() {
     const datetime = document.getElementById('reschedule-datetime').value;
     const reason = document.getElementById('reschedule-reason').value;
-    if (!datetime) { alert('Please select a new date and time'); return; }
+    if (!datetime) {
+        Swal.fire({
+            icon: 'warning',
+            title: 'Select Date & Time',
+            text: 'Please select a new date and time for the session.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+        return;
+    }
+    
+    Swal.fire({
+        title: 'Sending Request...',
+        html: '<div class="flex flex-col items-center py-3"><div class="w-10 h-10 border-4 border-gray-800 border-t-[#00D4AA] rounded-full animate-spin mb-3"></div><p class="text-xs text-gray-400">Notifying expert...</p></div>',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        background: '#0D131F',
+        color: '#fff',
+        customClass: { popup: 'border border-gray-800 rounded-2xl' }
+    });
+
     try {
         const response = await fetch(BASE_PATH + '/admin-panel/apis/common/reschedule-actions.php', {
             method: 'POST',
@@ -547,12 +569,69 @@ async function submitRescheduleRequest() {
             })
         });
         const data = await response.json();
-        if (data.success) location.reload(); else alert(data.message);
-    } catch (error) { alert('Failed to send request'); }
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Request Sent',
+                text: 'Reschedule request sent to the expert.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
+            location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Request Failed',
+                text: data.message || 'Failed to send reschedule request',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'Failed to send reschedule request.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+    }
 }
 
 async function rescheduleAction(action) {
-    if (!confirm(`Are you sure you want to ${action} this reschedule request?`)) return;
+    const actionLabel = action === 'approve' ? 'approve' : 'decline';
+    const confirmResult = await Swal.fire({
+        title: `${action === 'approve' ? 'Approve' : 'Decline'} Reschedule Request?`,
+        text: `Are you sure you want to ${actionLabel} this reschedule request?`,
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: action === 'approve' ? '#00D4AA' : '#EF4444',
+        cancelButtonColor: '#374151',
+        confirmButtonText: `Yes, ${action === 'approve' ? 'Approve' : 'Decline'}`,
+        cancelButtonText: 'Cancel',
+        background: '#0D131F',
+        color: '#fff',
+        customClass: { popup: 'border border-gray-800 rounded-2xl' }
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    Swal.fire({
+        title: 'Processing...',
+        html: '<div class="flex flex-col items-center py-3"><div class="w-10 h-10 border-4 border-gray-800 border-t-[#00D4AA] rounded-full animate-spin mb-3"></div><p class="text-xs text-gray-400">Updating booking schedule...</p></div>',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        background: '#0D131F',
+        color: '#fff',
+        customClass: { popup: 'border border-gray-800 rounded-2xl' }
+    });
+
     try {
         const response = await fetch(BASE_PATH + '/admin-panel/apis/common/reschedule-actions.php', {
             method: 'POST',
@@ -563,8 +642,39 @@ async function rescheduleAction(action) {
             })
         });
         const data = await response.json();
-        if (data.success) location.reload(); else alert(data.message);
-    } catch (error) { alert('Failed to process request'); }
+        if (data.success) {
+            await Swal.fire({
+                icon: 'success',
+                title: 'Schedule Updated',
+                text: 'Reschedule request has been processed.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
+            location.reload();
+        } else {
+            Swal.fire({
+                icon: 'error',
+                title: 'Update Failed',
+                text: data.message || 'Failed to process request',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: { popup: 'border border-gray-800 rounded-2xl' }
+            });
+        }
+    } catch (error) {
+        Swal.fire({
+            icon: 'error',
+            title: 'Connection Error',
+            text: 'Failed to process reschedule request.',
+            confirmButtonColor: '#00D4AA',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: { popup: 'border border-gray-800 rounded-2xl' }
+        });
+    }
 }
 
 document.addEventListener('DOMContentLoaded', function() {
