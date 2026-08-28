@@ -82,23 +82,24 @@ try {
         $stmt = $pdo->prepare("
             SELECT day_of_week, start_time, end_time 
             FROM expert_availability 
-            WHERE expert_id = ? AND is_active = 1 
+            WHERE (expert_id = ? OR expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?)) 
+              AND is_active = 1 
             ORDER BY day_of_week, start_time
         ");
-        $stmt->execute([$expertId]);
+        $stmt->execute([$expertId, $expertId]);
         $availability = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Get already booked slots (next 90 days)
+        // Get already booked slots (next 90 days) - all active/booked slots not cancelled or rejected
         $stmt = $pdo->prepare("
             SELECT session_datetime, duration_minutes 
             FROM bookings 
-            WHERE expert_id = ? 
-            AND status IN ('confirmed', 'pending')
-            AND session_datetime >= NOW()
+            WHERE (expert_id = ? OR expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?)) 
+            AND status NOT IN ('cancelled', 'rejected')
+            AND session_datetime >= DATE_SUB(NOW(), INTERVAL 1 DAY)
             AND session_datetime <= DATE_ADD(NOW(), INTERVAL 90 DAY)
             ORDER BY session_datetime
         ");
-        $stmt->execute([$expertId]);
+        $stmt->execute([$expertId, $expertId]);
         $bookedSlots = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Format rating
@@ -160,14 +161,14 @@ try {
         // - Any booking ending between 2:01 PM and 3:00 PM
         $stmt = $pdo->prepare("
             SELECT COUNT(*) as count FROM bookings 
-            WHERE expert_id = ? 
-            AND status IN ('confirmed', 'pending')
+            WHERE (expert_id = ? OR expert_id IN (SELECT id FROM expert_profiles WHERE user_id = ?))
+            AND status NOT IN ('cancelled', 'rejected')
             AND (
                 (session_datetime < DATE_ADD(?, INTERVAL ? MINUTE) AND 
                  DATE_ADD(session_datetime, INTERVAL duration_minutes MINUTE) > ?)
             )
         ");
-        $stmt->execute([$expertId, $sessionDatetime, $duration, $sessionDatetime]);
+        $stmt->execute([$expertId, $expertId, $sessionDatetime, $duration, $sessionDatetime]);
         $existingBooking = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($existingBooking['count'] > 0) {
