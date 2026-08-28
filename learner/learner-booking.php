@@ -18,9 +18,103 @@ $panel_type = "learner";
 require_once dirname(__DIR__) . '/includes/header.php';
 require_once dirname(__DIR__) . '/includes/navigation.php';
 ?>
-    <script>
-        document.body.className = "bg-[#080B10] min-h-screen text-white";
-    </script>
+<!-- Flatpickr Date Picker Assets -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+<style>
+.flatpickr-calendar {
+    background: #0c1222 !important;
+    border: 1px solid rgba(0, 212, 170, 0.3) !important;
+    border-radius: 1.25rem !important;
+    box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.95), 0 0 25px rgba(0, 212, 170, 0.1) !important;
+    font-family: inherit !important;
+    padding: 14px !important;
+    width: 320px !important;
+    backdrop-filter: blur(16px) !important;
+}
+.flatpickr-calendar::before, .flatpickr-calendar::after {
+    border-bottom-color: #0c1222 !important;
+}
+.flatpickr-months {
+    margin-bottom: 8px !important;
+}
+.flatpickr-months .flatpickr-month {
+    color: #fff !important;
+    fill: #fff !important;
+    height: 38px !important;
+}
+.flatpickr-current-month {
+    font-size: 105% !important;
+    padding-top: 4px !important;
+}
+.flatpickr-current-month .flatpickr-monthDropdown-months,
+.flatpickr-current-month input.cur-year {
+    color: #fff !important;
+    font-weight: 800 !important;
+}
+.flatpickr-months .flatpickr-prev-month, 
+.flatpickr-months .flatpickr-next-month {
+    color: #00D4AA !important;
+    fill: #00D4AA !important;
+    padding: 6px !important;
+    border-radius: 0.5rem !important;
+}
+.flatpickr-months .flatpickr-prev-month:hover, 
+.flatpickr-months .flatpickr-next-month:hover {
+    background: rgba(0, 212, 170, 0.15) !important;
+}
+.flatpickr-weekdays {
+    margin-bottom: 6px !important;
+}
+.flatpickr-weekday {
+    color: #00D4AA !important;
+    font-weight: 800 !important;
+    font-size: 11px !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+}
+.flatpickr-day {
+    color: #e2e8f0 !important;
+    border-radius: 0.75rem !important;
+    font-weight: 600 !important;
+    margin: 2px 0 !important;
+    height: 38px !important;
+    line-height: 38px !important;
+    transition: all 0.15s ease !important;
+}
+.flatpickr-day:hover, .flatpickr-day:focus {
+    background: rgba(0, 212, 170, 0.2) !important;
+    border-color: #00D4AA !important;
+    color: #00D4AA !important;
+}
+.flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange {
+    background: #00D4AA !important;
+    border-color: #00D4AA !important;
+    color: #080B10 !important;
+    font-weight: 900 !important;
+    box-shadow: 0 0 16px rgba(0, 212, 170, 0.5) !important;
+}
+.flatpickr-day.today {
+    border-color: #00D4AA !important;
+    color: #00D4AA !important;
+}
+.flatpickr-day.today:hover {
+    background: #00D4AA !important;
+    color: #080B10 !important;
+}
+.flatpickr-day.flatpickr-disabled, 
+.flatpickr-day.prevMonthDay, 
+.flatpickr-day.nextMonthDay {
+    color: #334155 !important;
+    opacity: 0.4 !important;
+}
+</style>
+
+<script>
+    document.body.className = "bg-[#080B10] min-h-screen text-white";
+</script>
 <div class="min-h-screen py-8">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <!-- Enhanced Header -->
@@ -136,14 +230,33 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                 
                 <!-- Date Selection -->
                 <div class="mb-10">
-                    <label class="block text-sm font-semibold text-gray-300 mb-4 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                        </svg>
-                        Choose a Date
+                    <label for="session-date" class="block text-sm font-semibold text-gray-300 mb-4 flex items-center justify-between">
+                        <span class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Choose a Date
+                        </span>
+                        <span class="text-xs text-[#00D4AA] font-semibold bg-[#00D4AA]/10 px-2.5 py-1 rounded-lg border border-[#00D4AA]/30 flex items-center gap-1.5 cursor-pointer" onclick="if(window.bookingFp) window.bookingFp.open();">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            <span>Calendar Dropdown</span>
+                        </span>
                     </label>
-                    <input type="date" id="session-date" 
-                           class="w-full px-5 py-4 bg-[#0d131f] border border-gray-800 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00D4AA] text-lg transition-all duration-200">
+                    <div class="relative group cursor-pointer" onclick="if(window.bookingFp) window.bookingFp.open();">
+                        <input type="text" id="session-date" readonly
+                               placeholder="Click to open calendar & pick a date..." 
+                               class="w-full px-5 py-4 pl-12 pr-12 bg-[#0d131f] border border-gray-800 hover:border-[#00D4AA]/50 group-hover:border-[#00D4AA]/60 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00D4AA] text-base sm:text-lg font-medium cursor-pointer transition-all duration-200 shadow-inner">
+                        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-[#00D4AA] pointer-events-none">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                        </div>
+                        <div class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-[#00D4AA] transition-colors pointer-events-none">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Time Slots -->
@@ -206,10 +319,27 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
             return;
         }
 
-        // Set minimum date to today
-        const dateInput = document.getElementById('session-date');
-        const today = new Date().toISOString().split('T')[0];
-        dateInput.min = today;
+        let fpInstance = null;
+
+        function initCalendarPicker() {
+            if (typeof flatpickr !== 'undefined') {
+                fpInstance = flatpickr("#session-date", {
+                    minDate: "today",
+                    dateFormat: "Y-m-d",
+                    altInput: true,
+                    altFormat: "l, F j, Y",
+                    altInputClass: "w-full px-5 py-4 pl-12 pr-12 bg-[#0d131f] border border-gray-800 hover:border-[#00D4AA]/50 group-hover:border-[#00D4AA]/60 text-white rounded-xl focus:outline-none focus:ring-2 focus:ring-[#00D4AA] text-base sm:text-lg font-semibold cursor-pointer transition-all duration-200 shadow-inner",
+                    disableMobile: true,
+                    onChange: function(selectedDates, dateStr) {
+                        selectedDate = dateStr;
+                        selectedTime = null;
+                        renderTimeSlots();
+                        updateSelectedDateTime();
+                    }
+                });
+                window.bookingFp = fpInstance;
+            }
+        }
 
         // Utility function to resolve image paths
         function resolveImagePath(imagePath) {
@@ -467,14 +597,7 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
             }
         }
 
-        // Event listeners
-        dateInput.addEventListener('change', function() {
-            selectedDate = this.value;
-            selectedTime = null;
-            renderTimeSlots();
-            updateSelectedDateTime();
-        });
-
+        // Confirm Booking CTA
         document.getElementById('confirm-booking-btn').addEventListener('click', function() {
             if (!selectedDate || !selectedTime) {
                 alert('Please select a date and time');
@@ -488,7 +611,8 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
             window.location.href = `${window.BASE_PATH}/index.php?panel=learner&page=payments&expert_id=${expertId}&datetime=${encodeURIComponent(sessionDateTime)}&amount=${hourlyRate}`;
         });
 
-        // Initialize
+        // Initialize Flatpickr and load expert telemetry
+        initCalendarPicker();
         loadExpertData();
     })();
 </script>
