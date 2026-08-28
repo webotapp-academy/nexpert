@@ -504,20 +504,46 @@ function displayExpertInsights(insights) {
 
 function formatApproach(text) {
     if (!text) return '';
-    let formatted = escapeHtml(text.toString());
-    if (formatted.match(/[•\-\*]\s/)) {
-        formatted = formatted.replace(/[•\-\*]\s+/g, '• ').replace(/\n/g, '<br>');
-        return formatted;
+    let raw = text.toString();
+    
+    // Split by lines or bullet/number markers
+    let rawLines = raw.split(/\r?\n+/);
+    let items = [];
+    
+    rawLines.forEach(line => {
+        line = line.trim();
+        if (!line) return;
+        
+        // If line has multiple numbered items on the same line like "1. foo 2. bar"
+        if (/\d+[\.\)]\s+/.test(line)) {
+            let parts = line.split(/(?:\s*\d+[\.\)]\s+)/);
+            parts.forEach(p => {
+                let cleaned = p.trim().replace(/^[-•*–—\d\.\)\s]+/, '').trim();
+                if (cleaned.length > 2) items.push(cleaned);
+            });
+        } else if (/[-•*–—]\s+/.test(line)) {
+            let parts = line.split(/(?:\s*[-•*–—]\s+)/);
+            parts.forEach(p => {
+                let cleaned = p.trim().replace(/^[-•*–—\d\.\)\s]+/, '').trim();
+                if (cleaned.length > 2) items.push(cleaned);
+            });
+        } else {
+            let cleaned = line.replace(/^[-•*–—\d\.\)\s]+/, '').trim();
+            if (cleaned.length > 2) items.push(cleaned);
+        }
+    });
+
+    if (items.length > 0) {
+        return items.map(item => {
+            return `<div class="flex items-start gap-2.5 py-1">
+                <span class="text-[#00D4AA] font-bold shrink-0 mt-0.5">•</span>
+                <span class="text-gray-200 leading-relaxed">${escapeHtml(item)}</span>
+            </div>`;
+        }).join('');
     }
-    if (formatted.match(/\n?\d+\.\s/)) {
-        formatted = formatted.replace(/\n?(\d+)\.\s+/g, '<br>• ').replace(/^<br>/, '');
-        return formatted;
-    }
-    const sentences = formatted.split(/(?<=[.!?])\s+/).map(s => s.trim()).filter(s => s.length > 10);
-    if (sentences.length > 1) return sentences.map(sentence => `• ${sentence}`).join('<br>');
-    const lines = formatted.split(/\n+/).map(line => line.trim()).filter(line => line.length > 5);
-    if (lines.length > 1) return lines.map(line => `• ${line}`).join('<br>');
-    return formatted.replace(/\n/g, '<br>');
+    
+    let fallback = raw.trim().replace(/^[-•*–—\d\.\)\s]+/, '').trim();
+    return `<p class="text-xs text-gray-200 leading-relaxed">${escapeHtml(fallback)}</p>`;
 }
 
 function escapeHtml(text) {

@@ -1031,24 +1031,46 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function formatApproach(text) {
     if (!text) return '';
-    let raw = text.toString().trim();
+    let raw = text.toString();
     
-    // Check if it has numbered list or standard bullet markers
-    let points = [];
-    if (/\d+[\.\)]\s+/.test(raw)) {
-        points = raw.split(/\s*(?:\d+[\.\)]\s+|\n+)/).map(p => p.trim()).filter(p => p.length > 0);
-    } else {
-        points = raw.split(/\.,\s*-\s*|,\s*-\s*|\n\s*-\s*|^\s*[-•*]\s*|\n+/).map(p => p.trim()).filter(p => p.length > 0);
-    }
+    // Split by lines or bullet/number markers
+    let rawLines = raw.split(/\r?\n+/);
+    let items = [];
     
-    if (points.length > 0) {
-        return points.map(p => {
-            p = p.replace(/^[-•*]\s*/, '').replace(/\.$/, '');
-            return `<div class="flex items-start gap-2.5 py-0.5"><span class="text-[#00D4AA] font-bold shrink-0 mt-0.5">•</span><span class="text-gray-200 leading-relaxed">${escapeHtml(p)}</span></div>`;
+    rawLines.forEach(line => {
+        line = line.trim();
+        if (!line) return;
+        
+        // If line has multiple numbered items on the same line like "1. foo 2. bar"
+        if (/\d+[\.\)]\s+/.test(line)) {
+            let parts = line.split(/(?:\s*\d+[\.\)]\s+)/);
+            parts.forEach(p => {
+                let cleaned = p.trim().replace(/^[-•*–—\d\.\)\s]+/, '').trim();
+                if (cleaned.length > 2) items.push(cleaned);
+            });
+        } else if (/[-•*–—]\s+/.test(line)) {
+            let parts = line.split(/(?:\s*[-•*–—]\s+)/);
+            parts.forEach(p => {
+                let cleaned = p.trim().replace(/^[-•*–—\d\.\)\s]+/, '').trim();
+                if (cleaned.length > 2) items.push(cleaned);
+            });
+        } else {
+            let cleaned = line.replace(/^[-•*–—\d\.\)\s]+/, '').trim();
+            if (cleaned.length > 2) items.push(cleaned);
+        }
+    });
+
+    if (items.length > 0) {
+        return items.map(item => {
+            return `<div class="flex items-start gap-2.5 py-1">
+                <span class="text-[#00D4AA] font-bold shrink-0 mt-0.5">•</span>
+                <span class="text-gray-200 leading-relaxed">${escapeHtml(item)}</span>
+            </div>`;
         }).join('');
     }
     
-    return `<p class="text-xs text-gray-200 leading-relaxed">${escapeHtml(raw)}</p>`;
+    let fallback = raw.trim().replace(/^[-•*–—\d\.\)\s]+/, '').trim();
+    return `<p class="text-xs text-gray-200 leading-relaxed">${escapeHtml(fallback)}</p>`;
 }
 
 function copyToClipboard(text) {
