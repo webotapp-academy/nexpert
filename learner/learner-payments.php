@@ -3,6 +3,14 @@
 $base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domain-path.php';
 
 require_once dirname(__DIR__) . '/includes/session-config.php';
+require_once dirname(__DIR__) . '/admin-panel/apis/connection/pdo.php';
+
+// Fetch payment method activation settings from database
+$settingsStmt = $pdo->query("SELECT setting_key, setting_value FROM system_settings WHERE setting_key IN ('enable_online_payment', 'enable_pay_later')");
+$paymentSettings = $settingsStmt->fetchAll(PDO::FETCH_KEY_PAIR);
+
+$enableOnline = ($paymentSettings['enable_online_payment'] ?? '1') === '1';
+$enablePayLater = ($paymentSettings['enable_pay_later'] ?? '1') === '1';
 
 // Check if user is logged in as learner
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'learner') {
@@ -57,6 +65,7 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                     <div>
                         <h3 class="text-lg font-semibold text-white mb-4">Payment Method</h3>
                         <div class="space-y-3" id="payment-methods">
+                            <?php if ($enableOnline): ?>
                             <label class="flex items-center p-4 border border-[#00D4AA] rounded-lg cursor-pointer transition duration-200 bg-[#0d131f]" id="card-option">
                                 <input type="radio" name="payment_method" value="card" checked class="h-4 w-4 text-[#00D4AA] focus:ring-[#00D4AA] border-gray-800 bg-[#080B10]">
                                 <div class="ml-3 flex items-center">
@@ -69,9 +78,11 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                                     </div>
                                 </div>
                             </label>
+                            <?php endif; ?>
                             
-                            <label class="flex items-center p-4 border border-gray-800 rounded-lg hover:border-[#00D4AA] cursor-pointer transition duration-200 bg-[#0d131f]" id="cod-option">
-                                <input type="radio" name="payment_method" value="cod" class="h-4 w-4 text-[#00D4AA] focus:ring-[#00D4AA] border-gray-800 bg-[#080B10]">
+                            <?php if ($enablePayLater): ?>
+                            <label class="flex items-center p-4 border <?= !$enableOnline ? 'border-[#00D4AA]' : 'border-gray-800 hover:border-[#00D4AA]' ?> rounded-lg cursor-pointer transition duration-200 bg-[#0d131f]" id="cod-option">
+                                <input type="radio" name="payment_method" value="cod" <?= !$enableOnline ? 'checked' : '' ?> class="h-4 w-4 text-[#00D4AA] focus:ring-[#00D4AA] border-gray-800 bg-[#080B10]">
                                 <div class="ml-3 flex items-center">
                                     <svg class="w-6 h-6 mr-2 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -82,6 +93,13 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
                                     </div>
                                 </div>
                             </label>
+                            <?php endif; ?>
+
+                            <?php if (!$enableOnline && !$enablePayLater): ?>
+                            <div class="p-4 bg-amber-950/40 border border-amber-500/30 rounded-xl text-amber-300 text-xs font-bold">
+                                ⚠️ Online booking and payments are temporarily undergoing system maintenance. Please check back shortly.
+                            </div>
+                            <?php endif; ?>
                         </div>
                     </div>
 
@@ -265,20 +283,34 @@ require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/navigation.php';
         const cardOption = document.getElementById('card-option');
         const codOption = document.getElementById('cod-option');
         
+        // Initial button text based on default checked option
+        const initialSelected = document.querySelector('input[name="payment_method"]:checked');
+        if (initialSelected && initialSelected.value === 'cod') {
+            submitBtn.textContent = 'Confirm Booking (Pay Later)';
+        }
+
         paymentMethodRadios.forEach(radio => {
             radio.addEventListener('change', function() {
                 if (this.value === 'cod') {
                     submitBtn.textContent = 'Confirm Booking (Pay Later)';
-                    codOption.classList.add('border-[#00D4AA]');
-                    codOption.classList.remove('border-gray-800');
-                    cardOption.classList.remove('border-[#00D4AA]');
-                    cardOption.classList.add('border-gray-800');
+                    if (codOption) {
+                        codOption.classList.add('border-[#00D4AA]');
+                        codOption.classList.remove('border-gray-800');
+                    }
+                    if (cardOption) {
+                        cardOption.classList.remove('border-[#00D4AA]');
+                        cardOption.classList.add('border-gray-800');
+                    }
                 } else {
                     submitBtn.textContent = 'Complete Payment';
-                    cardOption.classList.add('border-[#00D4AA]');
-                    cardOption.classList.remove('border-gray-800');
-                    codOption.classList.remove('border-[#00D4AA]');
-                    codOption.classList.add('border-gray-800');
+                    if (cardOption) {
+                        cardOption.classList.add('border-[#00D4AA]');
+                        cardOption.classList.remove('border-gray-800');
+                    }
+                    if (codOption) {
+                        codOption.classList.remove('border-[#00D4AA]');
+                        codOption.classList.add('border-gray-800');
+                    }
                 }
             });
         });
