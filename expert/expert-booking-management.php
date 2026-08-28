@@ -636,45 +636,78 @@ $totalPages = ceil($totalBookings / $limit);
         return `${window.BASE_PATH}/${normalizedPath}`;
     }
 
-    // Show loading popup
-    function showLoadingPopup(message) {
-        const popup = document.createElement('div');
-        popup.id = 'loadingPopup';
-        popup.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-        popup.innerHTML = `
-            <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
-                <div class="flex justify-center mb-4">
-                    <div class="animate-spin rounded-full h-16 w-16 border-b-4 border-accent"></div>
-                </div>
-                <p class="text-lg font-semibold text-gray-800 mb-2">Processing...</p>
-                <p class="text-sm text-gray-600">${message}</p>
-            </div>
-        `;
-        document.body.appendChild(popup);
-    }
-
-    // Hide loading popup
-    function hideLoadingPopup() {
-        const popup = document.getElementById('loadingPopup');
-        if (popup) {
-            popup.remove();
-        }
-    }
-
-    // Handle booking accept/reject actions
+    // Handle booking accept/reject actions with SweetAlert
     async function handleBookingAction(bookingId, action) {
-        const actionText = action === 'accept' ? 'accept' : 'reject';
-        
-        if (!confirm(`Are you sure you want to ${actionText} this booking?`)) {
-            return;
+        if (action === 'accept') {
+            const confirmResult = await Swal.fire({
+                title: 'Accept Booking Request?',
+                html: '<p class="text-gray-300 text-sm">Accepting will generate your secure Zoom video room and automatically send meeting invitations to you and the learner.</p>',
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#00D4AA',
+                cancelButtonColor: '#374151',
+                confirmButtonText: '✓ Yes, Accept & Create Zoom',
+                cancelButtonText: 'Cancel',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: {
+                    popup: 'border border-gray-800 rounded-2xl'
+                }
+            });
+            
+            if (!confirmResult.isConfirmed) {
+                return;
+            }
+
+            // Show loading SweetAlert
+            Swal.fire({
+                title: 'Creating Zoom Meeting...',
+                html: '<div class="flex flex-col items-center py-3"><div class="w-10 h-10 border-4 border-gray-800 border-t-[#00D4AA] rounded-full animate-spin mb-3"></div><p class="text-xs text-gray-400">Generating video room & sending email invitations...</p></div>',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                background: '#0D131F',
+                color: '#fff',
+                customClass: {
+                    popup: 'border border-gray-800 rounded-2xl'
+                }
+            });
+        } else {
+            const confirmResult = await Swal.fire({
+                title: 'Decline Booking Request?',
+                html: '<p class="text-gray-300 text-sm">Are you sure you want to decline this booking request?</p>',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#374151',
+                confirmButtonText: 'Decline Booking',
+                cancelButtonText: 'Keep Booking',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: {
+                    popup: 'border border-gray-800 rounded-2xl'
+                }
+            });
+            
+            if (!confirmResult.isConfirmed) {
+                return;
+            }
+
+            Swal.fire({
+                title: 'Processing...',
+                html: '<div class="flex flex-col items-center py-3"><div class="w-10 h-10 border-4 border-gray-800 border-t-red-500 rounded-full animate-spin mb-3"></div><p class="text-xs text-gray-400">Updating booking status...</p></div>',
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                showConfirmButton: false,
+                background: '#0D131F',
+                color: '#fff',
+                customClass: {
+                    popup: 'border border-gray-800 rounded-2xl'
+                }
+            });
         }
         
         try {
-            // Show loading popup for accept action (which creates Zoom meeting and sends emails)
-            if (action === 'accept') {
-                showLoadingPopup('Creating Zoom meeting and sending emails...');
-            }
-            
             const response = await fetch(`${window.BASE_PATH}/admin-panel/apis/expert/booking-action.php`, {
                 method: 'POST',
                 headers: {
@@ -688,39 +721,107 @@ $totalPages = ceil($totalBookings / $limit);
             
             const result = await response.json();
             
-            // Hide loading popup
-            hideLoadingPopup();
-            
             if (result.success) {
-                alert(result.message);
+                if (action === 'accept') {
+                    const zoomLink = result.zoom_link ? `<div class="mt-3 p-3 bg-[#080B10] rounded-xl border border-gray-800 text-left"><p class="text-xs font-semibold text-gray-400 mb-1">Session Meeting Link:</p><a href="${result.zoom_link}" target="_blank" class="text-[#00D4AA] text-xs font-mono break-all hover:underline">${result.zoom_link}</a></div>` : '';
+                    await Swal.fire({
+                        icon: 'success',
+                        title: '🎉 Booking Confirmed!',
+                        html: `
+                            <p class="text-gray-300 text-sm mb-2">${result.message || 'Booking accepted successfully!'}</p>
+                            ${zoomLink}
+                            <p class="text-[11px] text-gray-400 mt-3">Meeting invitations and join links have been sent to you and the learner.</p>
+                        `,
+                        confirmButtonText: 'Great, Done!',
+                        confirmButtonColor: '#00D4AA',
+                        background: '#0D131F',
+                        color: '#fff',
+                        customClass: {
+                            popup: 'border border-gray-800 rounded-2xl'
+                        }
+                    });
+                } else {
+                    await Swal.fire({
+                        icon: 'info',
+                        title: 'Booking Declined',
+                        text: result.message || 'The booking request was rejected.',
+                        confirmButtonColor: '#374151',
+                        background: '#0D131F',
+                        color: '#fff',
+                        customClass: {
+                            popup: 'border border-gray-800 rounded-2xl'
+                        }
+                    });
+                }
                 location.reload();
             } else {
-                // Show detailed error information
-                let errorMessage = 'Error: ' + result.error;
-                if (result.details) {
-                    errorMessage += '\n\nDetails: ' + result.details;
-                }
-                if (result.zoom_error) {
-                    errorMessage += '\n\nZoom Error: ' + result.zoom_error;
-                }
-                alert(errorMessage);
+                let errorMessage = result.error || 'Failed to update booking.';
+                if (result.details) errorMessage += ' (' + result.details + ')';
+                if (result.zoom_error) errorMessage += ' Zoom: ' + result.zoom_error;
+
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Action Failed',
+                    text: errorMessage,
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: {
+                        popup: 'border border-gray-800 rounded-2xl'
+                    }
+                });
             }
         } catch (error) {
-            // Hide loading popup on error
-            hideLoadingPopup();
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Connection Error',
+                text: 'An error occurred while connecting to the server. Please try again.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: {
+                    popup: 'border border-gray-800 rounded-2xl'
+                }
+            });
         }
     }
     
     // Handle reschedule request (accept/decline)
     async function handleReschedule(bookingId, action) {
         const actionText = action === 'accept' ? 'accept' : 'decline';
-        if (!confirm(`Are you sure you want to ${actionText} this reschedule request?`)) {
+        const confirmResult = await Swal.fire({
+            title: `${actionText === 'accept' ? 'Accept' : 'Decline'} Reschedule Request?`,
+            text: `Are you sure you want to ${actionText} this reschedule request?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: action === 'accept' ? '#00D4AA' : '#EF4444',
+            cancelButtonColor: '#374151',
+            confirmButtonText: `Yes, ${actionText.charAt(0).toUpperCase() + actionText.slice(1)}`,
+            cancelButtonText: 'Cancel',
+            background: '#0D131F',
+            color: '#fff',
+            customClass: {
+                popup: 'border border-gray-800 rounded-2xl'
+            }
+        });
+        
+        if (!confirmResult.isConfirmed) {
             return;
         }
         
-        showLoadingPopup();
+        Swal.fire({
+            title: 'Updating Schedule...',
+            html: '<div class="flex flex-col items-center py-3"><div class="w-10 h-10 border-4 border-gray-800 border-t-[#00D4AA] rounded-full animate-spin mb-3"></div><p class="text-xs text-gray-400">Please wait...</p></div>',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            background: '#0D131F',
+            color: '#fff',
+            customClass: {
+                popup: 'border border-gray-800 rounded-2xl'
+            }
+        });
         
         try {
             const response = await fetch('<?php echo BASE_PATH; ?>/admin-panel/apis/expert/reschedule.php', {
@@ -735,18 +836,46 @@ $totalPages = ceil($totalBookings / $limit);
             });
             
             const result = await response.json();
-            hideLoadingPopup();
             
             if (result.success) {
-                alert(result.message);
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Schedule Updated',
+                    text: result.message,
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: {
+                        popup: 'border border-gray-800 rounded-2xl'
+                    }
+                });
                 location.reload();
             } else {
-                alert('Error: ' + (result.message || 'Failed to process request'));
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Update Failed',
+                    text: result.message || 'Failed to process request',
+                    confirmButtonColor: '#00D4AA',
+                    background: '#0D131F',
+                    color: '#fff',
+                    customClass: {
+                        popup: 'border border-gray-800 rounded-2xl'
+                    }
+                });
             }
         } catch (error) {
-            hideLoadingPopup();
             console.error('Error:', error);
-            alert('An error occurred. Please try again.');
+            Swal.fire({
+                icon: 'error',
+                title: 'Connection Error',
+                text: 'An error occurred. Please try again.',
+                confirmButtonColor: '#00D4AA',
+                background: '#0D131F',
+                color: '#fff',
+                customClass: {
+                    popup: 'border border-gray-800 rounded-2xl'
+                }
+            });
         }
     }
     
