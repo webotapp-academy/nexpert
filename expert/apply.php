@@ -8,6 +8,12 @@ $base_path = require_once dirname(__DIR__) . '/admin-panel/apis/connection/domai
 require_once dirname(__DIR__) . '/includes/session-config.php';
 require_once dirname(__DIR__) . '/admin-panel/apis/connection/pdo.php';
 
+// If already logged in as expert, redirect directly to dashboard
+if (isset($_SESSION['user_id']) && isset($_SESSION['role']) && $_SESSION['role'] === 'expert') {
+    header('Location: ' . BASE_PATH . '/index.php?panel=expert&page=dashboard');
+    exit;
+}
+
 $success = false;
 $error   = '';
 
