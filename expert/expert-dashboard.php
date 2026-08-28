@@ -87,13 +87,21 @@ if ($userId) {
             AND status = 'completed'
         ");
         $stmt->execute([$userId]);
-        $totalCompletedSessions = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $totalCompletedSessions = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
+
+        // Fallback to trust_events session count if bookings is empty
+        if ($totalCompletedSessions === 0) {
+            $stmt = $pdo->prepare("
+                SELECT COUNT(*) as count 
+                FROM trust_events 
+                WHERE expert_id = ? 
+                AND event_type = 'session_completed'
+            ");
+            $stmt->execute([$userId]);
+            $totalCompletedSessions = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
+        }
         
         // Check if user just achieved a milestone
-        // We'll check if they have exactly 10, 20, 50, or 100 sessions
-        // and if they haven't seen this achievement yet
-        
-        // Check session storage for already shown achievements
         if (!isset($_SESSION['shown_achievements'])) {
             $_SESSION['shown_achievements'] = [];
         }
@@ -102,9 +110,6 @@ if ($userId) {
         foreach ($milestones as $milestone) {
             if ($totalCompletedSessions >= $milestone && !in_array($milestone, $_SESSION['shown_achievements'])) {
                 $showAchievementPopup = true;
-                
-                // Calculate rating (you can adjust this based on actual ratings)
-                $averageRating = 4.5 + (rand(0, 5) / 10); // 4.5 to 5.0
                 
                 // Get some learner names
                 $stmt = $pdo->prepare("
@@ -137,7 +142,7 @@ if ($userId) {
                     'milestone' => $milestone,
                     'badge_name' => getBadgeName($milestone),
                     'badge_description' => getBadgeDescription($milestone),
-                    'rating' => number_format($averageRating, 1),
+                    'rating' => 'N/A',
                     'sessions_completed' => $totalCompletedSessions,
                     'returning_learners' => $returningLearners,
                     'learner_names' => array_filter($learners),
@@ -145,9 +150,8 @@ if ($userId) {
                     'date' => date('F d, Y')
                 ];
                 
-                // Mark this achievement as shown
                 $_SESSION['shown_achievements'][] = $milestone;
-                break; // Show only one achievement at a time
+                break;
             }
         }
     } catch (Exception $e) {
@@ -196,7 +200,7 @@ $profileViews = 0;
 
 if ($userId) {
     try {
-        // Get total earnings from both bookings and programs - use userId for expert_id
+        // Get total earnings from both bookings and programs
         $stmt = $pdo->prepare("
             SELECT COALESCE(SUM(p.amount), 0) as total
             FROM payments p
@@ -209,25 +213,22 @@ if ($userId) {
         $totalEarnings = 0;
     }
     
-    // Debug: Log the query result
-    error_log("Expert Dashboard - User ID: $userId, Total Earnings: $totalEarnings");
-    
     try {
-        // Get active learners count - use userId for bookings.expert_id
+        // Get active learners count
         $stmt = $pdo->prepare("
             SELECT COUNT(DISTINCT b.learner_id) as count
             FROM bookings b
             WHERE b.expert_id = ?
         ");
         $stmt->execute([$userId]);
-        $activeLearners = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $activeLearners = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
     } catch (Exception $e) {
         error_log("Error fetching active learners: " . $e->getMessage());
         $activeLearners = 0;
     }
     
     try {
-        // Get sessions this month - use userId for bookings.expert_id
+        // Get sessions this month
         $stmt = $pdo->prepare("
             SELECT COUNT(*) as count
             FROM bookings
@@ -236,13 +237,13 @@ if ($userId) {
             AND YEAR(session_datetime) = YEAR(CURRENT_DATE())
         ");
         $stmt->execute([$userId]);
-        $sessionsThisMonth = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $sessionsThisMonth = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
     } catch (Exception $e) {
         error_log("Error fetching sessions this month: " . $e->getMessage());
         $sessionsThisMonth = 0;
     }
     
-    // Get follow-ups sent this month (assuming messages table exists)
+    // Get follow-ups sent this month
     try {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) as count
@@ -253,9 +254,9 @@ if ($userId) {
             AND YEAR(m.created_at) = YEAR(CURRENT_DATE())
         ");
         $stmt->execute([$userId]);
-        $followUpsSent = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 16; // Default fallback
+        $followUpsSent = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
     } catch (Exception $e) {
-        $followUpsSent = 16; // Default if messages table doesn't exist
+        $followUpsSent = 0;
     }
     
     // Calculate rebooking rate (learners who booked more than once)
@@ -277,7 +278,7 @@ if ($userId) {
         $rebookingRate = round(($rebookingData['rebooked_learners'] / $rebookingData['total_learners']) * 100);
     }
     
-    // Get profile views (if profile_views table exists)
+    // Get profile views
     try {
         $stmt = $pdo->prepare("
             SELECT COUNT(*) as count
@@ -288,9 +289,9 @@ if ($userId) {
             AND YEAR(pv.viewed_at) = YEAR(CURRENT_DATE())
         ");
         $stmt->execute([$userId]);
-        $profileViews = $stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0;
+        $profileViews = (int)($stmt->fetch(PDO::FETCH_ASSOC)['count'] ?? 0);
     } catch (Exception $e) {
-        $profileViews = rand(15, 45); // Random fallback for demo
+        $profileViews = 0;
     }
 
     // Get Trust State
@@ -304,7 +305,7 @@ if ($userId) {
     }
 }
 
-// Get recent activity (last 10 bookings) - use userId for bookings.expert_id
+// Get recent activity (last 10 bookings)
 $recentActivity = [];
 $highInterestLearners = [];
 $learnerActivityData = [];
@@ -336,7 +337,7 @@ if ($userId) {
     }
     
     try {
-        // Get high-interest learners (those with recent sessions and good ratings)
+        // Get high-interest learners
         $stmt = $pdo->prepare("
             SELECT 
                 lp.full_name as learner_name,
@@ -345,7 +346,6 @@ if ($userId) {
                 u.id as learner_id,
                 MAX(b.session_datetime) as session_datetime,
                 MAX(b.created_at) as created_at,
-                4 as rating,  -- Default rating since ratings table doesn't exist
                 ep.expertise_verticals as expertise,
                 COUNT(b.id) as total_sessions,
                 CASE 
@@ -354,16 +354,16 @@ if ($userId) {
                     ELSE 'low'
                 END as interest_level,
                 CASE 
-                    WHEN COUNT(b.id) > 3 THEN RAND() * 15 + 75  -- 75-90% for frequent learners
-                    WHEN MAX(b.session_datetime) >= DATE_SUB(NOW(), INTERVAL 3 DAY) THEN RAND() * 20 + 60     -- 60-80% for recent sessions
-                    ELSE RAND() * 30 + 40                        -- 40-70% for others
+                    WHEN COUNT(b.id) > 3 THEN 85
+                    WHEN MAX(b.session_datetime) >= DATE_SUB(NOW(), INTERVAL 3 DAY) THEN 70
+                    ELSE 50
                 END as engagement_score
             FROM bookings b
             LEFT JOIN users u ON b.learner_id = u.id
             LEFT JOIN learner_profiles lp ON u.id = lp.user_id
             LEFT JOIN expert_profiles ep ON ep.user_id = ?
             WHERE b.expert_id = ?
-            AND b.session_datetime >= NOW()  -- Only future sessions
+            AND b.session_datetime >= NOW()
             GROUP BY u.id, lp.full_name, lp.profile_photo, u.email, ep.expertise_verticals
             ORDER BY MAX(b.session_datetime) ASC
             LIMIT 5
@@ -381,14 +381,17 @@ if ($userId) {
             SELECT 
                 lp.full_name as learner_name,
                 COUNT(DISTINCT b.id) as total_bookings,
-                4 as avg_rating,  -- Default rating since ratings table doesn't exist
                 MAX(b.session_datetime) as last_session,
                 CASE 
-                    WHEN COUNT(b.id) > 2 THEN RAND() * 15 + 75  -- 75-90% for active learners
-                    WHEN COUNT(b.id) > 1 THEN RAND() * 20 + 60  -- 60-80% for moderate
-                    ELSE RAND() * 30 + 40                       -- 40-70% for new
+                    WHEN COUNT(b.id) > 2 THEN 85
+                    WHEN COUNT(b.id) > 1 THEN 70
+                    ELSE 50
                 END as engagement_score,
-                FLOOR(RAND() * 3 + 1) as profile_views  -- Random 1-3 views
+                (
+                    SELECT COUNT(*) 
+                    FROM profile_views pv 
+                    WHERE pv.expert_profile_id = (SELECT id FROM expert_profiles WHERE user_id = ?)
+                ) as profile_views
             FROM bookings b
             LEFT JOIN users u ON b.learner_id = u.id
             LEFT JOIN learner_profiles lp ON u.id = lp.user_id
@@ -397,7 +400,7 @@ if ($userId) {
             ORDER BY engagement_score DESC
             LIMIT 8
         ");
-        $stmt->execute([$userId]);
+        $stmt->execute([$userId, $userId]);
         $learnerActivityData = $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $e) {
         error_log("Error fetching learner activity data: " . $e->getMessage());
@@ -411,6 +414,7 @@ function getScoreLabel($score) {
     if ($score >= 50) return ['text' => 'Medium', 'class' => 'text-yellow-400 bg-yellow-950/40 border border-yellow-800/40 px-2 py-0.5 rounded text-[10px] font-bold uppercase'];
     return ['text' => 'Low', 'class' => 'text-red-400 bg-red-950/40 border border-red-800/40 px-2 py-0.5 rounded text-[10px] font-bold uppercase'];
 }
+
 ?>
 
 <script>
@@ -500,22 +504,51 @@ function getScoreLabel($score) {
         </div>
     </div>
 
-    <!-- Trust Insights Card -->
-    <?php if ($trustState): ?>
-    <div class="bg-[#131b2e] rounded-lg shadow-lg border border-gray-800 p-6 mb-8 bg-gradient-to-br from-[#131b2e] to-[#0e1322]">
-        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
-            <div class="flex items-center space-x-4 mb-4 md:mb-0">
-                <div class="w-16 h-16 bg-[#00D4AA] rounded-2xl flex items-center justify-center text-[#080B10] shadow-lg transform -rotate-3">
-                    <span class="text-3xl font-black">Tier <?php echo $trustState['trust_tier'] ?? 'C'; ?></span>
+    <!-- Trust Intelligence Card — MVP2 -->
+    <?php if ($trustState):
+        $tsScore     = round($trustState['overall_score'] ?? 0, 1);
+        $tsBand      = $trustState['band_name'] ?? 'Unverified';
+        $tsConf      = round($trustState['confidence_score'] ?? 0);
+        $tsTrend     = $trustState['trend_direction'] ?? 'stable';
+        $trendIcon   = match($tsTrend){ 'rising'=>'↑ Rising','declining'=>'↓ Declining',default=>'→ Stable'};
+        $trendColor  = match($tsTrend){ 'rising'=>'text-[#00D4AA]','declining'=>'text-red-400',default=>'text-gray-400'};
+        $circumf     = 339.3;
+        $ringOffset  = round($circumf - ($tsScore / 100) * $circumf, 2);
+        $ringColor   = match(true){ $tsScore>=90=>'#F5A623',$tsScore>=75=>'#00D4AA',$tsScore>=60=>'#3B82F6',$tsScore>=40=>'#9CA3AF',default=>'#6B7280'};
+        // Next milestone
+        $nextBand    = match(true){ $tsScore>=90=>'You are Sovereign — the highest band',$tsScore>=75=>"Need ".round(90-$tsScore,1)." more points for Sovereign",$tsScore>=60=>"Need ".round(75-$tsScore,1)." more points for Established",$tsScore>=40=>"Need ".round(60-$tsScore,1)." more points for Verified",default=>"Need ".round(40-$tsScore,1)." more points for Emerging"};
+    ?>
+    <div class="bg-[#131b2e] rounded-xl shadow-lg border border-gray-800 p-6 mb-8">
+        <!-- Header row -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+            <div>
+                <h2 class="text-xl font-bold text-white mb-1">Trust Intelligence</h2>
+                <p class="text-sm text-gray-400">Based on <?php echo (int)$totalCompletedSessions; ?> sessions · <?php echo $tsConf; ?>% confidence · <span class="<?php echo $trendColor; ?>"><?php echo $trendIcon; ?></span></p>
+            </div>
+            <!-- SVG Score Ring -->
+            <div class="flex items-center gap-4 flex-shrink-0">
+                <div class="relative w-20 h-20">
+                    <svg class="w-20 h-20" style="transform:rotate(-90deg)" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="7"/>
+                        <circle cx="40" cy="40" r="34" fill="none"
+                                stroke="<?php echo $ringColor; ?>" stroke-width="7" stroke-linecap="round"
+                                stroke-dasharray="<?php echo $circumf; ?>"
+                                stroke-dashoffset="<?php echo $ringOffset; ?>"
+                                style="transition:stroke-dashoffset 1.5s ease"/>
+                    </svg>
+                    <div class="absolute inset-0 flex flex-col items-center justify-center">
+                        <div class="text-xl font-black text-white leading-none"><?php echo $tsScore; ?></div>
+                        <div class="text-[9px] text-gray-500">/100</div>
+                    </div>
                 </div>
                 <div>
-                    <h2 class="text-xl font-bold text-white">Your Agentic Credibility</h2>
-                    <p class="text-sm text-gray-400">Based on <?php echo $totalCompletedSessions; ?> sessions analyzed by AI agents</p>
+                    <div class="text-xl font-bold" style="color:<?php echo $ringColor; ?>"><?php echo htmlspecialchars($tsBand); ?></div>
+                    <div class="text-xs text-gray-500 mt-1"><?php echo htmlspecialchars($nextBand); ?></div>
+                    <a href="<?php echo BASE_PATH; ?>/index.php?panel=expert&page=certificate"
+                       class="inline-flex items-center gap-1 mt-2 text-[#00D4AA] text-xs font-semibold hover:text-white transition">
+                        View Certificate →
+                    </a>
                 </div>
-            </div>
-            <div class="flex flex-col items-end">
-                <div class="text-3xl font-black text-[#00D4AA]"><?php echo number_format($trustState['overall_score'] ?? 0, 1); ?></div>
-                <div class="text-xs font-bold text-gray-400 tracking-widest uppercase">Overall Trust Score</div>
             </div>
         </div>
 
@@ -547,11 +580,37 @@ function getScoreLabel($score) {
             <?php endforeach; ?>
         </div>
 
-        <div class="mt-6 p-3 bg-[#0e1322] rounded-lg border border-gray-800 flex items-center">
-            <svg class="w-5 h-5 text-[#00D4AA] mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            <p class="text-sm text-gray-300">
-                <strong>Stability: <?php echo number_format($trustState['stability_score'] ?? 0, 0); ?>%</strong> — Your score is highly stable across recent sessions.
-            </p>
+        <!-- Stability + growth card -->
+        <div class="mt-4 grid md:grid-cols-2 gap-3">
+            <div class="p-3 bg-[#0e1322] rounded-lg border border-gray-800 flex items-center gap-3">
+                <span class="text-lg">📊</span>
+                <p class="text-sm text-gray-300">
+                    <strong class="text-white">Stability: <?php echo number_format($trustState['stability_score'] ?? 0, 0); ?>%</strong>
+                    <span class="text-gray-500 text-xs block mt-0.5">Consistency of your score over recent sessions</span>
+                </p>
+            </div>
+            <?php
+            // Growth recommendation — PHP logic, no AI needed
+            $lowestScore  = 100; $lowestDim = 'outcome';
+            $dims = ['outcome'=>$trustState['outcome_score']??0,'consistency'=>$trustState['consistency_score']??0,'structure'=>$trustState['structure_score']??0,'boundary'=>$trustState['boundary_score']??0];
+            foreach($dims as $d=>$v){ if($v < $lowestScore){ $lowestScore=$v; $lowestDim=$d; } }
+            $growthActions = [
+                'outcome'     => 'Ask your next 3 learners to submit a goal before their session so outcomes can be tracked.',
+                'consistency' => 'Respond to all learner messages within 24 hours this week to improve your consistency signal.',
+                'structure'   => 'Complete your profile — add a detailed bio, expertise areas, and at least one certification.',
+                'boundary'    => 'Confirm your next session 2 hours before it starts to improve your reliability signal.',
+            ];
+            ?>
+            <div class="p-3 bg-[#0e1322] rounded-lg border border-[#00D4AA]/20">
+                <div class="flex items-start gap-2">
+                    <span class="text-lg">🌱</span>
+                    <div>
+                        <p class="text-xs font-bold text-[#00D4AA] mb-1">Growth Action</p>
+                        <p class="text-xs text-gray-300 leading-relaxed"><?php echo $growthActions[$lowestDim]; ?></p>
+                        <p class="text-[10px] text-gray-600 mt-1">Weakest signal: <?php echo ucfirst($lowestDim); ?> (<?php echo round($lowestScore); ?>/100)</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <?php endif; ?>
@@ -621,7 +680,7 @@ function getScoreLabel($score) {
                                 "highly engaged. Suggest creating a customized learning path.",
                                 "showing excellent progress. Recommend additional resources and follow-up sessions."
                             ];
-                            $suggestion = $learner['learner_name'] . " is " . $aiSuggestions[array_rand($aiSuggestions)];
+                            $suggestion = $learner['learner_name'] . " is " . $aiSuggestions[0];
                         ?>
                         <!-- Learner Card -->
                         <div class="border border-gray-800 rounded-lg p-4 bg-[#0e1322]">

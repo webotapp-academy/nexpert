@@ -51,12 +51,12 @@ try {
         $pdo->beginTransaction();
         
         try {
-            // Insert user
+            // Insert user (setting both password and password_hash)
             $stmt = $pdo->prepare("
-                INSERT INTO users (role, email, password_hash, phone, status, created_at)
-                VALUES ('learner', ?, ?, ?, 'active', NOW())
+                INSERT INTO users (role, email, password, password_hash, phone, status, created_at)
+                VALUES ('learner', ?, ?, ?, ?, 'active', NOW())
             ");
-            $stmt->execute([$email, $passwordHash, $mobile]);
+            $stmt->execute([$email, $passwordHash, $passwordHash, $mobile]);
             $userId = $pdo->lastInsertId();
             
             // Insert learner profile

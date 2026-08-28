@@ -130,12 +130,28 @@ if ($method === 'PUT' && isset($_GET['action']) && $_GET['action'] === 'verify')
         ");
         $stmt->execute([$verification_status, $verified_at, $admin_notes, $expert_id]);
         
-        // Log trust event
-        if ($verification_status === 'verified') {
-            TrustHelper::logEvent($pdo, 'kyc_verified', $expert_id, null, [
-                'admin_notes' => $admin_notes,
-                'verified_at' => $verified_at
-            ]);
+        // Log trust event & Trigger baseline aggregation immediately
+        if ($verification_status === 'verified' || $verification_status === 'approved') {
+            try {
+                require_once dirname(__DIR__) . '/connection/trust-aggregator.php';
+                $payload = json_encode([
+                    'admin_notes' => $admin_notes,
+                    'verified_at' => $verified_at
+                ]);
+                $eventStmt = $pdo->prepare("
+                    INSERT INTO trust_events (event_type, expert_id, payload, status, created_at)
+                    VALUES ('kyc_verified', ?, ?, 'pending', NOW())
+                ");
+                $eventStmt->execute([$expert_id, $payload]);
+                $eventId = (int)$pdo->lastInsertId();
+
+                $aggregator = new TrustAggregator($pdo);
+                if (method_exists($aggregator, 'aggregateOne')) {
+                    $aggregator->aggregateOne((int)$expert_id, $eventId);
+                }
+            } catch (Exception $e) {
+                error_log("Failed to aggregate trust on expert verification: " . $e->getMessage());
+            }
         }
         
         echo json_encode(['success' => true, 'message' => 'Verification status updated successfully']);

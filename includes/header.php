@@ -46,8 +46,7 @@
                         primary: '#3B82F6',
                         secondary: '#1E40AF',
                         accent: '#F59E0B',
-                        saffron: '#FF6B35',
-                        emerald: '#10B981'
+                        saffron: '#FF6B35'
                     }
                 }
             }

@@ -74,9 +74,9 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                         <option value="">All Categories</option>
                         <option value="AI & Technology">AI & Technology</option>
                         <option value="Leadership">Leadership</option>
-                        <option value="career Growth">career Growth</option>
+                        <option value="Career Growth">Career Growth</option>
                         <option value="Entrepreneurship">Entrepreneurship</option>
-                        <option value="Product&Strategy">Product&Strategy</option>
+                        <option value="Product & Strategy">Product &amp; Strategy</option>
                     </select>
                 </div>
 
@@ -92,13 +92,14 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                     </select>
                 </div>
 
-                <!-- Rating -->
+                <!-- Trust Score Filter -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-400 mb-2">Minimum Rating</label>
-                    <select id="rating-select" name="rating" class="w-full px-3 py-2 bg-[#131b2e] border border-gray-800 rounded-lg focus:outline-none focus:border-gray-700 text-sm text-white">
-                        <option value="">All Ratings</option>
-                        <option value="4plus">4+ Stars</option>
-                        <option value="4.5plus">4.5+ Stars</option>
+                    <label class="block text-sm font-medium text-gray-400 mb-2">Minimum Trust Score</label>
+                    <select id="trust-filter-select" name="min_trust_score" class="w-full px-3 py-2 bg-[#131b2e] border border-gray-800 rounded-lg focus:outline-none focus:border-gray-700 text-sm text-white">
+                        <option value="">Any Trust Level</option>
+                        <option value="60">60+ — Verified</option>
+                        <option value="75">75+ — Established</option>
+                        <option value="90">90+ — Sovereign</option>
                     </select>
                 </div>
             </div>
@@ -110,10 +111,10 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
             <div class="flex items-center gap-2">
                 <span class="text-sm text-gray-400">Sort:</span>
                 <select id="sort-select" class="px-3 py-2 bg-[#131b2e] border border-gray-800 rounded-lg focus:outline-none focus:border-gray-700 text-sm text-white">
+                    <option value="trust_score" selected>Trust Score (Highest)</option>
                     <option value="relevance">Relevance</option>
                     <option value="price_low_high">Price: Low to High</option>
                     <option value="price_high_low">Price: High to Low</option>
-                    <option value="rating">Rating</option>
                     <option value="newest">Newest</option>
                 </select>
             </div>

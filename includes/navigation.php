@@ -83,8 +83,10 @@ if ($panel_type === 'home'):
                 <!-- Desktop Menu -->
                 <div class="hidden md:flex items-center space-x-8">
                     <a href="#categories" class="text-gray-300 hover:text-[#00D4AA] transition font-medium">Explore</a>
-                    <a href="#how-it-works" class="text-gray-300 hover:text-[#00D4AA] transition font-medium">How it Works</a>
-                    <a href="#experts" class="text-gray-300 hover:text-[#00D4AA] transition font-medium">For Learners</a>
+                    <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-[#00D4AA] transition font-medium">Find Experts</a>
+                    <a href="index.php?page=how-trust-works" class="text-gray-300 hover:text-[#00D4AA] transition font-medium">How Trust Works</a>
+                    <a href="index.php?page=methodology" class="text-gray-300 hover:text-[#00D4AA] transition font-medium">Methodology</a>
+                    <a href="index.php?page=for-enterprise" class="text-gray-300 hover:text-[#00D4AA] transition font-medium">For Enterprise</a>
                     
                     <?php if ($isLoggedIn): ?>
                         <!-- Logged in user options -->
@@ -103,7 +105,7 @@ if ($panel_type === 'home'):
                     <?php else: ?>
                         <!-- Guest user login buttons -->
                         <a href="?panel=learner&page=auth" class="text-gray-300 hover:text-white transition font-medium">Learner Login</a>
-                        <a href="?panel=expert&page=auth" class="border border-gray-700 text-white px-6 py-2 rounded-xl hover:bg-white hover:text-black hover:border-white transition font-semibold text-sm">Expert Login</a>
+                        <a href="?panel=expert&page=apply" class="border border-gray-700 text-white px-6 py-2 rounded-xl hover:bg-white hover:text-black hover:border-white transition font-semibold text-sm">Apply as Expert</a>
                     <?php endif; ?>
                 </div>
 
@@ -138,7 +140,7 @@ if ($panel_type === 'home'):
                         <a href="#how-it-works" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">How It Works</a>
                         <a href="#experts" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Top Experts</a>
                         <a href="?panel=learner&page=auth" class="bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition text-center">Learner Login</a>
-                        <a href="?panel=expert&page=auth" class="border border-gray-700 text-white px-6 py-3 rounded-lg hover:bg-white hover:text-black transition text-center">Expert Login</a>
+                        <a href="?panel=expert&page=apply" class="border border-gray-700 text-white px-6 py-3 rounded-lg hover:bg-white hover:text-black transition text-center">Apply as Expert</a>
                     <?php endif; ?>
                 </div>
             </div>
@@ -218,7 +220,7 @@ if ($panel_type === 'home'):
                     <?php else: ?>
                         <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-[#00D4AA] transition">Browse Experts</a>
                         <a href="?panel=learner&page=auth" class="bg-[#00D4AA] text-[#080B10] px-6 py-2 rounded-xl hover:bg-[#00bda0] font-bold transition">Learner Login</a>
-                        <a href="?panel=expert&page=auth" class="border border-gray-800 text-white px-6 py-2 rounded-xl hover:bg-[#131b2e] hover:border-gray-700 transition font-semibold">Expert Login</a>
+                        <a href="?panel=expert&page=apply" class="border border-gray-800 text-white px-6 py-2 rounded-xl hover:bg-[#131b2e] hover:border-gray-700 transition font-semibold">Apply as Expert</a>
                     <?php endif; ?>
                 </div>
 
@@ -253,7 +255,7 @@ if ($panel_type === 'home'):
                     <?php else: ?>
                         <a href="?panel=learner&page=browse-experts" class="text-gray-300 hover:text-[#00D4AA] transition px-2 py-2">Browse Experts</a>
                         <a href="?panel=learner&page=auth" class="bg-[#00D4AA] text-[#080B10] px-6 py-3 rounded-lg hover:bg-[#00bda0] transition text-center font-bold">Learner Login</a>
-                        <a href="?panel=expert&page=auth" class="border border-gray-800 text-white px-6 py-3 rounded-lg hover:bg-[#131b2e] hover:border-gray-700 transition text-center font-semibold">Expert Login</a>
+                        <a href="?panel=expert&page=apply" class="border border-gray-800 text-white px-6 py-3 rounded-lg hover:bg-[#131b2e] hover:border-gray-700 transition text-center font-semibold">Apply as Expert</a>
                     <?php endif; ?>
                 </div>
             </div>

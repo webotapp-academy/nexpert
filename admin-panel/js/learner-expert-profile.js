@@ -326,13 +326,25 @@ function renderExpertProfile(expert) {
     if (trustScoreStat) trustScoreStat.textContent = `${overallScore}%`;
 
     const taglineElement = document.getElementById('expert-tagline');
+    const rawBand = (expert.band_name || '').trim();
+    let bandDisplay = rawBand;
+    if (!bandDisplay) {
+        if (overallScore >= 90) bandDisplay = 'Sovereign';
+        else if (overallScore >= 75) bandDisplay = 'Established';
+        else if (overallScore >= 60) bandDisplay = 'Verified';
+        else if (overallScore >= 40) bandDisplay = 'Emerging';
+        else if (expert.trust_tier === 'A') bandDisplay = 'Established';
+        else if (expert.trust_tier === 'B') bandDisplay = 'Verified';
+        else bandDisplay = 'Unverified';
+    }
+
     if (taglineElement) {
         const title = expert.professional_title || 'Expert';
         let tagline = `${title} with ${years} years of experience`;
         if (sessions > 0) {
             tagline += `, having successfully mentored ${sessions}+ learners`;
         }
-        tagline += '. Verified Trust Tier: ' + (expert.trust_tier || 'C');
+        tagline += '. Trust Band: ' + bandDisplay;
         taglineElement.textContent = tagline;
     }
     
@@ -396,34 +408,41 @@ function renderExpertProfile(expert) {
         });
     }
 
-    // Render Trust Tier Badge
-    if (expert.trust_tier) {
+    // Render Trust Band Badge
+    if (expert.band_name || expert.trust_tier || expert.overall_score !== undefined) {
         const trustBadge = document.getElementById('trust-tier-badge');
         const trustLabel = document.getElementById('trust-tier-label');
         if (trustBadge && trustLabel) {
-            const tier = expert.trust_tier;
             const score = Math.round(expert.overall_score || 0);
             
-            // Set dynamic style based on tier
-            let bgColor = 'bg-slate-100';
-            let textColor = 'text-slate-600';
-            let dotColor = 'bg-slate-400';
+            // Set dynamic style based on band
+            let bgColor = 'bg-slate-900/60 border-gray-800';
+            let textColor = 'text-gray-400';
+            let dotColor = 'bg-gray-500';
             
-            if (tier === 'A') {
-                bgColor = 'bg-emerald-50';
-                textColor = 'text-emerald-700';
+            if (bandDisplay === 'Sovereign') {
+                bgColor = 'bg-emerald-950/40 border-emerald-800/60';
+                textColor = 'text-emerald-400';
                 dotColor = 'bg-emerald-500 animate-pulse';
-            } else if (tier === 'B') {
-                bgColor = 'bg-blue-50';
-                textColor = 'text-blue-700';
-                dotColor = 'bg-blue-500';
+            } else if (bandDisplay === 'Established') {
+                bgColor = 'bg-emerald-950/40 border-emerald-800/60';
+                textColor = 'text-emerald-400';
+                dotColor = 'bg-emerald-400';
+            } else if (bandDisplay === 'Verified') {
+                bgColor = 'bg-blue-950/40 border-blue-800/60';
+                textColor = 'text-blue-400';
+                dotColor = 'bg-blue-400';
+            } else if (bandDisplay === 'Emerging') {
+                bgColor = 'bg-indigo-950/40 border-indigo-800/60';
+                textColor = 'text-indigo-400';
+                dotColor = 'bg-indigo-400';
             }
             
             trustBadge.innerHTML = `
-                <div class="flex items-center gap-1.5 px-3 py-1 rounded-full ${bgColor} border border-white/50 shadow-lg ring-2 ring-white">
+                <div class="flex items-center gap-1.5 px-3 py-1 rounded-full ${bgColor} border shadow-lg">
                     <span class="flex h-2 w-2 rounded-full ${dotColor}"></span>
-                    <span class="text-[11px] font-black tracking-wider ${textColor} uppercase">Tier ${tier}</span>
-                    <span class="text-[10px] font-bold text-gray-400 opacity-60">|</span>
+                    <span class="text-[11px] font-black tracking-wider ${textColor} uppercase">${bandDisplay}</span>
+                    <span class="text-[10px] font-bold text-gray-500 opacity-60">|</span>
                     <span class="text-[10px] font-bold ${textColor}">${score}% Trust</span>
                 </div>
             `;

@@ -1,707 +1,400 @@
 <?php
-// Load domain path configuration
-$base_path = require_once 'admin-panel/apis/connection/domain-path.php';
-
-$page_title = "Nexpert.ai - Global Expert Learning Platform";
+$base_path  = require_once 'admin-panel/apis/connection/domain-path.php';
+$page_title = "Nexpert.ai — Learn from Experts You Can Truly Trust";
 $panel_type = "home";
 require_once 'includes/header.php';
 require_once 'includes/navigation.php';
 ?>
-    <!-- Hero Section -->
-    <section class="bg-[#080B10] py-20 relative overflow-hidden min-h-[75vh] flex items-center">
-        <!-- Subtle Background Glow -->
-        <div class="absolute inset-0 overflow-hidden pointer-events-none">
-            <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-[#00D4AA]/5 rounded-full blur-3xl"></div>
+
+<!-- HERO -->
+<section class="bg-[#080B10] min-h-[82vh] flex items-center relative overflow-hidden py-20">
+    <div class="absolute inset-0 pointer-events-none">
+        <div class="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] bg-[#00D4AA]/4 rounded-full blur-3xl"></div>
+    </div>
+    <div class="max-w-4xl mx-auto px-4 relative z-10 w-full text-center">
+        <div class="inline-flex items-center gap-2 bg-[#00D4AA]/10 border border-[#00D4AA]/25 text-[#00D4AA] px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest mb-8">
+            <span class="w-1.5 h-1.5 bg-[#00D4AA] rounded-full animate-pulse"></span>
+            Trust Intelligence Platform — Early Access
         </div>
-
-        <div class="max-w-5xl mx-auto px-4 relative z-10 w-full text-center">
-            <!-- Subtitle -->
-            <div class="text-[#00D4AA] text-xs font-bold uppercase tracking-[0.2em] mb-6">
-                THE TRUSTABLE OS FOR LEARNING & EXPERTISE
-            </div>
-            
-            <!-- Main Headline -->
-            <h1 class="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-[1.15] tracking-tight">
-                Learn from experts you can trust.<br>
-                <span class="text-[#00D4AA]">Build a reputation that lasts.</span>
-            </h1>
-            
-            <!-- Description -->
-            <p class="text-gray-400 text-lg md:text-xl max-w-3xl mx-auto mb-12 leading-relaxed">
-                A platform where learners grow with verified guidance and experts build long-term trust through real outcomes. Powered by AI-verified signals.
-            </p>
-            
-            <!-- Search Container -->
-            <div class="max-w-3xl mx-auto mb-8">
-                <form id="expertSearchForm" class="relative flex items-center bg-[#0d131f] border border-gray-800 rounded-2xl p-2.5 shadow-2xl focus-within:border-gray-700 transition duration-300">
-                    <div class="flex-grow pl-3 flex items-center">
-                        <input id="searchInput" type="text" 
-                               placeholder="What do you want to learn?" 
-                               class="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none border-0 focus:ring-0 text-base py-3 pr-44">
-                    </div>
-                    <div class="absolute right-2.5">
-                        <button type="submit" class="bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] px-7 py-3.5 rounded-xl transition font-bold text-sm shadow-lg hover:scale-[1.02] active:scale-[0.98]">
-                            Find Trusted Experts
-                        </button>
-                    </div>
-                </form>
-            </div>
-            
-            <!-- Tag Pills -->
-            <div class="flex flex-wrap justify-center gap-3">
-                <button onclick="searchForExpertise('AI & ML')" class="px-5 py-2.5 bg-[#0d131f] border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white text-sm font-medium rounded-xl transition duration-300 hover:scale-105">
-                    AI & ML
-                </button>
-                <button onclick="searchForExpertise('Product Strategy')" class="px-5 py-2.5 bg-[#0d131f] border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white text-sm font-medium rounded-xl transition duration-300 hover:scale-105">
-                    Product Strategy
-                </button>
-                <button onclick="searchForExpertise('Data Science')" class="px-5 py-2.5 bg-[#0d131f] border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white text-sm font-medium rounded-xl transition duration-300 hover:scale-105">
-                    Data Science
-                </button>
-                <button onclick="searchForExpertise('UX Design')" class="px-5 py-2.5 bg-[#0d131f] border border-gray-800 hover:border-gray-700 text-gray-400 hover:text-white text-sm font-medium rounded-xl transition duration-300 hover:scale-105">
-                    UX Design
-                </button>
-            </div>
+        <h1 class="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-[1.05] tracking-tight">
+            Learn from experts<br>you can <span class="text-[#00D4AA]" style="font-style:italic">truly</span> trust.
+        </h1>
+        <p class="text-gray-400 text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed">
+            Not the most popular. Not the most followed.<br>
+            The experts most likely to help you achieve the outcome you actually need.
+        </p>
+        <!-- Search — all IDs and JS unchanged -->
+        <div class="max-w-2xl mx-auto mb-6">
+            <form id="expertSearchForm" class="relative flex items-center bg-[#0d131f] border border-gray-800 rounded-2xl p-2 shadow-2xl focus-within:border-[#00D4AA]/30 transition">
+                <div class="flex-grow pl-4 flex items-center">
+                    <input id="searchInput" type="text"
+                           placeholder="What outcome do you want to achieve?"
+                           class="w-full bg-transparent text-white placeholder-gray-500 focus:outline-none border-0 focus:ring-0 text-base py-3 pr-48">
+                </div>
+                <div class="absolute right-2">
+                    <button type="submit" class="bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] px-6 py-3 rounded-xl font-bold text-sm shadow-lg hover:scale-[1.02] active:scale-[0.98] transition">
+                        Find Trusted Experts
+                    </button>
+                </div>
+            </form>
         </div>
-    </section>
+        <div class="flex flex-wrap justify-center gap-2 mb-10">
+            <?php foreach([
+                'AI & ML' => 'AI+%26+ML',
+                'Leadership' => 'Leadership',
+                'Career Growth' => 'Career+Growth',
+                'Product & Strategy' => 'Product+%26+Strategy',
+                'Data Science' => 'Data+Science',
+            ] as $label => $cat): ?>
+            <button onclick="searchForExpertise('<?= $label ?>')"
+                    class="px-4 py-2 bg-[#0d131f] border border-gray-800 hover:border-[#00D4AA]/40 text-gray-400 hover:text-white text-sm font-medium rounded-xl transition">
+                <?= $label ?>
+            </button>
+            <?php endforeach; ?>
+        </div>
+        <p class="text-gray-600 text-sm">Join our founding expert cohort. <a href="?panel=expert&page=apply" class="text-[#00D4AA] hover:underline">Apply as an Expert →</a></p>
+    </div>
+</section>
 
-    <!-- Expert Categories Section -->
-    <section id="categories" class="py-20 bg-[#0E1322] border-t border-gray-900">
-        <div class="max-w-7xl mx-auto px-4">
-            <!-- Header -->
-            <div class="text-center mb-16">
-                <div class="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#00D4AA]/20 to-[#00D4AA]/10 border border-[#00D4AA]/30 rounded-2xl mb-6">
-                    <svg class="w-8 h-8 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                    </svg>
-                </div>
-                <h3 class="text-4xl font-bold text-white mb-4">Expert Categories</h3>
-                <p class="text-lg text-gray-400 max-w-3xl mx-auto">
-                    Find the right expert for your specific needs across our comprehensive categories
-                </p>
+<!-- WHY NEXPERT -->
+<section class="py-20 bg-[#0A0D15] border-t border-gray-900">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="text-center mb-14">
+            <p class="text-[#00D4AA] text-xs font-bold uppercase tracking-widest mb-4">Why Nexpert</p>
+            <h2 class="text-4xl font-bold text-white mb-4">Every expert is verified.<br>Not just listed.</h2>
+            <p class="text-gray-400 max-w-xl mx-auto">The internet is full of experts. Finding one you can actually trust before you commit your time and money is the hard part. That is what Nexpert solves.</p>
+        </div>
+        <div class="grid md:grid-cols-3 gap-px bg-gray-800 border border-gray-800 rounded-2xl overflow-hidden">
+            <?php foreach([
+                ['📊','Behavior, not biography','We track what experts actually do — sessions completed, outcomes achieved, learners who returned. The score reflects reality, not a self-reported CV.'],
+                ['🔄','Updated continuously','Every session, every outcome, every interaction updates the score. You see who this expert is today — not when they joined.'],
+                ['🎯','Matched to your goal','Not all expertise is equal for all outcomes. You see who has actually helped people achieve what you want to achieve.'],
+            ] as [$icon,$title,$body]): ?>
+            <div class="bg-[#0d131f] p-10 hover:bg-[#131b2e] transition">
+                <div class="text-3xl mb-5"><?= $icon ?></div>
+                <h3 class="text-lg font-bold text-white mb-3"><?= $title ?></h3>
+                <p class="text-gray-400 text-sm leading-relaxed"><?= $body ?></p>
             </div>
-            
-            <!-- Category Cards Grid -->
-            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- AI & Technology -->
-                <div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-6 shadow-md hover:border-[#00D4AA]/30 hover:shadow-xl transition duration-300">
-                    <div class="w-16 h-16 bg-[#00D4AA]/10 border border-[#00D4AA]/20 rounded-2xl flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
-                        </svg>
-                    </div>
-                    <h4 class="text-xl font-bold text-white mb-3">AI & Technology</h4>
-                    <p class="text-gray-400 text-sm mb-4">Artificial intelligence, machine learning, software development, cloud computing</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-gray-300 bg-gray-800 px-3 py-1 rounded-full">1,200+ Experts</span>
-                        <a href="?panel=learner&page=browse-experts&category=AI%20%26%20Technology" class="text-[#00D4AA] font-semibold text-sm hover:text-white flex items-center transition">
-                            Explore AI & Tech
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
 
-                <!-- Leadership -->
-                <div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-6 shadow-md hover:border-[#00D4AA]/30 hover:shadow-xl transition duration-300">
-                    <div class="w-16 h-16 bg-[#00D4AA]/10 border border-[#00D4AA]/20 rounded-2xl flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                        </svg>
-                    </div>
-                    <h4 class="text-xl font-bold text-white mb-3">Leadership</h4>
-                    <p class="text-gray-400 text-sm mb-4">Executive coaching, management training, team leadership, organizational growth</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-gray-300 bg-gray-800 px-3 py-1 rounded-full">800+ Experts</span>
-                        <a href="?panel=learner&page=browse-experts&category=Leadership" class="text-[#00D4AA] font-semibold text-sm hover:text-white flex items-center transition">
-                            Find Leaders
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- career Growth -->
-                <div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-6 shadow-md hover:border-[#00D4AA]/30 hover:shadow-xl transition duration-300">
-                    <div class="w-16 h-16 bg-[#00D4AA]/10 border border-[#00D4AA]/20 rounded-2xl flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                        </svg>
-                    </div>
-                    <h4 class="text-xl font-bold text-white mb-3">career Growth</h4>
-                    <p class="text-gray-400 text-sm mb-4">Resume building, interview prep, career transitions, professional development</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-gray-300 bg-gray-800 px-3 py-1 rounded-full">600+ Experts</span>
-                        <a href="?panel=learner&page=browse-experts&category=career%20Growth" class="text-[#00D4AA] font-semibold text-sm hover:text-white flex items-center transition">
-                            Grow Career
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Entrepreneurship -->
-                <div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-6 shadow-md hover:border-[#00D4AA]/30 hover:shadow-xl transition duration-300">
-                    <div class="w-16 h-16 bg-[#00D4AA]/10 border border-[#00D4AA]/20 rounded-2xl flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
-                        </svg>
-                    </div>
-                    <h4 class="text-xl font-bold text-white mb-3">Entrepreneurship</h4>
-                    <p class="text-gray-400 text-sm mb-4">Startup advice, raising capital, business modeling, launching ventures</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-gray-300 bg-gray-800 px-3 py-1 rounded-full">900+ Experts</span>
-                        <a href="?panel=learner&page=browse-experts&category=Entrepreneurship" class="text-[#00D4AA] font-semibold text-sm hover:text-white flex items-center transition">
-                            Explore Startups
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Product&Strategy -->
-                <div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-6 shadow-md hover:border-[#00D4AA]/30 hover:shadow-xl transition duration-300">
-                    <div class="w-16 h-16 bg-[#00D4AA]/10 border border-[#00D4AA]/20 rounded-2xl flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-                        </svg>
-                    </div>
-                    <h4 class="text-xl font-bold text-white mb-3">Product&Strategy</h4>
-                    <p class="text-gray-400 text-sm mb-4">Product management, market strategy, positioning, user research, marketing strategy</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-gray-300 bg-gray-800 px-3 py-1 rounded-full">1,500+ Experts</span>
-                        <a href="?panel=learner&page=browse-experts&category=Product%26Strategy" class="text-[#00D4AA] font-semibold text-sm hover:text-white flex items-center transition">
-                            Find Strategists
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
-
-                <!-- All Categories -->
-                <div class="bg-[#131b2e] border border-gray-800 rounded-2xl p-6 shadow-md hover:border-[#00D4AA]/30 hover:shadow-xl transition duration-300">
-                    <div class="w-16 h-16 bg-[#00D4AA]/10 border border-[#00D4AA]/20 rounded-2xl flex items-center justify-center mb-4">
-                        <svg class="w-8 h-8 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                        </svg>
-                    </div>
-                    <h4 class="text-xl font-bold text-white mb-3">All Categories</h4>
-                    <p class="text-gray-400 text-sm mb-4">Browse all expert categories and find the perfect match for your learning goals</p>
-                    <div class="flex items-center justify-between">
-                        <span class="text-xs font-semibold text-gray-300 bg-gray-800 px-3 py-1 rounded-full">5,000+ Total</span>
-                        <a href="?panel=learner&page=browse-experts" class="text-white font-semibold text-sm hover:text-[#00D4AA] flex items-center transition">
-                            View All
-                            <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                            </svg>
-                        </a>
-                    </div>
-                </div>
+<!-- FEATURED EXPERTS — DB-driven -->
+<section id="experts" class="py-20 bg-[#080B10] border-t border-gray-900">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-end justify-between mb-12">
+            <div>
+                <p class="text-[#00D4AA] text-xs font-bold uppercase tracking-widest mb-3">Featured Experts</p>
+                <h2 class="text-4xl font-bold text-white">Trust built through<br>real outcomes.</h2>
+            </div>
+            <a href="?panel=learner&page=browse-experts" class="text-[#00D4AA] font-semibold text-sm hover:text-white transition flex items-center gap-1">
+                View all experts <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+        </div>
+        <!-- Populated by loadFeaturedExperts() — endpoint unchanged -->
+        <div id="featured-experts-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="col-span-full text-center py-16">
+                <div class="w-10 h-10 border-4 border-gray-800 border-t-[#00D4AA] rounded-full animate-spin mx-auto mb-4"></div>
+                <p class="text-gray-500 text-sm">Loading verified experts...</p>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
-    <!-- How It Works Section -->
-    <section id="how-it-works" class="py-20 bg-[#080B10] border-t border-gray-900">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="text-center mb-16">
-                <h3 class="text-4xl font-bold text-white mb-4">How Nexpert.ai Works</h3>
-                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
-                    Get started in 3 simple steps and connect with the right expert for your goals
-                </p>
+<!-- CATEGORIES -->
+<section id="categories" class="py-20 bg-[#0A0D15] border-t border-gray-900">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex items-end justify-between mb-12">
+            <div>
+                <p class="text-[#00D4AA] text-xs font-bold uppercase tracking-widest mb-3">Explore</p>
+                <h2 class="text-4xl font-bold text-white">Find expertise<br>for your goal.</h2>
             </div>
-            
-            <div class="grid md:grid-cols-3 gap-12">
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-[#00D4AA] text-[#080B10] rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-extrabold shadow-lg">
-                        <span>1</span>
-                    </div>
-                    <h4 class="text-xl font-semibold text-white mb-4">Browse & Choose</h4>
-                    <p class="text-gray-400 leading-relaxed">Search through our curated list of verified experts across 5 categories. Read reviews, check availability, and find your perfect match.</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-[#00D4AA] text-[#080B10] rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-extrabold shadow-lg">
-                        <span>2</span>
-                    </div>
-                    <h4 class="text-xl font-semibold text-white mb-4">Book & Pay</h4>
-                    <p class="text-gray-400 leading-relaxed">Schedule your session at a convenient time. Make secure payments through our integrated payment gateway with full refund protection.</p>
-                </div>
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-[#00D4AA] text-[#080B10] rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-extrabold shadow-lg">
-                        <span>3</span>
-                    </div>
-                    <h4 class="text-xl font-semibold text-white mb-4">Learn & Grow</h4>
-                    <p class="text-gray-400 leading-relaxed">Join your 1-on-1 video session, receive personalized guidance, assignments, and track your progress over time.</p>
-                </div>
-            </div>
+            <a href="?panel=learner&page=browse-experts" class="text-[#00D4AA] font-semibold text-sm hover:text-white transition flex items-center gap-1">
+                All categories <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
         </div>
-    </section>
-
-    <!-- Featured Experts Section -->
-    <section id="experts" class="py-20 bg-[#0E1322] border-t border-gray-900">
-        <div class="max-w-7xl mx-auto px-4">
-            <div class="text-center mb-16">
-                <h3 class="text-4xl font-bold text-white mb-4">Meet Our Top Experts</h3>
-                <p class="text-xl text-gray-400 max-w-3xl mx-auto">
-                    Connect with India's most experienced professionals who are passionate about sharing their knowledge
-                </p>
-            </div>
-            
-            <div id="featured-experts-grid" class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-                <!-- Experts will be loaded dynamically -->
-                <div class="col-span-full text-center py-8">
-                    <div class="inline-block">
-                        <div class="w-12 h-12 border-4 border-gray-800 border-t-[#00D4AA] rounded-full animate-spin mx-auto"></div>
-                        <p class="text-gray-400 mt-4">Loading top experts...</p>
-                    </div>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <?php foreach([
+                ['🤖','AI & Technology','AI+%26+Technology','Machine learning, software development, cloud computing'],
+                ['🧭','Leadership','Leadership','Executive coaching, management, team leadership'],
+                ['📈','Career Growth','Career+Growth','Resume, interview prep, career transitions'],
+                ['🚀','Entrepreneurship','Entrepreneurship','Startup advice, fundraising, product-market fit'],
+                ['📊','Product & Strategy','Product+%26+Strategy','Product management, positioning, user research'],
+                ['📚','All Categories','','Browse every expert domain'],
+            ] as [$icon,$name,$cat,$desc]):
+                $href = $cat ? "?panel=learner&page=browse-experts&category={$cat}" : "?panel=learner&page=browse-experts";
+            ?>
+            <a href="<?= $href ?>" class="group bg-[#0d131f] border border-gray-800 rounded-2xl p-6 hover:border-[#00D4AA]/30 hover:shadow-xl transition block">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-12 h-12 bg-[#00D4AA]/10 border border-[#00D4AA]/20 rounded-xl flex items-center justify-center text-xl"><?= $icon ?></div>
+                    <span class="text-xs font-semibold text-[#00D4AA] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">Explore <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg></span>
                 </div>
+                <h4 class="text-base font-bold text-white mb-2 group-hover:text-[#00D4AA] transition"><?= $name ?></h4>
+                <p class="text-gray-500 text-xs leading-relaxed"><?= $desc ?></p>
+            </a>
+            <?php endforeach; ?>
+        </div>
+    </div>
+</section>
+
+<!-- VS COMPARISON -->
+<section class="py-20 bg-[#080B10] border-t border-gray-900">
+    <div class="max-w-5xl mx-auto px-4">
+        <div class="text-center mb-12">
+            <p class="text-[#00D4AA] text-xs font-bold uppercase tracking-widest mb-4">The Difference</div>
+            <h2 class="text-4xl font-bold text-white">Ratings are opinions.<br>Trust is evidence.</h2>
+        </div>
+        <div class="grid md:grid-cols-2 gap-6">
+            <div class="bg-[#0d131f] border border-red-900/30 rounded-2xl p-8">
+                <div class="text-red-400 text-xs font-bold uppercase tracking-widest mb-5">✕ Traditional Platforms</div>
+                <h3 class="text-xl font-bold text-white mb-5">Star Ratings + Follower Count</h3>
+                <?php foreach(['Self-reported credentials','Ratings given in the moment, not by outcome','Same weight to a bad expert with 5 reviews as a great one','No outcome tracking','No independent verification'] as $item): ?>
+                <div class="flex items-start gap-3 mb-3 text-sm text-gray-400">
+                    <span class="text-red-400 mt-0.5 flex-shrink-0">✕</span><?= $item ?>
+                </div>
+                <?php endforeach; ?>
             </div>
-            
-            <div class="text-center mt-12">
-                <a href="?panel=learner&page=browse-experts" class="bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] px-8 py-3.5 rounded-xl transition text-lg font-bold shadow-lg inline-block">
-                    View All Experts
+            <div class="bg-[#0d131f] border border-[#00D4AA]/25 rounded-2xl p-8">
+                <div class="text-[#00D4AA] text-xs font-bold uppercase tracking-widest mb-5">✓ Nexpert Trust Intelligence</div>
+                <h3 class="text-xl font-bold text-white mb-5">Behavioral Evidence Score</h3>
+                <?php foreach(['Third-party verified, not self-reported','Score from real outcomes, not purchase-moment feelings','Continuous update — reflects today not signup day','Full outcome tracking per goal','Independent methodology, published in full'] as $item): ?>
+                <div class="flex items-start gap-3 mb-3 text-sm text-gray-300">
+                    <span class="text-[#00D4AA] mt-0.5 flex-shrink-0">✓</span><?= $item ?>
+                </div>
+                <?php endforeach; ?>
+                <a href="index.php?page=methodology" class="inline-flex items-center gap-2 mt-4 text-[#00D4AA] font-semibold text-sm hover:text-white transition">
+                    Read the full methodology →
                 </a>
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
+<!-- FOOTER CTA -->
+<section class="py-24 bg-[#0A0D15] border-t border-gray-900">
+    <div class="max-w-3xl mx-auto text-center px-4">
+        <h2 class="text-5xl font-extrabold text-white mb-5 leading-tight">
+            The right expert<br>changes <span class="text-[#00D4AA]">everything.</span>
+        </h2>
+        <p class="text-gray-400 text-lg mb-10 leading-relaxed">
+            Stop guessing. Stop relying on follower counts and star ratings.<br>
+            Find the expert most likely to help you achieve the outcome you need.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+            <a href="?panel=learner&page=browse-experts" class="bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] px-8 py-4 rounded-xl font-bold text-base transition shadow-lg">Find Your Expert →</a>
+            <a href="?panel=expert&page=apply" class="border border-gray-700 text-gray-300 px-8 py-4 rounded-xl font-bold text-base hover:text-white hover:border-gray-500 transition">Apply as an Expert</a>
+        </div>
+    </div>
+</section>
 
-
-
-    <!-- Call to Action Section -->
-    <section class="py-20 bg-[#0E1322] border-t border-gray-900">
-        <div class="max-w-4xl mx-auto text-center px-4">
-            <h3 class="text-4xl font-bold text-white mb-6">Ready to Accelerate Your Growth?</h3>
-            <p class="text-xl text-gray-400 mb-8">
-                Join thousands of learners who have transformed their careers with Nexpert.ai
-            </p>
-            <div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-6">
-                <a href="?panel=learner&page=auth" class="bg-[#00D4AA] hover:bg-[#00bfa0] text-[#080B10] px-8 py-4 rounded-xl font-bold text-lg transition shadow-lg">
-                    Start Learning Today
-                </a>
-                <a href="?panel=expert&page=auth" class="border-2 border-gray-700 text-gray-300 px-8 py-4 rounded-xl font-bold text-lg hover:text-white hover:border-white transition">
-                    Become an Expert
-                </a>
+<!-- FOOTER -->
+<footer class="bg-[#080B10] border-t border-gray-900 text-white py-16">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid md:grid-cols-4 gap-10 mb-12">
+            <div class="md:col-span-2">
+                <div class="flex items-center mb-5">
+                    <div class="w-9 h-9 bg-[#00D4AA] rounded-xl flex items-center justify-center font-extrabold text-[#080B10] text-lg mr-3">N</div>
+                    <div>
+                        <div class="text-xl font-bold">Nexpert.ai</div>
+                        <div class="text-xs text-gray-500">Trust Intelligence Platform</div>
+                    </div>
+                </div>
+                <p class="text-gray-500 text-sm leading-relaxed max-w-sm">The trust layer for human expertise. We help learners find the right expert and experts build a verified reputation through real outcomes.</p>
+                <p class="text-gray-600 text-xs mt-4">Trust is measured. Not claimed.</p>
+            </div>
+            <div>
+                <h5 class="font-bold mb-5 text-sm uppercase tracking-wider text-gray-300">Categories</h5>
+                <ul class="space-y-3">
+                    <?php foreach(['AI & Technology'=>'AI+%26+Technology','Leadership'=>'Leadership','Career Growth'=>'Career+Growth','Entrepreneurship'=>'Entrepreneurship','Product & Strategy'=>'Product+%26+Strategy'] as $name=>$cat): ?>
+                    <li><a href="?panel=learner&page=browse-experts&category=<?= $cat ?>" class="text-gray-500 hover:text-white text-sm transition"><?= $name ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <div>
+                <h5 class="font-bold mb-5 text-sm uppercase tracking-wider text-gray-300">Platform</h5>
+                <ul class="space-y-3">
+                    <?php foreach(['How Trust Works'=>'index.php?page=how-trust-works','Methodology'=>'index.php?page=methodology','For Enterprise'=>'index.php?page=for-enterprise','Privacy Policy'=>'#','Terms of Service'=>'#'] as $name=>$href): ?>
+                    <li><a href="<?= $href ?>" class="text-gray-500 hover:text-white text-sm transition"><?= $name ?></a></li>
+                    <?php endforeach; ?>
+                </ul>
             </div>
         </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="bg-[#080B10] border-t border-gray-900 text-white py-20 relative overflow-hidden">
-        <div class="max-w-7xl mx-auto px-4 relative z-10">
-            <div class="grid md:grid-cols-4 gap-12">
-                <div class="md:col-span-2">
-                    <div class="flex items-center mb-6">
-                        <div class="w-10 h-10 bg-[#00D4AA] rounded-xl flex items-center justify-center font-extrabold text-[#080B10] text-2xl mr-4 shadow-lg">
-                            N
-                        </div>
-                        <div>
-                            <h4 class="text-2xl font-bold text-white">nexpert.ai</h4>
-                            <span class="text-xs bg-gray-800 text-gray-400 px-2 py-0.5 rounded-full mt-1 inline-block">Global Platform</span>
-                        </div>
-                    </div>
-                    <p class="text-gray-400 mb-8 max-w-md leading-relaxed">
-                        The world's premier platform connecting learners with expert coaches, mentors, consultants, trainers, and freelancers worldwide.
-                    </p>
-
-                </div>
-                
-                <div>
-                    <h5 class="font-bold mb-6 text-xl flex items-center">
-                        <span class="w-2 h-2 bg-[#00D4AA] rounded-full mr-3"></span>
-                        Categories
-                    </h5>
-                    <ul class="space-y-3">
-                        <li><a href="?panel=learner&page=browse-experts&category=AI%20%26%20Technology" class="text-gray-400 hover:text-white transition duration-300 flex items-center group">
-                            AI & Technology
-                        </a></li>
-                        <li><a href="?panel=learner&page=browse-experts&category=Leadership" class="text-gray-400 hover:text-white transition duration-300 flex items-center group">
-                            Leadership
-                        </a></li>
-                        <li><a href="?panel=learner&page=browse-experts&category=career%20Growth" class="text-gray-400 hover:text-white transition duration-300 flex items-center group">
-                            career Growth
-                        </a></li>
-                        <li><a href="?panel=learner&page=browse-experts&category=Entrepreneurship" class="text-gray-400 hover:text-white transition duration-300 flex items-center group">
-                            Entrepreneurship
-                        </a></li>
-                        <li><a href="?panel=learner&page=browse-experts&category=Product%26Strategy" class="text-gray-400 hover:text-white transition duration-300 flex items-center group">
-                            Product&Strategy
-                        </a></li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h5 class="font-bold mb-6 text-xl flex items-center">
-                        <span class="w-2 h-2 bg-[#00D4AA] rounded-full mr-3"></span>
-                        Support
-                    </h5>
-                    <ul class="space-y-3">
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                            Help Center
-                        </a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                            Contact Us
-                        </a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                            Privacy Policy
-                        </a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                            Terms of Service
-                        </a></li>
-                        <li><a href="#" class="text-gray-400 hover:text-white transition duration-300">
-                            Refund Policy
-                        </a></li>
-                    </ul>
-                </div>
-            </div>
-            
-            <!-- Bottom Bar -->
-            <div class="border-t border-gray-800 mt-16 pt-8">
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <div class="flex items-center space-x-4 mb-4 md:mb-0">
-                        <p class="text-gray-500">
-                            <span class="mr-2">©</span>
-                            <span>2025 Nexpert.ai. All rights reserved.</span>
-                        </p>
-                    </div>
-                    
-                    <div class="flex items-center space-x-6">
-                        <div class="flex items-center text-gray-500 text-sm">
-                            <div class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                            <span>All systems operational</span>
-                        </div>
-                    </div>
-                </div>
+        <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-gray-600 text-sm">© 2026 Nexpert.ai. All rights reserved.</p>
+            <div class="flex items-center gap-2 text-gray-600 text-sm">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                All systems operational
             </div>
         </div>
-    </footer>
-    <style>
-        @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            50% { transform: translateY(-20px) translateX(10px); }
-        }
+    </div>
+</footer>
 
-        @keyframes float-delay {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            50% { transform: translateY(20px) translateX(-10px); }
-        }
+<script>
+function resolveImagePath(p) {
+    if (!p) return '';
+    if (p.startsWith('http://') || p.startsWith('https://')) return p;
+    const base = '<?php echo BASE_PATH; ?>';
+    return base + (p.startsWith('/') ? p : '/' + p);
+}
+function escapeHtml(t) {
+    if (!t) return '';
+    const d = document.createElement('div');
+    d.textContent = t;
+    return d.innerHTML;
+}
 
-        @keyframes float-slow {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-30px) rotate(10deg); }
-        }
-
-        @keyframes pulse-slow {
-            0%, 100% { opacity: 0.15; }
-            50% { opacity: 0.3; }
-        }
-
-        @keyframes scroll-testimonials {
-            0% { transform: translateX(0); }
-            100% { transform: translateX(calc(-384px * 3 - 32px * 3)); }
-        }
-
-        .animate-float {
-            animation: float 8s ease-in-out infinite;
-        }
-
-        .animate-float-delay {
-            animation: float-delay 10s ease-in-out infinite;
-        }
-
-        .animate-float-slow {
-            animation: float-slow 12s ease-in-out infinite;
-        }
-
-        .animate-pulse-slow {
-            animation: pulse-slow 6s ease-in-out infinite;
-        }
-
-        .animate-scroll-testimonials {
-            display: flex;
-            width: max-content;
-            animation: scroll-testimonials 25s linear infinite;
-        }
-
-        .animate-scroll-testimonials:hover {
-            animation-play-state: paused;
-        }
-    </style>
-
-    <script>
-    // Utility function to resolve image paths
-    function resolveImagePath(path) {
-        if (!path) return '';
-        if (path.startsWith('http://') || path.startsWith('https://')) return path;
-        return '<?php echo BASE_PATH; ?>' + (path.startsWith('/') ? '' : '/') + path;
+// Typing placeholder
+const pts = ['e.g. Get promoted to Senior PM', 'e.g. Launch my startup', 'e.g. Clear AWS certification', 'e.g. Become a better leader', 'e.g. Transition to product management'];
+let pti = 0, pci = 0, pd = false, ps = 100;
+function typeEffect() {
+    const el = document.getElementById('searchInput');
+    if (!el || el === document.activeElement) return;
+    const t = pts[pti];
+    if (pd) {
+        el.placeholder = t.substring(0, pci - 1);
+        pci--;
+        ps = 50;
+    } else {
+        el.placeholder = t.substring(0, pci + 1);
+        pci++;
+        ps = 80;
     }
-
-    // Typing effect for search placeholder
-    const placeholderTexts = [
-        'e.g. Career Change',
-        'e.g. Parenting Advice',
-        'e.g. Fitness Coaching',
-        'e.g. Business Strategy',
-        'e.g. Language Learning',
-        'e.g. Personal Finance'
-    ];
-    
-    let currentTextIndex = 0;
-    let currentCharIndex = 0;
-    let isDeleting = false;
-    let typingSpeed = 100;
-    
-    function typeEffect() {
-        const searchInput = document.getElementById('searchInput');
-        if (!searchInput || searchInput === document.activeElement) return;
-        
-        const currentText = placeholderTexts[currentTextIndex];
-        
-        if (isDeleting) {
-            searchInput.placeholder = currentText.substring(0, currentCharIndex - 1);
-            currentCharIndex--;
-            typingSpeed = 50;
-        } else {
-            searchInput.placeholder = currentText.substring(0, currentCharIndex + 1);
-            currentCharIndex++;
-            typingSpeed = 100;
-        }
-        
-        if (!isDeleting && currentCharIndex === currentText.length) {
-            isDeleting = true;
-            typingSpeed = 2000;
-        } else if (isDeleting && currentCharIndex === 0) {
-            isDeleting = false;
-            currentTextIndex = (currentTextIndex + 1) % placeholderTexts.length;
-            typingSpeed = 500;
-        }
-        
-        setTimeout(typeEffect, typingSpeed);
+    if (!pd && pci === t.length) {
+        pd = true;
+        ps = 2000;
+    } else if (pd && pci === 0) {
+        pd = false;
+        pti = (pti + 1) % pts.length;
+        ps = 400;
     }
-    
-    // Start typing effect when page loads
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(typeEffect, 1000);
-    });
+    setTimeout(typeEffect, ps);
+}
 
-    // Handle form submission using AI matching
-    document.getElementById('expertSearchForm').addEventListener('submit', async function(e) {
+const searchForm = document.getElementById('expertSearchForm');
+if (searchForm) {
+    searchForm.addEventListener('submit', async function(e) {
         e.preventDefault();
-        const query = document.getElementById('searchInput').value.trim();
-        if (!query) return;
-
-        const submitBtn = this.querySelector('button[type="submit"]');
-        const originalBtnText = submitBtn.innerHTML;
-        
-        // Show loading state
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `
-            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-[#080B10] inline-block" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg> Matching...
-        `;
-
+        const q = document.getElementById('searchInput').value.trim();
+        if (!q) return;
+        const btn = this.querySelector('button[type="submit"]'), orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<svg class="animate-spin h-4 w-4 text-[#080B10] inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Finding...';
         try {
-            const response = await fetch('<?php echo BASE_PATH; ?>/admin-panel/apis/learner/browse-experts.php?action=smart_search', {
+            const r = await fetch('<?php echo BASE_PATH; ?>/admin-panel/apis/learner/browse-experts.php?action=smart_search', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ query: query })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ query: q })
             });
-
-            const result = await response.json();
-
-            if (result.success && result.data && result.data.length > 0) {
-                // Store results in session storage for the browse page to consume
-                sessionStorage.setItem('smart_search_results', JSON.stringify(result.data));
-                sessionStorage.setItem('smart_search_query', query);
+            const res = await r.json();
+            if (res.success && res.data?.length > 0) {
+                sessionStorage.setItem('smart_search_results', JSON.stringify(res.data));
+                sessionStorage.setItem('smart_search_query', q);
                 window.location.href = '?panel=learner&page=browse-experts&mode=smart';
             } else {
-                // Fallback to regular search
-                console.error('Smart search failed:', result.error);
-                window.location.href = `?panel=learner&page=browse-experts&search=${encodeURIComponent(query)}`;
+                window.location.href = '?panel=learner&page=browse-experts&search=' + encodeURIComponent(q);
             }
-        } catch (error) {
-            console.error('Smart search error:', error);
-            window.location.href = `?panel=learner&page=browse-experts&search=${encodeURIComponent(query)}`;
+        } catch {
+            window.location.href = '?panel=learner&page=browse-experts&search=' + encodeURIComponent(q);
         } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnText;
+            btn.disabled = false;
+            btn.innerHTML = orig;
         }
     });
+}
 
-    function searchForExpertise(query) {
-        document.getElementById('searchInput').value = query;
-        // Trigger the form submit which will use AI search
-        document.getElementById('expertSearchForm').dispatchEvent(new Event('submit'));
+function searchForExpertise(q) {
+    const input = document.getElementById('searchInput');
+    if (input && searchForm) {
+        input.value = q;
+        searchForm.dispatchEvent(new Event('submit'));
     }
+}
 
-    // Load featured experts from database
-    async function loadFeaturedExperts() {
-        try {
-            const response = await fetch('<?php echo BASE_PATH; ?>/admin-panel/apis/learner/browse-experts.php?sort_by=latest&limit=6');
-            const result = await response.json();
-            
-            if (result.success && result.data.length > 0) {
-                const grid = document.getElementById('featured-experts-grid');
-                grid.innerHTML = '';
+// Featured experts
+async function loadFeaturedExperts() {
+    const grid = document.getElementById('featured-experts-grid');
+    if (!grid) return;
+
+    try {
+        const r = await fetch('<?php echo BASE_PATH; ?>/admin-panel/apis/learner/browse-experts.php?sort_by=latest&limit=6');
+        const text = await r.text();
+        const jsonStart = text.indexOf('{"success"');
+        const res = jsonStart !== -1 ? JSON.parse(text.substring(jsonStart)) : JSON.parse(text);
+
+        if (res.success && res.data && res.data.length > 0) {
+            const bandCfg = {
+                'Sovereign': { label: 'Sovereign', dot: 'bg-emerald-500 animate-pulse', text: 'text-emerald-400', bg: 'from-emerald-950/30 to-teal-950/30', border: 'border-emerald-900/40' },
+                'Established': { label: 'Established', dot: 'bg-emerald-400', text: 'text-emerald-400', bg: 'from-emerald-950/30 to-teal-950/30', border: 'border-emerald-900/40' },
+                'Verified': { label: 'Verified', dot: 'bg-blue-400', text: 'text-blue-400', bg: 'from-blue-950/30 to-indigo-950/30', border: 'border-blue-900/40' },
+                'Emerging': { label: 'Emerging', dot: 'bg-indigo-400', text: 'text-indigo-400', bg: 'from-indigo-950/30 to-slate-900/30', border: 'border-indigo-900/40' },
+                'Unverified': { label: 'Unverified', dot: 'bg-gray-500', text: 'text-gray-400', bg: 'from-slate-900/30 to-gray-900/30', border: 'border-gray-800' }
+            };
+
+            grid.innerHTML = res.data.slice(0, 6).map(e => {
+                const skills = Array.isArray(e.skills) ? e.skills : (typeof e.skills === 'string' ? e.skills.split(',').map(s => s.trim()) : []);
+                const avatar = e.profile_photo ? resolveImagePath(e.profile_photo) : ('https://ui-avatars.com/api/?name=' + encodeURIComponent(e.name) + '&background=00D4AA&color=080B10&size=200');
                 
-                result.data.slice(0, 6).forEach(expert => {
-                    const skills = Array.isArray(expert.skills) ? expert.skills : (expert.skills ? expert.skills.split(',').map(s => s.trim()) : []);
-                    
-                    const imageSource = expert.profile_photo 
-                        ? resolveImagePath(expert.profile_photo)
-                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(expert.name)}&background=00D4AA&color=080B10&size=200`;
-                    
-                    // Parse strengths and outcomes from database (no fallback values)
-                    const strengths = expert.strengths ? (typeof expert.strengths === 'string' ? JSON.parse(expert.strengths) : expert.strengths) : [];
-                    const outcomes = expert.expected_outcomes ? (typeof expert.expected_outcomes === 'string' ? JSON.parse(expert.expected_outcomes) : expert.expected_outcomes) : [];
-                    
-                    const expertCard = `
-                        <div class="bg-[#131b2e] rounded-2xl shadow-lg overflow-hidden hover:border-[#00D4AA]/30 hover:shadow-2xl transition duration-300 border border-gray-800">
-                            <!-- Header Section -->
-                            <div class="bg-[#131b2e] p-5">
-                                <div class="flex items-start justify-between mb-3">
-                                    <div class="flex items-center gap-3 flex-1">
-                                        <div class="relative rounded-2xl overflow-hidden border-2 border-gray-800 shadow-md" style="width: 80px; height: 80px; min-width: 80px;">
-                                            <img src="${imageSource}" 
-                                                 alt="${escapeHtml(expert.name)}" 
-                                                 class="w-full h-full object-cover">
-                                        </div>
-                                        <div class="flex-1 min-w-0">
-                                            <div class="flex items-center gap-2 mb-1">
-                                                <h3 class="font-bold text-xl text-white truncate">${escapeHtml(expert.name)}</h3>
-                                                <svg class="w-5 h-5 text-[#00D4AA] flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
-                                                </svg>
-                                            </div>
-                                            <p class="text-gray-300 font-medium text-sm mb-2">${escapeHtml(expert.professional_title || expert.category || 'Expert')}</p>
-                                            <div class="flex items-center gap-2">
-                                                ${expert.trust_tier ? `
-                                                    <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-gradient-to-r ${expert.trust_tier === 'A' ? 'from-emerald-950/20 to-teal-950/20 border-emerald-900/50' : expert.trust_tier === 'B' ? 'from-blue-950/20 to-indigo-950/20 border-blue-900/50' : 'from-slate-900/20 to-gray-900/20 border-gray-800'} border shadow-sm">
-                                                        <span class="flex h-2 w-2 rounded-full ${expert.trust_tier === 'A' ? 'bg-emerald-500 animate-pulse' : expert.trust_tier === 'B' ? 'bg-blue-500' : 'bg-gray-500'}"></span>
-                                                        <span class="text-[10px] font-bold tracking-wider ${expert.trust_tier === 'A' ? 'text-emerald-400' : expert.trust_tier === 'B' ? 'text-blue-400' : 'text-gray-400'} uppercase">Tier ${expert.trust_tier}</span>
-                                                        <span class="text-[9px] font-medium text-gray-400">| ${Math.round(expert.overall_score || 0)}% Trust</span>
-                                                    </div>
-                                                ` : `
-                                                    <div class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-900/50 border border-gray-800 shadow-sm">
-                                                        <span class="text-[10px] font-bold text-gray-500 uppercase">Calculating...</span>
-                                                    </div>
-                                                `}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                const rawBand = (e.band_name || '').trim();
+                const score = Math.round(Number(e.overall_score) || 0);
+                let band = rawBand;
+                if (!band) {
+                    if (score >= 90) band = 'Sovereign';
+                    else if (score >= 75) band = 'Established';
+                    else if (score >= 60) band = 'Verified';
+                    else if (score >= 40) band = 'Emerging';
+                    else if (e.trust_tier === 'A') band = 'Established';
+                    else if (e.trust_tier === 'B') band = 'Verified';
+                    else band = 'Unverified';
+                }
+                const tier = bandCfg[band] || bandCfg['Unverified'];
+                const strengths = e.strengths ? (typeof e.strengths === 'string' ? JSON.parse(e.strengths) : e.strengths) : [];
 
-                            <!-- Expert Skills Section -->
-                            ${skills.length > 0 ? `
-                            <div class="px-5 py-3 bg-[#131b2e] border-b border-gray-800/80">
-                                <h4 class="text-xs font-semibold text-gray-400 mb-2">EXPERT IN</h4>
-                                <div class="flex flex-wrap gap-2">
-                                    ${skills.slice(0, 3).map(skill => `
-                                        <span class="px-2.5 py-1 bg-[#0e1322] text-[#00D4AA] text-xs font-medium rounded-lg border border-[#00D4AA]/30">
-                                            ${escapeHtml(skill)}
-                                        </span>
-                                    `).join('')}
-                                </div>
-                            </div>
-                            ` : ''}
-
-                            <!-- Strengths & Outcomes Grid -->
-                            ${strengths.length > 0 || outcomes.length > 0 ? `
-                            <div class="grid grid-cols-2 gap-3 px-5 py-4 bg-[#131b2e]">
-                                ${strengths.length > 0 ? `
-                                <div>
-                                    <h4 class="text-sm font-bold text-white mb-2">Strengths</h4>
-                                    <ul class="space-y-1.5">
-                                        ${strengths.slice(0, 3).map(strength => `
-                                            <li class="text-xs text-gray-300 flex items-start">
-                                                <span class="mr-1.5 mt-0.5 text-[#00D4AA]">•</span>
-                                                <span>${escapeHtml(strength)}</span>
-                                            </li>
-                                        `).join('')}
-                                    </ul>
-                                </div>
-                                ` : ''}
-                                ${outcomes.length > 0 ? `
-                                <div>
-                                    <h4 class="text-sm font-bold text-white mb-2">Expected Outcomes</h4>
-                                    <ul class="space-y-1.5">
-                                        ${outcomes.slice(0, 3).map(outcome => `
-                                            <li class="text-xs text-gray-300 flex items-start">
-                                                <span class="mr-1.5 mt-0.5 text-[#00D4AA]">•</span>
-                                                <span>${escapeHtml(outcome)}</span>
-                                            </li>
-                                        `).join('')}
-                                    </ul>
-                                </div>
-                                ` : ''}
-                            </div>
-                            ` : ''}
-
-                            <!-- Stats Row -->
-                            <div class="px-5 py-3 bg-[#0e1322] border-t border-gray-800/80">
-                                <div class="flex items-center gap-4 text-xs text-gray-400">
-                                    <div class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                        </svg>
-                                        <span class="font-medium">${expert.bookings_this_month || Math.floor(Math.random() * 15) + 5} bookings this month</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
-                                        </svg>
-                                        <span class="font-medium">${expert.satisfaction_percent || 97}% satisfaction</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Footer with Price & CTA -->
-                            <div class="px-5 py-4 bg-[#131b2e] border-t border-gray-800/80 flex items-center justify-between">
-                                <div>
-                                    <div class="flex items-baseline gap-1">
-                                        <span class="text-2xl font-bold text-white">₹${escapeHtml(String(expert.hourly_rate || 0))}</span>
-                                        <span class="text-sm text-gray-400">/hour</span>
-                                    </div>
-                                </div>
-                                <a href="?panel=learner&page=expert-profile&expert_id=${encodeURIComponent(expert.id)}" 
-                                   class="bg-[#00D4AA] text-[#080B10] px-6 py-2.5 rounded-xl hover:bg-[#00bda0] transition duration-200 text-sm font-bold shadow-md hover:shadow-lg">
-                                    View Profile
-                                </a>
+                return `
+                <div class="bg-[#0d131f] rounded-2xl border border-gray-800 hover:border-[#00D4AA]/25 hover:shadow-xl transition duration-300 overflow-hidden flex flex-col">
+                    <div class="p-5 flex items-start gap-4">
+                        <div class="relative w-16 h-16 flex-shrink-0">
+                            <img src="${avatar}" alt="${escapeHtml(e.name)}" class="w-16 h-16 rounded-xl object-cover border-2 border-gray-800">
+                            <div class="absolute -bottom-1 -right-1 w-5 h-5 bg-[#00D4AA] rounded-full flex items-center justify-center">
+                                <svg class="w-3 h-3" fill="none" stroke="#080B10" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                             </div>
                         </div>
-                    `;
-                    
-                    grid.innerHTML += expertCard;
-                });
-            } else {
-                document.getElementById('featured-experts-grid').innerHTML = '<div class="col-span-full text-center py-8"><p class="text-gray-400">No experts available at the moment.</p></div>';
-            }
-        } catch (error) {
-            console.error('Error loading featured experts:', error);
-            document.getElementById('featured-experts-grid').innerHTML = '<div class="col-span-full text-center py-8"><p class="text-gray-400">Error loading experts. Please try again later.</p></div>';
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-white text-base truncate">${escapeHtml(e.name)}</h3>
+                            <p class="text-gray-400 text-sm truncate mb-2">${escapeHtml(e.professional_title || e.category || 'Expert')}</p>
+                            <div class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-gradient-to-r ${tier.bg} border ${tier.border} rounded-lg">
+                                <span class="w-1.5 h-1.5 rounded-full ${tier.dot}"></span>
+                                <span class="text-[10px] font-bold ${tier.text} uppercase tracking-wide">${tier.label}</span>
+                                <span class="text-[9px] text-gray-600 mx-0.5">·</span>
+                                <span class="text-[10px] font-bold text-white font-mono">${score}</span><span class="text-[9px] text-gray-500">/100</span>
+                            </div>
+                        </div>
+                    </div>
+                    ${skills.length ? `<div class="px-5 pb-4"><div class="flex flex-wrap gap-1.5">${skills.slice(0, 3).map(s => `<span class="px-2 py-0.5 bg-[#080B10] text-[#00D4AA] text-[10px] rounded-lg border border-[#00D4AA]/20">${escapeHtml(s)}</span>`).join('')}</div></div>` : ''}
+                    ${strengths.length ? `<div class="px-5 pb-4 border-t border-gray-800/50 pt-4"><p class="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-2">Why learners trust them</p><ul class="space-y-1">${strengths.slice(0, 2).map(s => `<li class="text-xs text-gray-400 flex items-start gap-2"><span class="text-[#00D4AA] mt-0.5 flex-shrink-0">•</span>${escapeHtml(s)}</li>`).join('')}</ul></div>` : ''}
+                    <div class="mt-auto px-5 py-4 bg-[#080B10] border-t border-gray-800/60 flex items-center justify-between">
+                        <div><span class="text-lg font-bold text-white">₹${escapeHtml(String(e.hourly_rate || 0))}</span><span class="text-gray-500 text-xs">/hr</span></div>
+                        <a href="?panel=learner&page=expert-profile&expert_id=${encodeURIComponent(e.id)}" class="bg-[#00D4AA] text-[#080B10] px-5 py-2 rounded-xl text-xs font-bold hover:bg-[#00bda0] transition">View Profile</a>
+                    </div>
+                </div>`;
+            }).join('');
+        } else {
+            grid.innerHTML = '<div class="col-span-full text-center py-16"><p class="text-gray-500">Founding cohort of verified experts currently onboarding. <a href="?panel=expert&page=apply" class="text-[#00D4AA]">Apply as an expert →</a></p></div>';
         }
+    } catch (err) {
+        console.error('Error loading featured experts:', err);
+        grid.innerHTML = '<div class="col-span-full text-center py-16"><p class="text-gray-500">Founding cohort of verified experts currently onboarding. <a href="?panel=expert&page=apply" class="text-[#00D4AA]">Apply as an expert →</a></p></div>';
     }
+}
 
-    // Escape HTML to prevent XSS
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // Load featured experts on page load
-    document.addEventListener('DOMContentLoaded', loadFeaturedExperts);
-    </script>
-
-</body>
-</html>
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(typeEffect, 1000);
+        loadFeaturedExperts();
+    });
+} else {
+    setTimeout(typeEffect, 1000);
+    loadFeaturedExperts();
+}
+</script>
+</body></html>

@@ -270,6 +270,7 @@ function searchExperts($pdo, $searchTerms, $originalQuery)
             MIN(pricing.amount) as hourly_rate,
             ts.overall_score,
             ts.trust_tier,
+            ts.band_name,
             (SELECT GROUP_CONCAT(DISTINCT title SEPARATOR ' | ') 
              FROM workflows 
              WHERE expert_id = u.id AND is_active = 1) as programs
@@ -615,9 +616,11 @@ function searchExperts($pdo, $searchTerms, $originalQuery)
         // Format price
         $expert['hourly_rate'] = (float) $expert['hourly_rate'];
 
-        // Add missing fields expected by frontend
-        $expert['bookings_this_month'] = $expert['total_sessions'] > 0 ? max(1, min(15, (int) ($expert['total_sessions'] / 4))) : rand(3, 12);
-        $expert['satisfaction_percent'] = $expert['avg_rating'] >= 4.5 ? rand(95, 99) : ($expert['avg_rating'] >= 4.0 ? rand(90, 95) : rand(85, 90));
+        // Real database statistics
+        $expert['bookings_this_month'] = isset($expert['bookings_this_month']) ? (int) $expert['bookings_this_month'] : (int) ($expert['total_sessions'] ?? 0);
+        $expert['satisfaction_percent'] = isset($expert['satisfaction_percent']) && (int)$expert['satisfaction_percent'] > 0 
+            ? (int) $expert['satisfaction_percent'] 
+            : (($expert['avg_rating'] ?? 0) > 0 ? round(($expert['avg_rating'] / 5) * 100) : 0);
 
         // Process strengths and expected outcomes from database
         $expert['strengths'] = $expert['strengths'] ? json_decode($expert['strengths'], true) : [];

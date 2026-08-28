@@ -243,71 +243,7 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
     </div>
 </div>
 
-<!-- Footer -->
-<footer class="bg-gradient-to-br from-gray-900 via-slate-900 to-gray-800 text-white py-20 relative overflow-hidden">
-    <div class="absolute inset-0 bg-black/20"></div>
-    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
-    
-    <div class="max-w-7xl mx-auto px-4 relative z-10">
-        <div class="grid md:grid-cols-4 gap-12">
-            <div class="md:col-span-2">
-                <div class="flex items-center mb-6">
-                    <div class="w-12 h-12 bg-gradient-to-r from-primary to-purple-600 rounded-xl flex items-center justify-center mr-4 shadow-lg">
-                        <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                        </svg>
-                    </div>
-                    <div>
-                        <h4 class="text-3xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent">Nexpert.ai</h4>
-                        <span class="text-sm bg-gradient-to-r from-primary to-purple-600 text-white px-2 py-1 rounded-full">Global Platform</span>
-                    </div>
-                </div>
-                <p class="text-gray-300 mb-8 max-w-md leading-relaxed text-lg">
-                    The world's premier platform connecting learners with expert coaches, mentors, consultants, trainers, and freelancers worldwide.
-                </p>
-                
-            </div>
-            
-            <div>
-                <h5 class="font-bold mb-6 text-xl flex items-center">
-                    <span class="w-2 h-2 bg-primary rounded-full mr-3"></span>
-                    Categories
-                </h5>
-                <ul class="space-y-3">
-                    <li><a href="?panel=learner&page=browse-experts&category=AI%20%26%20Technology" class="text-gray-300 hover:text-white transition">AI & Technology</a></li>
-                    <li><a href="?panel=learner&page=browse-experts&category=Leadership" class="text-gray-300 hover:text-white transition">Leadership</a></li>
-                    <li><a href="?panel=learner&page=browse-experts&category=career%20Growth" class="text-gray-300 hover:text-white transition">career Growth</a></li>
-                    <li><a href="?panel=learner&page=browse-experts&category=Entrepreneurship" class="text-gray-300 hover:text-white transition">Entrepreneurship</a></li>
-                    <li><a href="?panel=learner&page=browse-experts&category=Product%26Strategy" class="text-gray-300 hover:text-white transition">Product&Strategy</a></li>
-                </ul>
-            </div>
-            
-            <div>
-                <h5 class="font-bold mb-6 text-xl flex items-center">
-                    <span class="w-2 h-2 bg-emerald-500 rounded-full mr-3"></span>
-                    Support
-                </h5>
-                <ul class="space-y-3">
-                    <li><a href="#" class="text-gray-300 hover:text-white transition">Help Center</a></li>
-                    <li><a href="#" class="text-gray-300 hover:text-white transition">Contact Us</a></li>
-                    <li><a href="#" class="text-gray-300 hover:text-white transition">Privacy Policy</a></li>
-                    <li><a href="#" class="text-gray-300 hover:text-white transition">Terms of Service</a></li>
-                    <li><a href="#" class="text-gray-300 hover:text-white transition">Refund Policy</a></li>
-                </ul>
-            </div>
-        </div>
-        
-        <div class="border-t border-gray-700/50 mt-16 pt-8">
-            <div class="flex flex-col md:flex-row justify-between items-center">
-                <p class="text-gray-400 mb-4 md:mb-0">© 2025 Nexpert.ai. All rights reserved.</p>
-                <div class="flex items-center text-gray-400 text-sm">
-                    <div class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
-                    <span>All systems operational</span>
-                </div>
-            </div>
-        </div>
-    </div>
-</footer>
+
 
 <script>
 const expertId = <?php echo $program['expert_id']; ?>;

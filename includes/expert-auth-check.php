@@ -1,6 +1,6 @@
 <?php
 // Expert authentication check - include this in all protected expert pages
-session_start();
+require_once __DIR__ . '/session-config.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'expert') {

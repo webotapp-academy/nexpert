@@ -1,5 +1,5 @@
 <?php
-session_start();
+require_once dirname(dirname(dirname(__DIR__))) . '/includes/session-config.php';
 header('Content-Type: application/json');
 require_once __DIR__ . '/../connection/pdo.php';
 
@@ -50,20 +50,28 @@ try {
         $pdo->beginTransaction();
         
         try {
-            // Insert into users table
+            // Insert into users table (setting both password and password_hash)
             $stmt = $pdo->prepare("
-                INSERT INTO users (email, phone, password_hash, role, status, created_at)
-                VALUES (?, ?, ?, 'expert', 'active', NOW())
+                INSERT INTO users (email, phone, password, password_hash, role, status, created_at)
+                VALUES (?, ?, ?, ?, 'expert', 'active', NOW())
             ");
-            $stmt->execute([$email, $mobile, $passwordHash]);
+            $stmt->execute([$email, $mobile, $passwordHash, $passwordHash]);
             $userId = $pdo->lastInsertId();
             
             // Insert into expert_profiles table
             $stmt = $pdo->prepare("
-                INSERT INTO expert_profiles (user_id, full_name, verification_status, created_at)
-                VALUES (?, ?, 'pending', NOW())
+                INSERT INTO expert_profiles (user_id, full_name, verification_status, timezone, created_at)
+                VALUES (?, ?, 'pending', 'UTC', NOW())
             ");
             $stmt->execute([$userId, $name]);
+
+            // Initialize default baseline trust_state record
+            $trustStmt = $pdo->prepare("
+                INSERT INTO trust_state (expert_id, overall_score, trust_tier, band_name, confidence_score, stability_score, trend_direction, last_updated)
+                VALUES (?, 50.00, 'C', 'Unverified', 0.00, 100.00, 'stable', NOW())
+                ON DUPLICATE KEY UPDATE expert_id = expert_id
+            ");
+            $trustStmt->execute([$userId]);
             
             $pdo->commit();
             

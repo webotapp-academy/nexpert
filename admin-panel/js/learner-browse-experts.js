@@ -169,6 +169,62 @@
         return badges[tier] || '';
     }
 
+    // Helper to get 5-band trust configuration
+    function getTrustBandConfig(expert) {
+        const rawBand = (expert.band_name || '').trim();
+        const score = expert.overall_score !== undefined && expert.overall_score !== null ? Math.round(Number(expert.overall_score)) : 0;
+        const tier = (expert.trust_tier || '').trim().toUpperCase();
+
+        let band = rawBand;
+        if (!band) {
+            if (score >= 90) band = 'Sovereign';
+            else if (score >= 75) band = 'Established';
+            else if (score >= 60) band = 'Verified';
+            else if (score >= 40) band = 'Emerging';
+            else if (tier === 'A') band = 'Established';
+            else if (tier === 'B') band = 'Verified';
+            else band = 'Unverified';
+        }
+
+        const configs = {
+            'Sovereign': {
+                label: 'Sovereign',
+                bg: 'from-emerald-950/20 to-teal-950/20 border-emerald-900/50',
+                dot: 'bg-emerald-500 animate-pulse',
+                textColor: 'text-emerald-400'
+            },
+            'Established': {
+                label: 'Established',
+                bg: 'from-emerald-950/20 to-teal-950/20 border-emerald-900/50',
+                dot: 'bg-emerald-400',
+                textColor: 'text-emerald-400'
+            },
+            'Verified': {
+                label: 'Verified',
+                bg: 'from-blue-950/20 to-indigo-950/20 border-blue-900/50',
+                dot: 'bg-blue-400',
+                textColor: 'text-blue-400'
+            },
+            'Emerging': {
+                label: 'Emerging',
+                bg: 'from-indigo-950/20 to-slate-900/20 border-indigo-900/50',
+                dot: 'bg-indigo-400',
+                textColor: 'text-indigo-400'
+            },
+            'Unverified': {
+                label: 'Unverified',
+                bg: 'from-slate-900/20 to-gray-900/20 border-gray-800',
+                dot: 'bg-gray-500',
+                textColor: 'text-gray-400'
+            }
+        };
+
+        return {
+            config: configs[band] || configs['Unverified'],
+            score: score
+        };
+    }
+
     // Helper function to get ordinal suffix (1st, 2nd, 3rd, etc.)
     function getOrdinalSuffix(num) {
         const j = num % 10;
@@ -208,6 +264,8 @@
                 if (index === 2) return "THIRD";
                 return `${index + 1}TH`;
             };
+
+            const { config: trustConfig, score: trustScore } = getTrustBandConfig(expert);
             
             return `
             <div class="bg-[#131b2e] rounded-2xl shadow-lg overflow-hidden hover:border-[#00D4AA]/30 hover:shadow-2xl transition duration-300 border border-gray-800">
@@ -241,11 +299,11 @@
                                 </div>
                                 <p class="text-gray-300 font-medium text-sm mb-2">${escapeHtml(expert.professional_title || expert.category || 'Expert')}</p>
                                 <div class="flex items-center gap-2">
-                                    ${expert.trust_tier ? `
-                                        <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-gradient-to-r ${expert.trust_tier === 'A' ? 'from-emerald-950/20 to-teal-950/20 border-emerald-900/50' : expert.trust_tier === 'B' ? 'from-blue-950/20 to-indigo-950/20 border-blue-900/50' : 'from-slate-900/20 to-gray-900/20 border-gray-800'} border shadow-sm">
-                                            <span class="flex h-2 w-2 rounded-full ${expert.trust_tier === 'A' ? 'bg-emerald-500 animate-pulse' : expert.trust_tier === 'B' ? 'bg-blue-500' : 'bg-gray-500'}"></span>
-                                            <span class="text-[10px] font-bold tracking-wider ${expert.trust_tier === 'A' ? 'text-emerald-400' : expert.trust_tier === 'B' ? 'text-blue-400' : 'text-gray-400'} uppercase">Tier ${expert.trust_tier}</span>
-                                            <span class="text-[9px] font-medium text-gray-400">| ${Math.round(expert.overall_score || 0)}% Trust</span>
+                                    ${(expert.band_name || expert.trust_tier || expert.overall_score !== undefined) ? `
+                                        <div class="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-gradient-to-r ${trustConfig.bg} border shadow-sm">
+                                            <span class="flex h-2 w-2 rounded-full ${trustConfig.dot}"></span>
+                                            <span class="text-[10px] font-bold tracking-wider ${trustConfig.textColor} uppercase">${trustConfig.label}</span>
+                                            <span class="text-[9px] font-medium text-gray-400">| ${trustScore}% Trust</span>
                                         </div>
                                     ` : `
                                         <div class="flex items-center gap-1 px-2 py-0.5 rounded-md bg-gray-900/50 border border-gray-800 shadow-sm">
@@ -323,13 +381,13 @@
                             <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
-                            <span class="font-medium">${expert.bookings_this_month || Math.floor(Math.random() * 15) + 5} bookings this month</span>
+                            <span class="font-medium">${Number(expert.bookings_this_month) || 0} bookings this month</span>
                         </div>
                         <div class="flex items-center gap-1.5">
                             <svg class="w-4 h-4 text-[#00D4AA]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5"></path>
                             </svg>
-                            <span class="font-medium">${expert.satisfaction_percent || 97}% satisfaction</span>
+                            <span class="font-medium">${(Number(expert.satisfaction_percent) > 0) ? (Math.round(expert.satisfaction_percent) + '% satisfaction') : (Number(expert.rating_average) > 0 ? (Math.round(expert.rating_average * 20) + '% satisfaction') : 'Verified Profile')}</span>
                         </div>
                     </div>
                 </div>

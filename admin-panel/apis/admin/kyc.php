@@ -246,16 +246,30 @@ try {
                     $data['expert_id']
                 ]);
 
-                // Log Trust Event if approved
+                // Log Trust Event and Trigger Baseline Trust Score Calculation if approved
                 if ($data['status'] === 'approved') {
                     try {
-                        require_once __DIR__ . '/../connection/trust-helper.php';
-                        TrustHelper::logEvent($data['expert_id'], 'kyc_verified', [
+                        require_once dirname(__DIR__) . '/connection/trust-aggregator.php';
+                        
+                        // 1. Emit kyc_verified event
+                        $payload = json_encode([
                             'verified_at' => $verified_at,
-                            'admin_notes' => $data['notes'] ?? ''
+                            'admin_notes' => $data['notes'] ?? 'KYC approved by admin'
                         ]);
+                        $eventStmt = $pdo->prepare("
+                            INSERT INTO trust_events (event_type, expert_id, payload, status, created_at)
+                            VALUES ('kyc_verified', ?, ?, 'pending', NOW())
+                        ");
+                        $eventStmt->execute([$data['expert_id'], $payload]);
+                        $eventId = (int)$pdo->lastInsertId();
+
+                        // 2. Immediately calculate baseline Trust Score
+                        $aggregator = new TrustAggregator($pdo);
+                        if (method_exists($aggregator, 'aggregateOne')) {
+                            $aggregator->aggregateOne((int)$data['expert_id'], $eventId);
+                        }
                     } catch (Exception $e) {
-                        error_log("Failed to log kyc_verified event: " . $e->getMessage());
+                        error_log("Failed to aggregate baseline trust score on KYC approval: " . $e->getMessage());
                     }
                 }
                 

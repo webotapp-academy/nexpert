@@ -8,12 +8,13 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 try {
     if ($method === 'GET') {
-        $search = $_GET['search'] ?? '';
-        $category = $_GET['category'] ?? '';
-        $minPrice = $_GET['min_price'] ?? null;
-        $maxPrice = $_GET['max_price'] ?? null;
-        $minRating = $_GET['min_rating'] ?? null;
-        $sortBy = $_GET['sort_by'] ?? 'relevance';
+        $search       = $_GET['search'] ?? '';
+        $category     = $_GET['category'] ?? '';
+        $minPrice     = $_GET['min_price'] ?? null;
+        $maxPrice     = $_GET['max_price'] ?? null;
+        $minTrust     = isset($_GET['min_trust_score']) ? (float)$_GET['min_trust_score'] : null;
+        $minRating    = $_GET['min_rating'] ?? null;
+        $sortBy       = $_GET['sort_by'] ?? 'trust_score'; // Default to trust score
         $page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
         $limit = isset($_GET['limit']) ? (int)$_GET['limit'] : null;
         $perPage = $limit ?? 9; // Use limit if provided, otherwise 9 experts per page
@@ -31,8 +32,7 @@ try {
 
         // Build query - get pricing from expert_pricing table and programs from workflows
         // Also get booking_count and base_price for dynamic pricing
-        // Disable ONLY_FULL_GROUP_BY for this query
-        $pdo->exec("SET sql_mode=(SELECT REPLACE(@@sql_mode,'ONLY_FULL_GROUP_BY',''))");
+        // Note: GROUP BY fixed properly — no sql_mode override needed
         
         $query = "
             SELECT DISTINCT
@@ -60,6 +60,7 @@ try {
                 MIN(pricing.amount) as hourly_rate,
                 ts.overall_score,
                 ts.trust_tier,
+                ts.band_name,
                 (SELECT GROUP_CONCAT(DISTINCT title SEPARATOR ' | ') 
                  FROM workflows 
                  WHERE expert_id = u.id AND is_active = 1) as programs
@@ -91,9 +92,15 @@ try {
             $params[] = $searchTerm;
         }
 
-        // Add category filter
+        // Add min trust score filter
+        if ($minTrust !== null) {
+            $query .= " AND ts.overall_score >= ?";
+            $params[] = $minTrust;
+        }
+
+        // Add category filter — case-insensitive
         if (!empty($category)) {
-            $query .= " AND ep.category = ?";
+            $query .= " AND LOWER(ep.category) = LOWER(?)";
             $params[] = $category;
             error_log("Category filter applied: " . $category);
             error_log("Query with category filter: " . $query);
@@ -120,6 +127,9 @@ try {
 
         // Add sorting
         switch ($sortBy) {
+            case 'trust_score':
+                $query .= " ORDER BY ts.overall_score DESC";
+                break;
             case 'price_low_high':
                 $query .= " ORDER BY hourly_rate ASC";
                 break;

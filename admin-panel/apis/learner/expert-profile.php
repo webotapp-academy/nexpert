@@ -33,6 +33,7 @@ try {
                 MIN(pricing.amount) as hourly_rate,
                 ts.overall_score,
                 ts.trust_tier,
+                ts.band_name,
                 ts.stability_score
             FROM users u
             INNER JOIN expert_profiles ep ON u.id = ep.user_id
@@ -47,7 +48,7 @@ try {
             GROUP BY u.id, ep.full_name, u.email, ep.tagline, ep.bio_full, 
                      ep.profile_photo, ep.experience_years, ep.verification_status,
                      ep.rating_average, ep.total_reviews, ep.total_sessions, ep.expertise_verticals,
-                     ts.overall_score, ts.trust_tier, ts.stability_score
+                     ts.overall_score, ts.trust_tier, ts.band_name, ts.stability_score
         ");
         $stmt->execute([$expertId]);
         $expert = $stmt->fetch(PDO::FETCH_ASSOC);

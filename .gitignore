@@ -30,12 +30,20 @@ composer.lock
 *.swo
 *~
 
-# Temporary files
+# Temporary and local state files
 *.tmp
 *.bak
 *.swp
 .tmp/
 .temp/
+.local/
+scratch/
+old-v1/
+todo/
+Archive*.zip
+fix_*.py
+generate_*.py
+home2.php
 
 # Security and sensitive files
 *.key
@@ -64,3 +72,4 @@ composer.lock
 # Logs and databases
 *.sqlite
 *.sqlite3
+

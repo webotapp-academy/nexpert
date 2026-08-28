@@ -1,131 +1,0 @@
-NEXPERT — SCOPE OF WORK (SOW)
-
-Internal Credibility Console + Trust-based UI Transformation
-
-1. Project Objective
-Build an internal credibility system (admin-only) and redesign the platform UI to shift from a marketplace experience to a trust-based expertise platform without disrupting existing functionality.
-
-2. Key Principles
-- No change to core marketplace flows
-- Credibility logic is internal only
-- Public UI shows only: Verified, Trust Tier (A/B/C), Stability
-- Modular and extensible system
-
-3. Workstreams
-
-WORKSTREAM 1: Event Logging Layer
-Create trust_events table and log:
-- session_completed
-- booking_created
-- feedback_submitted
-- expert_profile_updated
-- kyc_verified
-- complaint_logged
-
-WORKSTREAM 2: Credibility Data Layer
-Tables:
-- trust_signals
-- trust_state
-- trust_state_history
-
-WORKSTREAM 3: Credibility Engine
-- Deterministic aggregation (EMA/weighted)
-- Compute scores, tier, stability
-- No AI calls
-
-WORKSTREAM 4: Internal Credibility Console (Admin)
-Route: /internal/dashboard
-Features:
-- Expert credibility view
-- Signal viewer
-- Timeline
-- Admin actions (freeze, recompute)
-
-WORKSTREAM 5: Expert Dashboard
-Route: /expert/dashboard
-Show:
-- Structure, Outcome, Boundary, Consistency (High/Medium/Low)
-- Trust Tier
-- Stability
-
-WORKSTREAM 6: Learner UI
-Show:
-- Verified
-- Trust Tier
-- Stability
-Remove ratings/reviews
-
-WORKSTREAM 7: UI Redesign
-- Replace ratings with trust indicators
-- Clean, analytical UI
-
-WORKSTREAM 8: API Layer
-Expert APIs, Learner APIs, Internal APIs
-
-WORKSTREAM 9: Security
-- Admin protected
-- Expert scoped
-- Learner limited access
-
-WORKSTREAM 10: Background Processing
-- Cron jobs for signal processing and updates
-
-4. Non-Functional Requirements
-- No performance impact
-- Modular
-- API-first
-- Logging + error handling
-
-5. Deliverables
-- DB schema
-- APIs
-- Console UI
-- Updated dashboards
-- Deployment plan
-
-6. Acceptance Criteria
-- Events logged
-- Trust computed
-- Admin visibility
-- Expert summary
-- Learner trust surface
-
-7. Timeline
-Week 1–2: DB + Events
-Week 3: Engine
-Week 4: Console
-Week 5: UI
-Week 6: Testing
-
-Final Note:
-This is a core system layer, not a feature.
-
-
-
-NEXPERT — TECHNICAL DEVELOPMENT SCOPE OF WORK
-Agentic Credibility Infrastructure (Developer Specification) Version 3.0 
-1. System Overview
-Nexpert will implement an event-driven, agent-based credibility system layered on top of the existing PHP platform. The system consists of three layers: 1. PHP Marketplace (Event Source) 2. Agent Layer (Python Microservice) 3. Deterministic Aggregator + Storage 
-2. Technology Stack
-
-3. Event-Driven Architecture
-PHP system must emit events to agent service.  Trigger Events: - session_completed - feedback_submitted - profile_updated - kyc_verified - complaint_logged  Each event will be sent via REST or pushed into a queue.
-4. Agent Definitions
-Structure Agent
-Triggered on profile update, session completion Analyzes structure of content, completeness, flow Outputs structured signals
-Outcome Agent
-Triggered on feedback, assignments Measures improvement and outcome direction Outputs outcome signals
-Boundary Agent
-Triggered on session transcripts / complaints Detects domain violations and risky advice Outputs boundary flags
-Consistency Agent
-Runs periodically (cron) Evaluates performance over time Outputs stability score
-Audit Agent
-Triggered after signals Evaluates confidence of other agents Flags low-confidence cases
-5. Agent Invocation Flow
-1. PHP emits event 2. Event enters queue 3. Relevant agent is triggered 4. Agent processes input using LLM 5. Outputs structured signal 6. Signal stored in trust_signals 7. Aggregator updates trust_state 
-6. Aggregation Logic
-Use EMA-based deterministic aggregation: new_score = alpha * signal + (1-alpha) * previous_score  Trust tier derived from overall score. 
-7. APIs Required
-- POST /events - GET /expert/credibility - GET /learner/trust - GET /internal/credibility 
-8. Development Phases
-Phase 1: Event system Phase 2: Agent service Phase 3: Aggregator Phase 4: Internal console Phase 5: UI updates 
