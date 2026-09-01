@@ -11,9 +11,6 @@ require_once dirname(__DIR__) . '/includes/header.php';
 require_once dirname(__DIR__) . '/includes/navigation.php';
 ?>
 
-<script>
-    document.body.className = "bg-[#080B10] min-h-screen text-white";
-</script>
 <!-- Expert Profile Hero Section - High Converting Landing Page Design -->
 <div class="relative bg-[#131b2e] border-b border-gray-800 pt-12 md:pt-16 pb-8 md:pb-12 overflow-hidden">
     <!-- Animated Background Objects -->
@@ -87,20 +84,12 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                                 </div>
                             </div>
                         </div>
-                        
-                        <!-- Location -->
-                        <div class="mt-8 inline-flex items-center gap-2 text-[#00D4AA] bg-[#0e1322] border border-gray-800 rounded-full px-4 py-2 text-sm font-medium">
-                            <svg class="w-4 h-4 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                            </svg>
-                            <span id="expert-location">Loading...</span>
-                        </div>
                     </div>
 
                     <!-- Expert Info Section -->
                     <div class="flex-1 text-center lg:text-left max-w-3xl">
                         <!-- Name + Verified Badge -->
-                        <div class="flex flex-col lg:flex-row items-center lg:items-start gap-3 mb-4">
+                        <div class="flex flex-col lg:flex-row items-center lg:items-start gap-3 mb-3">
                             <div>
                                 <h1 id="expert-name" class="text-2xl md:text-3xl lg:text-4xl font-black text-white mb-2">
                                     <span class="inline-block animate-pulse bg-white/20 rounded-lg px-6 py-3">Loading...</span>
@@ -110,6 +99,15 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                                     <p id="expert-title" class="relative text-lg md:text-xl font-bold text-[#080B10] bg-gradient-to-r from-[#00D4AA] to-emerald-500 px-5 py-2 rounded-lg inline-block shadow-lg">
                                         <span class="animate-pulse">Loading...</span>
                                     </p>
+                                </div>
+                                <!-- Location on next line -->
+                                <div class="mt-3 flex items-center justify-center lg:justify-start gap-2 text-[#00D4AA] text-sm font-medium">
+                                    <div class="inline-flex items-center gap-1.5 bg-[#0e1322] border border-gray-800 rounded-full px-3.5 py-1.5 shadow-sm">
+                                        <svg class="w-4 h-4 text-red-400 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
+                                        </svg>
+                                        <span id="expert-location" class="text-gray-200 font-semibold">Loading...</span>
+                                    </div>
                                 </div>
                             </div>
                             <!-- Verified Badge -->
@@ -301,11 +299,13 @@ require_once dirname(__DIR__) . '/includes/navigation.php';
                         <h3 class="text-xl font-black mb-2 text-white">Ready to Start?</h3>
                         <p class="text-gray-400 mb-6 text-sm">Book a session or send a message to get started on your learning journey.</p>
                         <div class="space-y-3">
-                            <a id="sidebar-book-btn" href="?panel=learner&page=booking" class="block w-full bg-[#00D4AA] text-[#080B10] px-6 py-3.5 rounded-xl hover:bg-[#00bda0] transition text-center font-black shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95">
-                                📅 Book Session
+                            <a id="sidebar-book-btn" href="?panel=learner&page=booking" class="w-full bg-[#00D4AA] text-[#080B10] px-6 py-3.5 rounded-xl hover:bg-[#00bda0] transition flex items-center justify-center gap-2 font-extrabold shadow-lg hover:shadow-xl transform hover:scale-105 active:scale-95 text-sm">
+                                <svg class="w-4 h-4 text-[#080B10]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                                <span>Book Session</span>
                             </a>
-                            <button id="sidebar-message-btn" class="w-full bg-transparent border border-gray-800 text-gray-300 hover:text-white px-6 py-3.5 rounded-xl hover:bg-[#0e1322] hover:border-gray-700 transition text-center font-black">
-                                💬 Send Message
+                            <button id="sidebar-message-btn" class="w-full bg-transparent border border-gray-800 text-gray-300 hover:text-white px-6 py-3.5 rounded-xl hover:bg-[#0e1322] hover:border-gray-700 transition flex items-center justify-center gap-2 font-bold text-sm">
+                                <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                <span>Send Message</span>
                             </button>
                         </div>
                     </div>
