@@ -17,7 +17,12 @@ try {
                 SELECT ep.*, u.email, u.phone, u.status as account_status, u.created_at as account_created,
                        kyc.full_legal_name, kyc.date_of_birth, kyc.nationality, kyc.gender,
                        kyc.address_line1, kyc.address_line2, kyc.city, kyc.state, kyc.postal_code, kyc.country,
-                       kyc.id_document_type, kyc.id_number, kyc.id_document_path
+                       kyc.id_document_type, kyc.id_number,
+                       kyc.id_document_front_url, kyc.id_document_back_url,
+                       COALESCE(NULLIF(kyc.id_document_path, ''), kyc.id_document_front_url) as id_document_path,
+                       kyc.account_holder_name, kyc.bank_name, kyc.account_number, kyc.ifsc_code, kyc.account_type,
+                       COALESCE(kyc.verification_status, ep.verification_status, 'pending') as verification_status,
+                       kyc.submitted_at, kyc.reviewed_at, kyc.admin_notes, kyc.rejection_reason
                 FROM expert_profiles ep
                 INNER JOIN users u ON ep.user_id = u.id
                 LEFT JOIN expert_kyc_verification kyc ON ep.user_id = kyc.expert_id
@@ -45,19 +50,24 @@ try {
             $status = $_GET['status'] ?? null;
             
             $query = "
-                SELECT ep.*, u.email, u.phone, u.status as account_status, u.created_at as account_created
+                SELECT ep.*, u.email, u.phone, u.status as account_status, u.created_at as account_created,
+                       COALESCE(kyc.verification_status, ep.verification_status, 'pending') as verification_status,
+                       kyc.submitted_at, kyc.full_legal_name, kyc.id_document_type,
+                       kyc.id_document_front_url, kyc.id_document_back_url,
+                       COALESCE(NULLIF(kyc.id_document_path, ''), kyc.id_document_front_url) as id_document_path
                 FROM expert_profiles ep
                 INNER JOIN users u ON ep.user_id = u.id
+                LEFT JOIN expert_kyc_verification kyc ON ep.user_id = kyc.expert_id
                 WHERE u.role = 'expert'
             ";
             
             $params = [];
             if ($status && $status !== 'all') {
-                $query .= " AND ep.verification_status = ?";
+                $query .= " AND (COALESCE(kyc.verification_status, ep.verification_status) = ?)";
                 $params[] = $status;
             }
             
-            $query .= " ORDER BY ep.created_at DESC";
+            $query .= " ORDER BY COALESCE(kyc.submitted_at, ep.created_at) DESC";
             
             $stmt = $pdo->prepare($query);
             $stmt->execute($params);
@@ -243,6 +253,24 @@ try {
                 $stmt->execute([
                     $data['status'],
                     $verified_at,
+                    $data['expert_id']
+                ]);
+
+                // Also update expert_kyc_verification table
+                $stmtKyc = $pdo->prepare("
+                    UPDATE expert_kyc_verification SET
+                        verification_status = ?,
+                        reviewed_at = NOW(),
+                        admin_notes = ?,
+                        rejection_reason = ?
+                    WHERE expert_id = ?
+                ");
+                $adminNotes = $data['notes'] ?? ($data['admin_notes'] ?? null);
+                $rejectionReason = $data['status'] === 'rejected' ? ($data['notes'] ?? 'KYC rejected by admin') : null;
+                $stmtKyc->execute([
+                    $data['status'],
+                    $adminNotes,
+                    $rejectionReason,
                     $data['expert_id']
                 ]);
 

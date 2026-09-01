@@ -170,6 +170,14 @@ function displayKYC(data) {
     `).join('');
 }
 
+function resolveDocUrl(path) {
+    if (!path) return '';
+    if (/^(https?:\/\/|data:)/.test(path)) return path;
+    const base = window.BASE_PATH || '';
+    if (base && path.startsWith(base)) return path;
+    return `${base}/${path.replace(/^\/+/, '')}`;
+}
+
 // View expert details
 async function viewKYC(expertId) {
     currentKYCId = expertId;
@@ -184,6 +192,10 @@ async function viewKYC(expertId) {
             
             const statusColor = expert.verification_status === 'approved' ? 'green' : 
                                expert.verification_status === 'rejected' ? 'red' : 'yellow';
+
+            const frontDocUrl = expert.id_document_front_url || expert.id_document_path || '';
+            const backDocUrl = expert.id_document_back_url || '';
+            const hasDocs = Boolean(frontDocUrl || backDocUrl);
             
             document.getElementById('kycModalContent').innerHTML = `
                 <div class="space-y-6">
@@ -196,12 +208,16 @@ async function viewKYC(expertId) {
                                     ${escapeHtml((expert.verification_status || 'pending').toUpperCase())}
                                 </span>
                             </div>
-                            ${expert.verified_at ? `
                             <div class="text-right">
-                                <p class="text-sm text-gray-600">Verified On</p>
+                                ${expert.submitted_at ? `
+                                <p class="text-sm text-gray-600">Submitted On</p>
+                                <p class="font-semibold text-gray-900">${new Date(expert.submitted_at).toLocaleDateString()}</p>
+                                ` : ''}
+                                ${expert.verified_at ? `
+                                <p class="text-sm text-gray-600 mt-1">Verified On</p>
                                 <p class="font-semibold text-gray-900">${new Date(expert.verified_at).toLocaleDateString()}</p>
+                                ` : ''}
                             </div>
-                            ` : ''}
                         </div>
                     </div>
 
@@ -240,34 +256,71 @@ async function viewKYC(expertId) {
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">Address Information</h3>
                         <div class="bg-gray-50 p-4 rounded-lg space-y-2">
-                            <p class="text-gray-900">${escapeHtml(expert.address_line1 || 'Address not provided')}</p>
+                            <p class="text-gray-900 font-medium">${escapeHtml(expert.address_line1 || 'Address not provided')}</p>
                             ${expert.address_line2 ? `<p class="text-gray-900">${escapeHtml(expert.address_line2)}</p>` : ''}
-                            <p class="text-gray-900">${escapeHtml(expert.city || '')}, ${escapeHtml(expert.state || '')} ${escapeHtml(expert.postal_code || '')}</p>
-                            <p class="text-gray-900">${escapeHtml(expert.country || '')}</p>
+                            <p class="text-gray-900">${escapeHtml([expert.city, expert.state, expert.postal_code].filter(Boolean).join(', '))}</p>
+                            <p class="text-gray-900 font-medium">${escapeHtml(expert.country || '')}</p>
                         </div>
                     </div>
 
                     <!-- KYC Documents -->
                     <div>
                         <h3 class="text-lg font-semibold text-gray-900 mb-4">📄 KYC Documents</h3>
-                        ${expert.id_document_path ? `
-                        <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-700 mb-1">${escapeHtml(expert.id_document_type || 'Government ID')} Document</p>
-                                    <p class="text-xs text-gray-500">ID Number: ${escapeHtml(expert.id_number || 'Not provided')}</p>
-                                </div>
-                                <a href="${escapeHtml(expert.id_document_path)}" target="_blank" rel="noopener noreferrer" 
-                                   class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition">
-                                    View Document
+                        ${hasDocs ? `
+                        <div class="grid md:grid-cols-2 gap-4">
+                            ${frontDocUrl ? `
+                            <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                                <p class="text-sm font-bold text-gray-800 mb-1">${escapeHtml((expert.id_document_type || 'ID').toUpperCase())} — Front Document</p>
+                                <p class="text-xs text-gray-600 mb-3">ID Number: <span class="font-mono font-bold">${escapeHtml(expert.id_number || 'N/A')}</span></p>
+                                <a href="${resolveDocUrl(frontDocUrl)}" target="_blank" rel="noopener noreferrer" 
+                                   class="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition text-sm font-semibold">
+                                    🔍 View Front Document
                                 </a>
                             </div>
+                            ` : ''}
+                            ${backDocUrl ? `
+                            <div class="bg-indigo-50 border border-indigo-200 p-4 rounded-lg">
+                                <p class="text-sm font-bold text-gray-800 mb-1">${escapeHtml((expert.id_document_type || 'ID').toUpperCase())} — Back Document</p>
+                                <p class="text-xs text-gray-600 mb-3">ID Number: <span class="font-mono font-bold">${escapeHtml(expert.id_number || 'N/A')}</span></p>
+                                <a href="${resolveDocUrl(backDocUrl)}" target="_blank" rel="noopener noreferrer" 
+                                   class="inline-block bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition text-sm font-semibold">
+                                    🔍 View Back Document
+                                </a>
+                            </div>
+                            ` : ''}
                         </div>
                         ` : `
                         <div class="bg-gray-50 p-4 rounded-lg text-center text-gray-500">
                             <p>No KYC documents uploaded yet</p>
                         </div>
                         `}
+                    </div>
+
+                    <!-- Bank & Payout Information -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">🏦 Bank & Payout Account</h3>
+                        <div class="grid md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">Account Holder Name</p>
+                                <p class="font-semibold text-gray-900">${escapeHtml(expert.account_holder_name || 'N/A')}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">Bank Name</p>
+                                <p class="font-semibold text-gray-900">${escapeHtml(expert.bank_name || 'N/A')}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">Account Number</p>
+                                <p class="font-mono font-bold text-gray-900">${escapeHtml(expert.account_number || 'N/A')}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">IFSC / Swift / Routing Code</p>
+                                <p class="font-mono font-bold text-gray-900">${escapeHtml(expert.ifsc_code || 'N/A')}</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <p class="text-sm text-gray-600 mb-1">Account Type</p>
+                                <p class="font-semibold text-gray-900 capitalize">${escapeHtml(expert.account_type || 'N/A')}</p>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Professional Qualifications -->
@@ -418,7 +471,13 @@ function filterKYC(status) {
 }
 
 // Load data on page load
-loadKYC();
+loadKYC().then(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const expertIdParam = urlParams.get('expert_id');
+    if (expertIdParam) {
+        viewKYC(expertIdParam);
+    }
+});
 </script>
 
 <?php require_once $_SERVER['DOCUMENT_ROOT'] . BASE_PATH . '/includes/footer.php'; ?>
