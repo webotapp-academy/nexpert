@@ -7,11 +7,12 @@ require_once __DIR__ . '/../../../includes/payment-config.php';
 require_once __DIR__ . '/../connection/trust-helper.php';
 require_once __DIR__ . '/../connection/email-helper.php';
 
-function notifyExpertOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount) {
+function notifyPartiesOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount) {
     try {
         $stmt = $pdo->prepare("
-            SELECT b.session_datetime, b.duration_minutes, b.session_topic,
+            SELECT b.id, b.session_datetime, b.duration_minutes, b.session_topic,
                    lp.full_name as learner_name,
+                   lu.email as learner_email,
                    ep.full_name as expert_name,
                    eu.email as expert_email
             FROM bookings b
@@ -23,7 +24,7 @@ function notifyExpertOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amou
         ");
         $stmt->execute([$bookingId]);
         $info = $stmt->fetch(PDO::FETCH_ASSOC);
-        if ($info && !empty($info['expert_email'])) {
+        if ($info) {
             $dt = new DateTime($info['session_datetime']);
             $date = $dt->format('l, F j, Y');
             $time = $dt->format('g:i A');
@@ -33,19 +34,38 @@ function notifyExpertOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amou
             $duration = (int)($info['duration_minutes'] ?? 60);
 
             $emailHelper = new EmailHelper();
-            $emailHelper->sendExpertNewBookingRequestAlert(
-                $info['expert_email'],
-                $expertName,
-                $learnerName,
-                $topic,
-                $date,
-                $time,
-                $duration,
-                $amount
-            );
+
+            // 1. Send receipt & confirmation email to LEARNER
+            if (!empty($info['learner_email'])) {
+                $emailHelper->sendLearnerNewBookingReceipt(
+                    $info['learner_email'],
+                    $learnerName,
+                    $expertName,
+                    $topic,
+                    $date,
+                    $time,
+                    $duration,
+                    $amount,
+                    $bookingId
+                );
+            }
+
+            // 2. Send instant alert notification to EXPERT
+            if (!empty($info['expert_email'])) {
+                $emailHelper->sendExpertNewBookingRequestAlert(
+                    $info['expert_email'],
+                    $expertName,
+                    $learnerName,
+                    $topic,
+                    $date,
+                    $time,
+                    $duration,
+                    $amount
+                );
+            }
         }
     } catch (Exception $e) {
-        error_log("Error in notifyExpertOfNewBooking: " . $e->getMessage());
+        error_log("Error in notifyPartiesOfNewBooking: " . $e->getMessage());
     }
 }
 
@@ -138,8 +158,8 @@ try {
                             
                             $pdo->commit();
                             
-                            // Send instant notification email to expert
-                            notifyExpertOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount);
+                            // Send instant notification email to both learner and expert
+                            notifyPartiesOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount);
                             
                             // Log trust event
                             TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
@@ -170,8 +190,8 @@ try {
                             
                             $pdo->commit();
                             
-                            // Send instant notification email to expert
-                            notifyExpertOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount);
+                            // Send instant notification email to both learner and expert
+                            notifyPartiesOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount);
                             
                             // Log trust event
                             TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
@@ -290,8 +310,8 @@ try {
             
             $pdo->commit();
             
-            // Send instant notification email to expert
-            notifyExpertOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount);
+            // Send instant notification email to both learner and expert
+            notifyPartiesOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount);
             
             // Log trust event
             TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
@@ -344,6 +364,9 @@ try {
                     $paymentId = $pdo->lastInsertId();
                     $pdo->commit();
                     
+                    // Send instant notification email to both learner and expert
+                    notifyPartiesOfNewBooking($pdo, $bookingId, $expertId, $learnerId, $amount);
+
                     // Log trust event
                     TrustHelper::logEvent($pdo, 'booking_created', $expertId, $learnerId, [
                         'booking_id' => $bookingId,

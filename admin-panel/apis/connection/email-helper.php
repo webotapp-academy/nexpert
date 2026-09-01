@@ -120,6 +120,85 @@ class EmailHelper {
         }
     }
 
+    // Send instant confirmation & receipt email to learner when they book a session
+    public function sendLearnerNewBookingReceipt($learnerEmail, $learnerName, $expertName, $sessionTopic, $sessionDate, $sessionTime, $duration, $amount, $bookingId = null) {
+        try {
+            $this->mail->clearAddresses();
+            $this->mail->addAddress($learnerEmail, $learnerName);
+            
+            $this->mail->isHTML(true);
+            $this->mail->Subject = "🎉 Booking Confirmed: Your session with {$expertName}";
+            
+            $appUrl = (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'localhost') === false) 
+                ? 'https://' . $_SERVER['HTTP_HOST'] . (defined('BASE_PATH') ? BASE_PATH : '')
+                : 'http://localhost/nexpert';
+            $learnerDashboardUrl = rtrim($appUrl, '/') . '/index.php?panel=learner&page=bookings';
+
+            $this->mail->Body = "
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+                    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                    .header { background: linear-gradient(135deg, #080B10 0%, #131b2e 50%, #00D4AA 100%); color: white; padding: 35px 25px; text-align: center; border-radius: 12px 12px 0 0; }
+                    .content { background: #f8fafc; padding: 30px; border-radius: 0 0 12px 12px; border: 1px solid #e2e8f0; }
+                    .detail-box { background: white; padding: 22px; margin: 20px 0; border-radius: 10px; border-left: 5px solid #00D4AA; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+                    .action-button { display: inline-block; background: #00D4AA; color: #080B10 !important; padding: 14px 32px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: 800; font-size: 15px; }
+                    .footer { text-align: center; color: #64748b; margin-top: 30px; font-size: 13px; }
+                    .badge { display: inline-block; background: #ecfdf5; color: #065f46; font-size: 12px; font-weight: bold; padding: 4px 10px; border-radius: 9999px; margin-bottom: 10px; }
+                </style>
+            </head>
+            <body>
+                <div class='container'>
+                    <div class='header'>
+                        <h1 style='margin: 0; font-size: 26px;'>🎉 Booking Confirmed!</h1>
+                        <p style='margin: 8px 0 0; opacity: 0.9; font-size: 15px;'>Your mentorship session has been scheduled successfully</p>
+                    </div>
+                    <div class='content'>
+                        <p>Hi <strong>{$learnerName}</strong>,</p>
+                        <p>Thank you for booking a 1-on-1 mentorship session on <strong>Nexpert</strong>. Here is your booking summary and receipt:</p>
+                        
+                        <div class='detail-box'>
+                            <span class='badge'>✓ Confirmed Appointment</span>
+                            <h3 style='margin: 5px 0 15px 0; color: #0f172a; font-size: 18px;'>Session Details</h3>
+                            <p style='margin: 6px 0;'><strong>Expert:</strong> {$expertName}</p>
+                            <p style='margin: 6px 0;'><strong>Topic:</strong> {$sessionTopic}</p>
+                            <p style='margin: 6px 0;'><strong>Date:</strong> {$sessionDate}</p>
+                            <p style='margin: 6px 0;'><strong>Time:</strong> {$sessionTime} IST</p>
+                            <p style='margin: 6px 0;'><strong>Duration:</strong> {$duration} minutes (1-on-1 Video)</p>
+                            <p style='margin: 6px 0;'><strong>Amount Paid:</strong> ₹{$amount}</p>
+                        </div>
+                        
+                        <div style='background: #f1f5f9; padding: 16px; border-radius: 8px; margin: 20px 0;'>
+                            <h4 style='margin: 0 0 8px 0; color: #1e293b; font-size: 14px;'>📌 What happens next?</h4>
+                            <p style='margin: 0; font-size: 13px; color: #475569;'>
+                                Your expert has been notified of your booking. Once accepted, your meeting link will be accessible directly in your Learner Dashboard.
+                            </p>
+                        </div>
+                        
+                        <div style='text-align: center; margin: 25px 0;'>
+                            <a href='{$learnerDashboardUrl}' class='action-button'>View My Bookings</a>
+                        </div>
+                        
+                        <div class='footer'>
+                            <p>Need help or have questions? Contact us at support@nexpert.ai</p>
+                            <p style='margin-top: 5px;'>© " . date('Y') . " Nexpert.ai. All rights reserved.</p>
+                        </div>
+                    </div>
+                </div>
+            </body>
+            </html>
+            ";
+            
+            $this->mail->send();
+            return ['success' => true, 'message' => 'New booking receipt sent to learner'];
+        } catch (Exception $e) {
+            error_log("Failed to send new booking receipt to learner: " . $this->mail->ErrorInfo);
+            return ['success' => false, 'error' => $this->mail->ErrorInfo];
+        }
+    }
+
     // Send instant notification email to expert when a learner FIRST books a session
     public function sendExpertNewBookingRequestAlert($expertEmail, $expertName, $learnerName, $sessionTopic, $sessionDate, $sessionTime, $duration, $amount) {
         try {
@@ -129,6 +208,11 @@ class EmailHelper {
             $this->mail->isHTML(true);
             $this->mail->Subject = "🔔 New Booking Request: {$learnerName} booked a session with you";
             
+            $appUrl = (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'], 'localhost') === false) 
+                ? 'https://' . $_SERVER['HTTP_HOST'] . (defined('BASE_PATH') ? BASE_PATH : '')
+                : 'http://localhost/nexpert';
+            $expertManageUrl = rtrim($appUrl, '/') . '/index.php?panel=expert&page=booking-management';
+
             $this->mail->Body = "
             <!DOCTYPE html>
             <html>
@@ -139,7 +223,7 @@ class EmailHelper {
                     .header { background: linear-gradient(135deg, #0f172a 0%, #00D4AA 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
                     .content { background: #f9fafb; padding: 30px; border-radius: 0 0 10px 10px; }
                     .detail-box { background: white; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #00D4AA; }
-                    .action-button { display: inline-block; background: #00D4AA; color: #080B10; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }
+                    .action-button { display: inline-block; background: #00D4AA; color: #080B10 !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: bold; }
                     .footer { text-align: center; color: #6b7280; margin-top: 30px; font-size: 14px; }
                 </style>
             </head>
@@ -157,14 +241,14 @@ class EmailHelper {
                             <p><strong>Topic:</strong> {$sessionTopic}</p>
                             <p><strong>Learner:</strong> {$learnerName}</p>
                             <p><strong>Date:</strong> {$sessionDate}</p>
-                            <p><strong>Time:</strong> {$sessionTime}</p>
+                            <p><strong>Time:</strong> {$sessionTime} IST</p>
                             <p><strong>Duration:</strong> {$duration} minutes</p>
                             <p><strong>Session Fee:</strong> ₹{$amount}</p>
                         </div>
                         
                         <p>Please log in to your expert dashboard to accept or manage this booking:</p>
                         <div style='text-align: center;'>
-                            <a href='http://localhost/nexpert/index.php?panel=expert&page=booking-management' class='action-button'>Go to Booking Management</a>
+                            <a href='{$expertManageUrl}' class='action-button'>Go to Booking Management</a>
                         </div>
                         
                         <div class='footer'>
