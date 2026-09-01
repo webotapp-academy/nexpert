@@ -12,13 +12,14 @@
  * Or schedule: 0 10 * * * (Daily at 10 AM)
  */
 
-require_once __DIR__ . '/../admin-panel/apis/connection/pdo.php';
-require_once __DIR__ . '/../admin-panel/apis/connection/email-helper.php';
+require_once __DIR__ . '/../../admin-panel/apis/connection/pdo.php';
+require_once __DIR__ . '/../../admin-panel/apis/connection/email-helper.php';
+require_once __DIR__ . '/../../admin-panel/apis/connection/universal-env.php';
 
 // Configuration
-$FROM_EMAIL = 'noreply@nexpert.ai';
-$FROM_NAME = 'Nexpert.ai';
-$OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY'; // Add to config
+$FROM_EMAIL = UniversalEnv::get('SMTP_FROM_EMAIL', 'support@nexpert.ai');
+$FROM_NAME = UniversalEnv::get('SMTP_FROM_NAME', 'Nexpert.ai');
+$OPENAI_API_KEY = UniversalEnv::get('OPENAI_API_KEY');
 
 // Initialize EmailHelper
 $emailHelper = new EmailHelper();
@@ -193,7 +194,7 @@ Key Message: \"Your expert is waiting for you!\"
 Requirements:
 - Warm and encouraging tone
 - Emphasize that the expert is ready and waiting for the learner
-- Reference their positive experience (${rating}-star rating)
+- Reference their positive experience ({$rating}-star rating)
 - Create gentle urgency - don't lose momentum
 - Mention that consistent sessions lead to better results
 - Include clear call-to-action to book next session
