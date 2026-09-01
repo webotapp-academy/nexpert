@@ -30,6 +30,10 @@ try {
                 ep.total_reviews as review_count,
                 ep.total_sessions,
                 ep.expertise_verticals,
+                ep.timezone,
+                kyc.city,
+                kyc.state,
+                kyc.country,
                 MIN(pricing.amount) as hourly_rate,
                 ts.overall_score,
                 ts.trust_tier,
@@ -37,17 +41,18 @@ try {
                 ts.stability_score
             FROM users u
             INNER JOIN expert_profiles ep ON u.id = ep.user_id
+            LEFT JOIN expert_kyc_verification kyc ON u.id = kyc.expert_id
             LEFT JOIN expert_pricing pricing ON u.id = pricing.expert_id 
                 AND pricing.pricing_type = 'per_session' 
                 AND pricing.is_active = 1
             LEFT JOIN trust_state ts ON u.id = ts.expert_id
             WHERE u.id = ? 
             AND u.role = 'expert'
-            AND ep.verification_status = 'approved'
             AND u.status = 'active'
             GROUP BY u.id, ep.full_name, u.email, ep.tagline, ep.bio_full, 
                      ep.profile_photo, ep.experience_years, ep.verification_status,
                      ep.rating_average, ep.total_reviews, ep.total_sessions, ep.expertise_verticals,
+                     ep.timezone, kyc.city, kyc.state, kyc.country,
                      ts.overall_score, ts.trust_tier, ts.band_name, ts.stability_score
         ");
         $stmt->execute([$expertId]);
@@ -57,6 +62,36 @@ try {
             http_response_code(404);
             echo json_encode(['success' => false, 'message' => 'Expert not found']);
             exit;
+        }
+
+        // Format location from KYC address or timezone
+        $countryMap = [
+            'IN' => 'India',
+            'US' => 'United States',
+            'UK' => 'United Kingdom',
+            'GB' => 'United Kingdom',
+            'CA' => 'Canada',
+            'AU' => 'Australia',
+            'SG' => 'Singapore',
+            'AE' => 'United Arab Emirates',
+            'DE' => 'Germany',
+            'FR' => 'France',
+        ];
+        $locParts = [];
+        if (!empty($expert['city'])) $locParts[] = trim($expert['city']);
+        if (!empty($expert['state'])) $locParts[] = trim($expert['state']);
+        if (!empty($expert['country'])) {
+            $c = strtoupper(trim($expert['country']));
+            $locParts[] = $countryMap[$c] ?? trim($expert['country']);
+        }
+
+        if (!empty($locParts)) {
+            $expert['location'] = implode(', ', $locParts);
+        } elseif (!empty($expert['timezone']) && $expert['timezone'] !== 'UTC') {
+            $tzParts = explode('/', $expert['timezone']);
+            $expert['location'] = str_replace('_', ' ', end($tzParts));
+        } else {
+            $expert['location'] = 'Remote';
         }
 
         // Extract skills from expertise_verticals JSON

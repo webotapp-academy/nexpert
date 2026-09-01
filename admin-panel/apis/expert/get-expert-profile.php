@@ -36,10 +36,15 @@ try {
             ep.total_reviews,
             ep.linkedin_url,
             ep.twitter_url,
-            ep.portfolio_url
+            ep.portfolio_url,
+            ep.timezone,
+            kyc.city,
+            kyc.state,
+            kyc.country
         FROM users u
         INNER JOIN expert_profiles ep ON u.id = ep.user_id
-        WHERE u.id = ? AND u.role = 'expert' AND ep.verification_status = 'approved'
+        LEFT JOIN expert_kyc_verification kyc ON u.id = kyc.expert_id
+        WHERE u.id = ? AND u.role = 'expert' AND u.status = 'active'
     ");
     
     $stmt->execute([$expert_id]);
@@ -48,9 +53,26 @@ try {
     if (!$expert) {
         echo json_encode([
             'success' => false,
-            'message' => 'Expert not found or not approved'
+            'message' => 'Expert not found'
         ]);
         exit;
+    }
+
+    $countryMap = ['IN' => 'India', 'US' => 'United States', 'UK' => 'United Kingdom', 'GB' => 'United Kingdom', 'CA' => 'Canada', 'AU' => 'Australia', 'SG' => 'Singapore', 'AE' => 'United Arab Emirates', 'DE' => 'Germany', 'FR' => 'France'];
+    $locParts = [];
+    if (!empty($expert['city'])) $locParts[] = trim($expert['city']);
+    if (!empty($expert['state'])) $locParts[] = trim($expert['state']);
+    if (!empty($expert['country'])) {
+        $c = strtoupper(trim($expert['country']));
+        $locParts[] = $countryMap[$c] ?? trim($expert['country']);
+    }
+    if (!empty($locParts)) {
+        $expert['location'] = implode(', ', $locParts);
+    } elseif (!empty($expert['timezone']) && $expert['timezone'] !== 'UTC') {
+        $tzParts = explode('/', $expert['timezone']);
+        $expert['location'] = str_replace('_', ' ', end($tzParts));
+    } else {
+        $expert['location'] = 'Remote';
     }
     
     echo json_encode([
